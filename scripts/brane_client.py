@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Shared BRANE client for team Redwood's security workstream.
+Shared BRANE configuration, transport and verdict handling for Redwood.
 
-Standard library only, matching the starter kit. Three rules this module enforces
-so the rest of the scripts cannot break them:
+The client uses the standard library and enforces three transport guarantees:
 
   1. Every request goes to BRANE_BASE_URL. There is no fallback host, no direct
      provider call and no retry against a different endpoint.
@@ -156,7 +155,7 @@ def brane_headers(headers: Dict[str, str]) -> Dict[str, str]:
 
 
 # --------------------------------------------------------------------------------------
-# Reference implementation of docs/brane_adapter_contract.md §3.
+# Routing outcomes documented in docs/brane_adapter_contract.md.
 #
 # request() above is transport only: it hands back whatever came off the wire. That is
 # deliberate, because the evidence harness needs the raw observation. It is NOT safe to

@@ -44,6 +44,4 @@ Start with the [classification method](classification-method.md) for label defin
 
 ## Reading the examples
 
-Use the permitted packet as a test fixture. Compare it with the actual outbound provider request when BRANE is configured. Record both the policy decision and whether the analyst could still complete their task. The files contain expected results, not live integration runs.
-
-For the hackathon, the track brief asks for a reusable agent, supported legal research, a policy matrix, and a live demo with a business case. It requires at least three justified rules and five documented pass/fail tests using exclusively synthetic data. See **AI-Z Challenge Track, MAIN Summit 2026**, pp. 7–9.
+Each profile gives a proposed transfer policy, a synthetic input and expected test outcomes. Redwood’s implemented drafting path uses registered wording and keeps the case data inside the bank. For measured outcomes, the department record gives each desk’s observed routes and signed decision. The policy matrix connects the implemented controls to their sources. [Department run](../../docs/evidence/department-rehearsal-live.json) · [Policy matrix](../../submission/MAIN_Policy_Matrix_Template.csv)

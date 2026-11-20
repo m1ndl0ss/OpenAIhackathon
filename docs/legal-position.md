@@ -2,7 +2,7 @@
 
 Corporate banking agent | Dutch bank deployment assessment | 21 November 2026
 
-**Scope.** The submission uses synthetic cases. The organizer assigns desk reviews, bank code calculates credit capacity, and staff sign the current file. Across six live letter-of-credit calls, the bank observed zero planted private fields in its outgoing requests. BRANE reported the downstream routes. Production review must also cover identity, logs, retention and support access. [Case evidence](evidence/submission-live.json) · [Workflow research](../research/bank-data-classification/README.md)
+**Scope.** Redwood uses synthetic cases. The organizer assigns desk reviews, bank code calculates credit capacity, and staff sign the current file. Across six live letter-of-credit calls, the bank observed zero planted private fields in its outgoing requests. BRANE reported the downstream routes. Production review must also cover identity, logs, retention and support access. [Case evidence](evidence/submission-live.json) · [Workflow research](../research/bank-data-classification/README.md)
 
 ## Controller and processor chain
 
@@ -22,4 +22,4 @@ Keep the identity map at the bank. In *EDPS v SRB*, C-413/23 P, the Court held t
 
 ## EU AI Act classification
 
-**The submitted use falls outside the high-risk categories.** Redwood prepares corporate reviews. It neither scores natural persons nor assesses their creditworthiness under Annex III 5(b). Its HR task routes administrative requests. The bank acts as deployer and gives staff meaningful decision authority. Reassess before scoring a sole trader or guarantor, ranking job candidates, or changing the intended purpose. [Article 6](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6) · [Annex III points 4 and 5](https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3) · [Bank’s decision mandate](../legal/case-answer-key.md)
+**The corporate review use described here falls outside the high-risk categories.** Redwood prepares corporate reviews. It neither scores natural persons nor assesses their creditworthiness under Annex III 5(b). Its HR task routes administrative requests. The bank acts as deployer and gives staff meaningful decision authority. Reassess before scoring a sole trader or guarantor, ranking job candidates, or changing the intended purpose. [Article 6](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-6) · [Annex III points 4 and 5](https://ai-act-service-desk.ec.europa.eu/en/ai-act/annex-3) · [Bank’s decision mandate](../legal/case-answer-key.md)

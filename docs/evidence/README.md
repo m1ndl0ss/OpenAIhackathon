@@ -1,28 +1,15 @@
-# Evidence for the submission
+# Workflow evidence
 
-The two completed CSVs for the jury are in [submission/](../../submission/). This directory holds their supporting measurements and walkthroughs.
+All records use synthetic cases. The live runs used separate scripted staff identities through the staff API. Request observations cover what the application sent to BRANE. Downstream routing and usage come from the gateway’s response headers.
 
-| Open this file | What was observed |
+| Record | Observation |
 | --- | --- |
-| [Integrated live case](submission-live.json) | Two revisions, three departments, the real OpenAI model through BRANE, per-call route and digest, citation checks, three current signatures, the officer decision and one simulated receipt. Six distinct scripted staff identities used the API. |
-| [Submission-readiness rerun](readiness-live.json) | A separate live run of LC-001 on 21 November in Maastricht took 47.63 seconds across both revisions, with six real calls, three current signatures and one simulated receipt. |
-| [Specialist live rehearsal](department-rehearsal-live.json) | One case per specialist desk through approval. BRANE reported 57 cloud and 12 local-model calls. Three restricted desks recorded zero model calls. |
-| [Specialist routing dashboard](specialist-workflow.jpg) | Payments & Cash servicing a returned payment during an actual live run. |
-| [Editable payment request](request-intake.jpg) | The originating desk can enter a subject, payment rail, amount, currency, review date and supporting reference before submission. |
-| [Organizer routing replay](request-routing.gif) | A submitted Payments & Cash request moves from the analyst to the organizer, then to the evidence, policy and handover agents. This recording replays an offline case at 2.35 seconds per handoff. |
-| [Payment agent reply](request-result.jpg) | A live Payments & Cash request shows the recommended action, the agent’s wording and the supporting payment-return record before dispatch to Sam Reed and Amir Cole. |
-| [Final approval form](human-approval.jpg) | In the offline demo, Sam Reed and Amir Cole have signed. Ari Fox can inspect the packet, enter a reason and approve or refer the request from the dashboard. |
-| [Signed letter of credit](signed-letter-of-credit.jpg) | The live rehearsal shows three named desk findings and Eva Lin’s recorded approval of revision 2 of synthetic case LC-001 after Coverage supplied the invoice. |
-| [Merged BRANE client checks](brane-check-failure.csv) | Five faults repeated three times returned zero answer text. Three healthy controls returned a verified response. The observer checked each destination and port from the client process. |
-| [Network-denied outage](firewall-outage.json) | T5 in its official firewall-unavailable meaning. An independent Python audit hook denied DNS and IP socket operations. The bank attempted its policy lookup, submitted zero model requests and left the case unsealed. |
-| [Submission test worksheet](../../submission/MAIN_Five_Tests_Template.csv) | T1–T5 and E1–E5. T5 records check failure and E2 also covers the participant brief’s local-only T5. Each row identifies the application, gateway or outage observation. |
-| [Submission policy matrix](../../submission/MAIN_Policy_Matrix_Template.csv) | Eleven rules from Ilaria's legal worksheet with observed gateway behaviour and application controls. The legal-source column matches her source sheet. |
-| [Timed backup walkthrough](live-walkthrough.gif) | Seven Redwood browser captures from a separate live case, from desk entry through simulated issuance. |
-| [Fixture hold and retry checks](workflow-fixture.csv) | A compliance hold prevents approval. A stale revision fails. Concurrent requests and application restart preserve one receipt. |
-| [Fixture utility](agent-utility-fixture.json) | Two offline scenarios scored against the case answer key. |
+| [Letter of credit](submission-live.json) | The first revision identifies a missing invoice and USD 500,000 in remaining capacity. The second cites the invoice, collects three current signatures and ends with one simulated receipt. Each of the six model calls has a policy digest, route and usage record. |
+| [Preparation times](preparation-times.csv) | The two revisions took 15.852 and 13.702 seconds to draft and validate. Rows for the same revision share that revision’s timing. |
+| [Repeat run](readiness-live.json) | Both revisions completed again. Their six drafts passed the source checks in 47.63 seconds of preparation time. |
+| [Specialist desks](department-rehearsal-live.json) | One case per desk reached a signed decision. The gateway reported 57 cloud calls and 12 local-model calls. Three of the 26 workflows completed entirely in bank code. |
+| [Unavailable firewall](firewall-outage.json) | With DNS and IP sockets denied, the application attempted one policy lookup, made zero model requests and left the case unsealed. |
+| [Client fault results](brane-check-failure.csv) | Five faults repeated three times returned no answer text. Three healthy controls returned verified responses. |
+| [Approval and retry checks](workflow-fixture.csv) | In local fixture mode an open hold and a stale revision each blocked approval. Concurrent retries and a restart preserved a single issuance receipt. |
 
-The security team captured its own baseline, hardened gateway results and ten-row worksheet. The raw-firewall T3 and T3c failures remain visible there. [Baseline](../../evidence/baseline_run.csv) · [Gateway results](../../evidence/REPORT.md) · [Security worksheet](../../evidence/MAIN_Five_Tests_Template.csv)
-
-Ilaria revised the rationale and legal sources for CB-04 and CB-10. The submission and gateway matrices include her revisions. The original worksheet is available for comparison. [Current cited source](../../evidence/clearance_policy_matrix.source.csv) · [Gateway matrix](../../evidence/clearance_policy_matrix.csv) · [Original worksheet](policy-matrix.csv)
-
-**Reproduce locally.** Run `make setup`, `make test` and `make evidence`. The local commands exercise fixtures and the outage in a disposable environment. Set the team credential as described in the run guide and use `make live-evidence` for a new live case. Reports are written under `.clearance/evidence/`. Only the reviewed artifacts above are used in the submission. [Demo and business case](../../SUBMISSION.md)
+The [test protocol](../../submission/MAIN_Five_Tests_Template.csv) identifies the observation behind each test. The [gateway report](../../evidence/REPORT.md) documents the separate trials on raw document text, including missed and excessive masking. The [policy matrix](../../submission/MAIN_Policy_Matrix_Template.csv) links the controls to their legal sources.

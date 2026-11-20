@@ -15,7 +15,8 @@ from . import departments
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "data/trade/demo.json"
-KIT = ROOT / "docs/MAIN_Participant_Starter_Kit"
+TEST_PROTOCOL = ROOT / "submission/MAIN_Five_Tests_Template.csv"
+POLICY_MATRIX = ROOT / "submission/MAIN_Policy_Matrix_Template.csv"
 ROLES = ("coverage", "trade_finance", "credit_risk", "compliance", "final_officer", "operations")
 
 
@@ -103,29 +104,30 @@ EDGE_CASES = {
 
 def prepare_evidence(directory):
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    with (KIT / "MAIN_Five_Tests_Template.csv").open(newline="") as source:
-        reader = csv.reader(source)
-        header = next(reader)
-        rows = list(reader)
+    with TEST_PROTOCOL.open(encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source)
+        fields = reader.fieldnames
+        scenarios = []
+        for row in reader:
+            test_id = row["Test ID"]
+            name, expected = EDGE_CASES.get(test_id, (row["Scenario type"], row["Expected result"]))
+            scenarios.append({"Test ID": test_id, "Scenario type": name, "Expected result": expected})
     for version in ("baseline", "hardened"):
         output = directory / f"{version}.csv"
         try:
-            target = output.open("x", newline="")
+            target = output.open("x", encoding="utf-8", newline="")
         except FileExistsError:
             continue
         with target:
-            writer = csv.writer(target)
-            writer.writerow(header)
-            for row in rows:
-                if row[0] in EDGE_CASES:
-                    row[1:3] = EDGE_CASES[row[0]]
-                row[-2:] = ["UNVERIFIED", version]
-                writer.writerow(row)
+            writer = csv.DictWriter(target, fieldnames=fields)
+            writer.writeheader()
+            for scenario in scenarios:
+                writer.writerow({**scenario, "Pass/Fail": "UNVERIFIED", "Team / Policy version": version})
     matrix = directory / "policy-matrix.csv"
     if not matrix.exists():
-        with (KIT / "MAIN_Policy_Matrix_Template.csv").open(newline="") as source:
+        with POLICY_MATRIX.open(encoding="utf-8", newline="") as source:
             header = next(csv.reader(source))
-        with matrix.open("x", newline="") as dest:
+        with matrix.open("x", encoding="utf-8", newline="") as dest:
             csv.writer(dest).writerow(header)
 
 

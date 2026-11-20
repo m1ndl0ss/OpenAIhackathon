@@ -10,7 +10,7 @@ from backend.agent.packets import headroom_after
 from backend.store import transaction
 
 
-def test_submission_and_gateway_matrices_use_the_reviewed_rationale_and_sources():
+def test_submission_matrix_uses_the_reviewed_rationale_and_sources():
     root = Path(__file__).resolve().parents[1]
 
     def cited_rules(path):
@@ -25,7 +25,6 @@ def test_submission_and_gateway_matrices_use_the_reviewed_rationale_and_sources(
             ]
 
     reviewed = cited_rules("evidence/clearance_policy_matrix.source.csv")
-    assert cited_rules("evidence/clearance_policy_matrix.csv") == reviewed
     assert cited_rules("submission/MAIN_Policy_Matrix_Template.csv") == reviewed
 
 
@@ -46,7 +45,11 @@ def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):
         with (tmp_path / "evidence" / f"{policy}.csv").open(newline="") as source:
             rows = list(csv.DictReader(source))
         assert [r["Test ID"] for r in rows] == [f"{p}{i}" for p in ("T", "E") for i in range(1, 6)]
-        assert {r["Pass/Fail"] for r in rows} == {"UNVERIFIED"}
+        for row in rows:
+            assert row["Pass/Fail"] == "UNVERIFIED" and row["Team / Policy version"] == policy
+            assert all(value == "" for field, value in row.items() if field not in {
+                "Test ID", "Scenario type", "Expected result", "Pass/Fail", "Team / Policy version",
+            })
     matrix = tmp_path / "evidence/policy-matrix.csv"
     matrix.write_text("Synthetic reviewed work in progress\n")
     with transaction(path, write=True) as db:

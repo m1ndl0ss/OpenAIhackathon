@@ -1,47 +1,10 @@
 #!/usr/bin/env python3
-"""
-A5 / track test 5 -- "check failure": when the protection check is unavailable, the
-request is not sent, and an automatic fallback to a cloud model fails the test.
+"""Measure how the BRANE client handles an unavailable or unverifiable response.
 
-  python3 scripts/check_failure_test.py
-  python3 scripts/check_failure_test.py --client raw          # the transport, uncontrolled
-  python3 scripts/check_failure_test.py --client mymod:call   # Tasos's adapter
-
-Why this file exists. The track description states test 5 as a property of the SYSTEM
-under outage, not of a prompt: "if the protection check is unavailable, the request is
-not sent. An automatic fallback to the cloud model fails this test." Our T5b tests an
-unavailable *business* check while BRANE was healthy, so it does not evidence this. This
-does.
-
-The evidence is an INDEPENDENT observation, not the client's own logging. A
-sys.addaudithook records every socket.getaddrinfo and socket.connect the process
-attempts, for the whole run. A client cannot write a reassuring log line into it,
-because it never passes through the client at all.
-
-The static pre-check covers code and configuration (.py, .json, .yaml, .env, ...)
-outside docs/. It deliberately does not scan prose: evidence/REPORT.md documents this
-check and therefore contains the very strings it looks for. Secrets are scanned
-separately across every file, prose included, before each commit.
-
-Scenarios, each run 3 times with the same synthetic letter-of-credit prompt:
-
-  a dns          BRANE_BASE_URL host does not resolve (brane.invalid)
-  b refused      a reserved loopback port refuses the connection
-  c timeout      a loopback server accepts the request and withholds its response
-  d http_5xx     a local stub returns 503
-  e no_header    a local stub returns HTTP 200 with a completion and NO X-Brane-Routed-To
-  f control      the real BRANE endpoint, healthy -- proves the harness can still pass
-
-A scenario PASSES only when all three hold:
-  1. the outcome is `unavailable` (or the adapter's equivalent),
-  2. no answer text reached the caller,
-  3. the audit log shows connection attempts ONLY to the configured endpoint for that
-     scenario, and none to anything else.
-
-Scenario f inverts 1 and 2: it must produce a real outcome and an answer.
-
-Exit codes: 0 all scenarios passed, 1 at least one failed, 2 refused to run
-(static check failed, or configuration error).
+Five fault cases exercise a DNS failure, a refused connection, a timeout, a
+server error and a successful HTTP response missing its routing verdict. A
+sixth case uses the healthy, assigned BRANE endpoint. The socket audit hook
+records DNS lookups and connections from this process on each run.
 """
 from __future__ import annotations
 
@@ -314,7 +277,7 @@ def run_scenario(sc: Scenario, client: Callable[..., Dict[str, Any]], run_index:
         if ok:
             why = f"outcome={outcome}, answer={answer_len} chars, egress {egress_note}"
         elif outcome is None:
-            why = ("client performs no outcome classification (adapter contract §3 not "
+            why = ("client performs no outcome classification (adapter contract not "
                    f"implemented); it returned {answer_len} chars, egress {egress_note}")
         else:
             why = f"healthy control: outcome={outcome}, answer={answer_len} chars, connected={connected}, egress {egress_note}"
@@ -322,7 +285,7 @@ def run_scenario(sc: Scenario, client: Callable[..., Dict[str, Any]], run_index:
         reasons = []
         if outcome is None:
             reasons.append("client performs no outcome classification, so it cannot report "
-                           "`unavailable` (adapter contract §3 not implemented)")
+                           "`unavailable` (adapter contract not implemented)")
         required_event = "getaddrinfo" if sc.sid == "a" else "connect"
         if not any(kind == required_event for kind, _, _ in attempts):
             reasons.append(f"expected {required_event} was not observed")
@@ -462,8 +425,7 @@ def main() -> int:
             ])
             jf.write(json.dumps(bc.scrub({
                 "check_id": f"T5c/A5{rec['scenario']}",
-                "definition_source": "AI-Z track description §03/§06 'Check failure'; "
-                                     "spec §10 E5 renamed A5",
+                "definition_source": "BRANE availability and response validation (T5 / A5)",
                 "client": client_name,
                 "timestamp_utc": bc.utc_iso(),
                 "policy_version": policy_version, "policy_hash": policy_hash,

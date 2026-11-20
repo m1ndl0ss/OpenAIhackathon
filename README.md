@@ -1,68 +1,41 @@
 # Redwood
 
-Redwood helps corporate banking staff prepare a request that needs several departments to agree. In the jury case, a relationship manager requests a USD 2 million letter of credit. The organizer sends work to Trade Finance, Credit Risk and Compliance. BRANE checks each model request, each desk signs its finding, and a separate officer makes the final decision. All cases are synthetic and issuance is simulated.
+Redwood helps corporate banking staff prepare a case for a human decision. In the example, a relationship manager requests a **USD 2 million letter of credit**. Trade Finance checks the documents, Credit Risk calculates the remaining capacity, and Compliance flags a missing supplier invoice. Once the invoice arrives, all three desks sign the revised file. A separate officer approves it, and Operations records a simulated issuance. All cases and staff identities are synthetic.
 
-**Start with the [submission guide](SUBMISSION.md) or its [printable edition](output/pdf/redwood-submission.pdf).** The [37-second recorded walkthrough](docs/evidence/live-walkthrough.gif) shows the case from desk selection through issuance.
+![The Redwood console shows a payment recommendation, its supporting record and the staff assigned to review it.](docs/evidence/request-result.jpg)
 
-## Submission for the AI-Z track
+## Run Redwood
 
-| What the jury evaluates | What to open |
-| --- | --- |
-| **Technology and execution · 40 points.** Working agent, BRANE integration and human handoff. | [Run the demo](#run-from-a-fresh-clone) · [Architecture](docs/pitch/1_trust_boundaries.png) · [Recorded model calls, signatures and receipt](docs/evidence/submission-live.json) |
-| **Legal research and governance · 40 points.** The agent’s legal position, department data classifications and implemented rules. | [Agent legal brief](output/pdf/redwood-legal-position.pdf) · [26 department analyses](research/bank-data-classification/README.md) · [Completed policy matrix CSV, 11 rules](submission/MAIN_Policy_Matrix_Template.csv) |
-| **Business impact · 20 points.** Three-minute live demonstration, value and comparison with manual preparation. | [Pitch and team Q&A](docs/pitch.md) · [Business case and timing comparison](SUBMISSION.md#business-case) · [Utility scorecard](eval/utility-scorecard.csv) |
-| **Mandatory security gate.** Five required scenarios and five team-written banking edge cases. | [Completed test evidence CSV](submission/MAIN_Five_Tests_Template.csv) · [Results for both versions of test five](SUBMISSION.md#governance-and-the-five-security-tests) · [Evidence index](docs/evidence/README.md) |
-
-The two finished CSVs are in [submission/](submission/). The track description lists the deliverables on page 8 and the judging criteria on page 9. The participant brief adds the CSV format, the five edge cases and the three-minute demo. [Track description](docs/AI-Z-Track-Description.pdf) · [Participant brief](docs/MAIN_Participant_Starter_Kit/MAIN_Summit_AI-Z_Challenge_Brief.pdf)
-
-![Redwood showing a payment request, the agent’s recommendation, its route and the assigned reviewers](docs/evidence/request-result.jpg)
-
-## Give the jury a runnable copy
-
-From a Git checkout, run `make submission`. It prints the path of a ZIP under `.clearance/submission/` built from the current commit. Send that ZIP through the organiser’s hand-in channel or give the jury read access to this private repository. The ZIP includes the runnable app, both completed CSVs, both Redwood PDFs and the recorded evidence. After extracting it, open `Redwood/README.md` for local links and run the commands below from the `Redwood` folder. The live demo uses the team’s credential.
-
-## Run from a fresh clone
-
-Install Python 3.11+ and Node 22.12+ with npm. Run these commands from the repository root.
+Install Python 3.11+ and Node.js 22.12+ with npm. From the repository root, run these commands.
 
 ```sh
 make setup
 make run
 ```
 
-Open the [local demo on port 8000](http://127.0.0.1:8000) and choose **Coverage**. The desk picker supplies a demo identity. This mode uses local fixtures and requires no API key.
+Open the [local console](http://127.0.0.1:8000), choose **Coverage → LC-001**, and select **Run analysis**. This mode uses offline fixtures.
 
-### Run the live BRANE rehearsal
+For a live demo, copy `.env.example` to `.env`, set `BRANE_API_KEY` to the assigned department credential, then run `make brane-check` and `make run-live`. Open the [live console](http://127.0.0.1:8001). The demo guide takes the case from the first finding to the signed decision and receipt. [Live demo guide](docs/demo-guide.md#walk-the-case)
 
-After setup, copy `.env.example` to `.env` on a fresh clone and put the assigned AI-Z team credential in `BRANE_API_KEY`. Then start the live rehearsal.
+## How a case stays under bank control
 
-```sh
-make brane-check
-make run-live
-```
+- **The bank prepares the facts.** Bank code reads the records each desk may see, checks facility limits and attaches citations. For the letter of credit, each desk’s model chooses between two approved wordings for the next step. Customer notes, amounts and account references stay in the bank. [Drafting code](backend/agent/runtime.py) · [Case rules and expected results](legal/case-answer-key.md)
+- **BRANE checks each model request.** The adapter verifies the active policy before sending approved wording. A failed policy check stops the analysis. In the outage test the bank attempted one policy lookup, sent zero model requests and left the case pending. [BRANE adapter](backend/brane_client.py) · [Outage record](docs/evidence/firewall-outage.json)
+- **People sign the current revision.** An open Compliance hold blocks approval. Adding material evidence requires fresh signatures. The final decision and simulated issuance belong to separate staff roles. [Live case, signatures and receipt](docs/evidence/submission-live.json)
 
-Open the [live console on port 8001](http://127.0.0.1:8001). It starts with a fresh synthetic database. The bank verifies the active policy before each model call. [Configuration example](.env.example) · [BRANE setup](policy/README.md)
+## Business case
 
-## Walk the case
+The relationship manager and three reviewing desks work from the same evidence and can see which signature or document is outstanding. In one live run Redwood prepared and checked six cited drafts across two revisions in **29.55 seconds**. A second run took **47.63 seconds**. The team estimated that manual preparation took about twice as long as the first run, or **roughly 59 seconds**. Separate manual stopwatch readings are unavailable. Both measured runs exclude time spent waiting for documents, reviewing the drafts and signing. [Timing data](docs/evidence/preparation-times.csv) · [Second run](docs/evidence/readiness-live.json)
 
-1. Choose **Coverage → LC-001 → Run analysis**. **Agent reply** shows the recommendation and sources. **Request routing** shows which desk prepared each finding.
-2. Review the missing invoice as Compliance and place a hold. As Coverage, attach the invoice and rerun the case. Reviewers now sign revision 2.
-3. With three current desk clearances, the assigned officer selects **Final approve**. Operations can then record one simulated issuance. [Full role-by-role walkthrough](docs/demo-guide.md#walk-the-case)
+The same review flow supports 26 additional desks. In a live run using scripted staff identities, all 26 reached a signed outcome. Three restricted workflows ran entirely inside the bank. [Desk workflows](docs/department-workflows.md) · [Recorded outcomes](docs/evidence/department-rehearsal-live.json)
 
-### Try a specialist desk
+## Governance and test results
 
-Choose **Corporate banking → Payments & Cash** for a second example, or use **New request → Payment exception triage → Fill demo example**. After submission, read the agent’s recommendation, send the finding for desk review and follow the named signers through final approval. The repo has 27 workflows and 54 seeded examples. [Payment walkthrough](docs/demo-guide.md#try-a-specialist-desk) · [All desks and case IDs](docs/department-workflows.md)
-
-## What the evidence supports
-
-- **Utility.** The live letter-of-credit rehearsal produced six cited drafts across two revisions in **29.55 seconds**. The team reports manual preparation took about twice as long, implying **roughly 59 seconds** for comparable work. The team supplied the ratio without separate stopwatch readings. A second live run took **47.63 seconds**. [Measurement and assumptions](SUBMISSION.md#business-case) · [Readiness rerun](docs/evidence/readiness-live.json)
-- **Security.** The submitted workflow recorded a pass for each of the five gate scenarios and five edge cases within the scope described in the worksheet. The bank observed zero planted private fields across six outbound model requests. The gateway on its own missed a raw name variant. Both results are disclosed. [Submitted test results](submission/MAIN_Five_Tests_Template.csv) · [Security evidence and limitations](SUBMISSION.md#governance-and-the-five-security-tests)
-- **Reach.** All 26 specialist workflows reached a signed outcome in a separate live rehearsal using scripted staff identities. BRANE reported 57 cloud calls and 12 local-model calls. Three restricted desks completed their tasks entirely in bank code. [Specialist run](docs/evidence/department-rehearsal-live.json)
-
-## Repository guide
-
-| Looking for | Location |
+| Project record | What it shows |
 | --- | --- |
-| Runnable application and invented cases | [Bank API and organizer](backend/) · [Staff console](console/) · [Synthetic cases](data/) |
-| Governance and assurance | [Deployed policy](policy/) · [Case mandate and answer key](legal/case-answer-key.md) · [Reviewed submission evidence](docs/evidence/README.md) |
-| Reproducing a result or developing the app | [Demo and developer commands](docs/demo-guide.md#developer-commands) · [Tests](tests/) · [Team plan](docs/team-build-plan.md) |
+| [Legal assessment](docs/legal-position.md) and [department research](research/bank-data-classification/README.md) | The proposed bank deployment, its legal bases, provider and transfer conditions, and the data each desk needs. |
+| [Policy matrix](submission/MAIN_Policy_Matrix_Template.csv) | Eleven rules linking data categories and legal sources to implemented controls, observed results and remaining gaps. |
+| [Test protocol](submission/MAIN_Five_Tests_Template.csv) | Results for permitted requests, protected and repeated details, embedded instructions, and an unavailable firewall, plus five banking edge cases. |
+| [Security findings](evidence/REPORT.md) and [application evidence](docs/evidence/README.md) | The application excluded every planted private field across six observed requests. In separate raw-text tests the gateway missed a name variant and masked ordinary trade wording. |
+
+Use `make test` to run the automated suite and `make evidence` to reproduce the local fixture and outage checks. From a Git checkout, `make submission` packages the committed source and evidence into a ZIP.

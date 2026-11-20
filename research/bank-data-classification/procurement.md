@@ -24,9 +24,7 @@ Compare bids locally and send approved requirement categories and statuses witho
 
 ## Transfer policy
 
-- **Build the payload inside the bank.** Authorize the user and case first. Construct only the listed keys using a validated schema and approved enums or named public sources. Drop raw attachments, conversation history, free text, file paths, retrieved passages and tool results unless a rule explicitly permits a derived value. Check combinations and case context before release.
-- **Enforce the field actions.** The table defines the workflow-specific rules, including which values may survive transformation. Internal-only fields can support approved local work. Blocked material is excluded from model input on this route. Reject the whole request when the workflow’s case-level stop condition is met or when the application cannot establish that blocked material was isolated.
-- **Require BRANE on the approved model route.** Log the local decision and BRANE verdict with a policy version, a random per-request trace and destination. Keep source copies, identifier maps and evidence pointers in the authorized bank application. On timeout, missing verdict or policy denial, issue no external request and surface a review state. Validate the exact schema controls, routing precedence and logs in the hackathon instance.
+Apply the [shared transfer controls](classification-method.md#application-and-brane-controls) to the field actions above.
 
 Keep an active bid local whenever summary categories are identifying or the supplier’s NDA restricts derived disclosure. Use the ICT register fields only where DORA scope applies.
 

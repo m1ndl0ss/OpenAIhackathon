@@ -1,23 +1,9 @@
 #!/usr/bin/env python3
-"""
-Verify that the policy in force is the policy we committed.
+"""Compare the deployed BRANE policy with the committed definition.
 
-  python3 scripts/verify_policy.py                              # against hardened-v2.json
-  python3 scripts/verify_policy.py --policy-file policy/hardened-v1.json
-  python3 scripts/verify_policy.py --expect-hash sha256:7238362a...
-
-Why this exists. Anyone holding the team key can PUT /policy at any moment -- a
-teammate experimenting in the /team-policy web workbench changes the department
-for everybody, silently and without a deploy. Evidence is therefore only
-meaningful when tied to a verified policy hash. A CSV row that says "hardened-v2"
-proves nothing unless the policy with that hash was in force while the row was
-produced.
-
-This is the standalone form of the gate that run_checks.py applies before it will
-run, so the same check can be used in a pre-demo smoke test or by a teammate who
-is not running the harness.
-
-Exit codes: 0 verified, 1 drift detected, 2 transport or config error.
+Reads the department policy and checks its digest and enabled semantic rules.
+The default reference is hardened-v2. Exit codes are 0 for a match, 1 for drift
+and 2 for a configuration or transport error.
 """
 from __future__ import annotations
 

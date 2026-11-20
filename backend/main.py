@@ -417,7 +417,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
                     if task == "decision" and view["status"] != "ready_for_decision":
                         task = None
                     result.append({**{k: view[k] for k in fields}, "my_approval": task})
-        # Keep the original walkthrough first for its six staff. Specialists start in their own queue.
+        # Show letter-of-credit cases first for staff who also review specialist cases.
         return sorted(result, key=lambda case: (case["workflow_id"] != departments.TRADE, case["case_id"]))
 
     @app.post(PREFIX + "/workflows/{workflow_id}/cases")

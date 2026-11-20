@@ -1,6 +1,6 @@
 # Redwood department workflows
 
-Open a department from the desk picker. Each row has a named analyst and a different final approver. Where a partner appears in the last column, that desk also signs the current file. Use **Switch desk** to move between them. [Walk through a payment exception](../README.md#try-a-specialist-desk)
+Open a department from the desk picker. Each row has a named analyst and a different final approver. Where a partner appears in the last column, that desk also signs the current file. Use **Switch desk** to move between them. [Run a payment case](demo-guide.md#try-a-specialist-desk)
 
 Each department has two synthetic cases. The first starts with a verified source. In the second, the analyst must check and attach the registered supporting record. That action creates a new revision with its own drafts and signatures. Either case can end with the listed internal outcome or a referral. A hold stays open until the desk that placed it releases it.
 
