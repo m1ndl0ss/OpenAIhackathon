@@ -2,6 +2,8 @@
 
 `make setup` creates three editable workbooks under `.clearance/evidence/` using the organisers’ column headers. `baseline.csv` and `hardened.csv` each contain T1–T5 and E1–E5, initially marked **UNVERIFIED**. `policy-matrix.csv` is ready for Ilaria's cited rules. Setup preserves existing workbooks.
 
+The [E3/E4 fixture results](workflow-fixture.csv) are from a clean checkout of implementation commit `1d7e69a`. E3 recorded blocked approval and issuance while Compliance held a complete file. E4 recorded a stale-revision rejection and one persisted receipt after concurrent retries and restart. The BRANE columns are empty because these checks ran on the local bank workflow.
+
 | Owner | Inputs to the report |
 | --- | --- |
 | Matvei | Official T1–T5, plus E1 case isolation, E2 local/cloud boundary and E5 outage. Record actual policy versions and available redacted trace references for both policies. The official brief and CSV describe T5 differently. Retain the original wording and record AI-Z's clarification. |
