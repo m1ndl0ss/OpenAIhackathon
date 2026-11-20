@@ -326,7 +326,7 @@ def test_bank_enforces_credit_and_officer_limits(bank, fixture, amount):
 def test_unavailable_analysis_never_seals_the_file(bank, monkeypatch):
     from backend import integrations
 
-    def unavailable_provider(snapshot, mode, report=None):
+    def unavailable_provider(snapshot, mode, **run):
         raise RuntimeError("Synthetic upstream detail for this test; keep it internal.")
 
     monkeypatch.setattr(integrations, "prepare_packets", unavailable_provider)
@@ -341,6 +341,36 @@ def test_unavailable_analysis_never_seals_the_file(bank, monkeypatch):
         case = read(deployment, STAGE)
         assert case["packet_hash"] is None and case["status"] == "preparing"
         assert "Synthetic upstream detail" not in json.dumps(read(deployment, STAGE + "/audit"))
+
+
+def test_live_adapter_contract_can_seal_both_revisions(bank, monkeypatch):
+    from backend import brane_client
+    from backend.agent.runtime import ModelTurn
+
+    monkeypatch.setattr(brane_client, "live_run_config", lambda: ("", "", "hardened-test", "test-model"))
+
+    def governed_reply(**request):
+        packet = json.loads(request["messages"][1]["content"])["approved_packets"][1]
+        return ModelTurn("local", json.dumps(packet), {"provider_request_id": "synthetic-trace"})
+
+    monkeypatch.setattr(brane_client, "send_turn", governed_reply)
+    _, tokens, path, principals = bank
+    with TestClient(create_app(path, principals, mode="live")) as client:
+        live = client, tokens, path, principals
+        for revision in (1, 2):
+            submitted = ok(post(live, STAGE + "/runs", "coverage", {"revision": revision, "mode": "live"}))
+            run = read(live, STAGE + f"/runs/{submitted['run_id']}")
+            assert run["status"] == "sealed" and run["analysis"]["policy_version"] == "hardened-test"
+            assert [item["task"] for item in run["analysis"]["observations"]] == ["draft_trade_finance"]
+            trade = read(live, STAGE, "trade_finance")
+            assert trade["mode"] == "live" and trade["revision"] == revision
+            packet, = trade["packets"]
+            assert packet["missing_items"] == (["supplier_invoice"] if revision == 1 else [])
+            assert ("DOC-INV-01@1" in packet["evidence_refs"]) == (revision == 2)
+            if revision == 1:
+                ok(post(live, STAGE + "/evidence", "coverage", {
+                    "fixture_document_id": "DOC-INV-01", "expected_revision": revision,
+                }))
 
 
 @pytest.mark.parametrize("already_issued", [False, True], ids=["approved", "existing-receipt"])
@@ -378,9 +408,9 @@ def test_overlapping_analysis_can_only_seal_once(bank, monkeypatch):
     overlap = Barrier(2)
     prepare = integrations.prepare_packets
 
-    def prepare_together(snapshot, mode, report=None):
+    def prepare_together(snapshot, mode, **run):
         overlap.wait(timeout=10)
-        return prepare(snapshot, mode, report)
+        return prepare(snapshot, mode, **run)
 
     monkeypatch.setattr(integrations, "prepare_packets", prepare_together)
     runs = concurrent_posts(bank, STAGE + "/runs", "coverage", {"mode": "fixture", "revision": 1},
@@ -397,11 +427,11 @@ def test_amendment_during_analysis_discards_old_completion(bank, monkeypatch):
     started, finish = Event(), Event()
     prepare = integrations.prepare_packets
 
-    def delayed(snapshot, mode, report=None):
+    def delayed(snapshot, mode, **run):
         started.set()
         if not finish.wait(timeout=10):
             raise TimeoutError("The synthetic run was not released")
-        return prepare(snapshot, mode, report)
+        return prepare(snapshot, mode, **run)
 
     monkeypatch.setattr(integrations, "prepare_packets", delayed)
     with ThreadPoolExecutor(max_workers=1) as pool:

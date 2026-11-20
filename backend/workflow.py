@@ -3,7 +3,9 @@
 import json
 
 from . import integrations
-from .agent.packets import headroom_after as headroom
+from .agent.packets import facility_source, headroom_after as headroom, invoice_is_current, validate_draft
+from .agent.runtime import contexts
+from .agent.tools import POLICY_TEXT
 from .store import DESKS, ROLES, canonical, digest, event, identifier, now
 
 
@@ -75,12 +77,16 @@ def active_holds(db, s):
 
 
 def valid_invoice(s):
-    return s["invoice_ref"] == s["invoice_document_id"] + "@1" and s["invoice_ref"] in s["evidence_refs"]
+    return invoice_is_current(s)
 
 
 def capacity(s):
-    value = headroom(s)
+    value = current_headroom(s)
     return value is not None and value >= 0
+
+
+def current_headroom(s):
+    return headroom(s) if facility_source(s) in s["evidence_refs"] else None
 
 
 def within_mandate(s):
@@ -116,13 +122,19 @@ def source_catalog(s):
                 "Checked invoice for " + s["supplier_ref"] + " in " + s["currency"] + ".",
                 ROLES,
             )
-        elif ref == s["facility_ref"] + "@1":
-            f = s["facility"]
+        elif ref == facility_source(s):
+            f = s.get("facility")
+            detail = "Facility snapshot unavailable."
+            if isinstance(f, dict):
+                detail = (
+                    f"{f.get('currency')} minor units: limit {f.get('limit_minor')}, "
+                    f"drawn {f.get('drawn_minor')}, committed {f.get('committed_minor')}. "
+                    f"Expires {f.get('expiry')}."
+                )
             add(
                 ref,
                 "Facility snapshot",
-                f"{f['currency']} minor units: limit {f['limit_minor']}, drawn {f['drawn_minor']}, "
-                f"committed {f['committed_minor']}. Expires {f['expiry']}.",
+                detail,
                 ("credit_risk", "final_officer"),
             )
     add(
@@ -131,17 +143,12 @@ def source_catalog(s):
         "Synthetic Compliance-only screening record.",
         ("compliance",),
     )
-    passages = {
-        "trade_finance": "The bank requires the supplier invoice before clearing Trade Finance.",
-        "credit_risk": "The facility must cover the amount, currency and instrument expiry.",
-        "compliance": "An open departmental hold requires explicit clearance by its owning reviewer.",
-    }
     for desk, refs in s["policy_refs"].items():
         for ref in refs:
             add(
                 ref,
                 "Synthetic " + desk.replace("_", " ") + " policy",
-                passages[desk],
+                POLICY_TEXT[desk],
                 (desk, "final_officer"),
             )
     return docs
@@ -149,6 +156,19 @@ def source_catalog(s):
 
 def sources_for(s, role):
     return [v for v, roles in source_catalog(s).values() if role in roles]
+
+
+def visible_run_analysis(db, run_id, role):
+    row = db.execute("SELECT details FROM run_analysis WHERE run_id=?", (run_id,)).fetchone()
+    if not row:
+        return None
+    report = json.loads(row["details"])
+    allowed_tasks = {"draft_" + role}
+    if role in ("coverage", "final_officer"):
+        allowed_tasks.update(("draft_trade_finance", "draft_credit_risk") if role == "final_officer"
+                             else ("draft_trade_finance",))
+    report["observations"] = [item for item in report["observations"] if item["task"] in allowed_tasks]
+    return report
 
 
 def detail(db, r, s, actor, configured_mode="fixture"):
@@ -242,11 +262,11 @@ def detail(db, r, s, actor, configured_mode="fixture"):
         "packet_hash": r["packet_hash"],
         "mode": r["mode"],
         "configured_mode": configured_mode,
-        "analysis_available": configured_mode == "fixture",
+        "analysis_available": integrations.analysis_ready(configured_mode),
         "mandate_minor": s["mandate_minor"],
         "mandate_currency": s["mandate_currency"],
         "within_mandate": within_mandate(s),
-        "headroom_after_minor": headroom(s) if role in ("credit_risk", "final_officer") else None,
+        "headroom_after_minor": current_headroom(s) if role in ("credit_risk", "final_officer") else None,
         "permitted_actions": permitted,
         "reviews": findings,
         "holds": holds,
@@ -255,73 +275,16 @@ def detail(db, r, s, actor, configured_mode="fixture"):
         "sources": sources_for(s, role),
         "decision": decision_view,
         "receipt": dict(receipt) if receipt else None,
-        "last_run": dict(run) if run else None,
+        "last_run": {**dict(run), "analysis": visible_run_analysis(db, run["run_id"], role)} if run else None,
     }
 
 
 def validate_packets(s, packets):
-    if not isinstance(packets, dict) or set(packets) != set(DESKS):
+    expected = contexts(s, source_catalog(s), lambda: None)
+    if not isinstance(packets, dict) or set(packets) != set(expected):
         raise ValueError("Incomplete desk bundle")
-    keys = {
-        "desk",
-        "summary",
-        "facts",
-        "policy_refs",
-        "evidence_refs",
-        "missing_items",
-        "suggested_next_step",
-        "limitations",
-    }
-    amounts = {"amount_minor": s["amount_minor"], "headroom_after_minor": headroom(s)}
     for desk, packet in packets.items():
-        permitted_refs = {x["ref"] for x in sources_for(s, desk)}
-        if (
-            not isinstance(packet, dict)
-            or set(packet) != keys
-            or packet["desk"] != desk
-            or not isinstance(packet["summary"], str)
-            or not 1 <= len(packet["summary"]) <= 2000
-            or packet["suggested_next_step"] not in ("request_invoice", "review")
-            or not isinstance(packet["facts"], list)
-        ):
-            raise ValueError("Invalid desk packet")
-        for field in ("policy_refs", "evidence_refs", "missing_items", "limitations"):
-            if not isinstance(packet[field], list) or any(
-                not isinstance(i, str) or len(i) > 1000 for i in packet[field]
-            ):
-                raise ValueError("Invalid packet field")
-        if (
-            not packet["policy_refs"]
-            or not set(packet["policy_refs"]) <= set(s["policy_refs"][desk])
-            or not packet["evidence_refs"]
-            or not set(packet["evidence_refs"]) <= permitted_refs - set(s["policy_refs"][desk])
-            or set(packet["missing_items"]) - {"supplier_invoice"}
-            or ("supplier_invoice" in packet["missing_items"])
-            != (not valid_invoice(s) and desk != "credit_risk")
-        ):
-            raise ValueError("Unsupported source or missing item")
-        for fact in packet["facts"]:
-            if (
-                not isinstance(fact, dict)
-                or set(fact) != {"field", "value", "source_ref"}
-                or type(fact["value"]) is not int
-                or fact["field"] not in amounts
-                or fact["value"] != amounts[fact["field"]]
-                or fact["source_ref"] not in packet["evidence_refs"]
-            ):
-                raise ValueError("Unverified fact")
-            if fact["field"] == "headroom_after_minor" and (
-                desk != "credit_risk" or fact["source_ref"] != s["facility_ref"] + "@1"
-            ):
-                raise ValueError("Incorrect facility source")
-            if fact["field"] == "amount_minor" and not fact["source_ref"].startswith(("INTAKE-", "TRADE-")):
-                raise ValueError("Incorrect amount source")
-        if (
-            desk == "credit_risk"
-            and headroom(s) is not None
-            and not any(f["field"] == "headroom_after_minor" for f in packet["facts"])
-        ):
-            raise ValueError("Missing facility result")
+        validate_draft(packet, expected[desk]["approved_packets"])
 
 
 def local_document(s):
@@ -340,7 +303,7 @@ def seal(db, s, packets, run):
     validate_packets(s, packets)
     catalog = source_catalog(s)
     manifest = {
-        "case": s,
+        "case": {**s, "brane_policy_version": run.get("policy_version", s["brane_policy_version"])},
         "documents": {ref: digest(doc) for ref, (doc, _) in sorted(catalog.items())},
         "desks": {desk: digest(packets[desk]) for desk in DESKS},
         "mode": run["mode"],

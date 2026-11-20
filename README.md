@@ -32,7 +32,7 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 | Owner | Start here | Handoff |
 | --- | --- | --- |
 | Matvei | [BRANE setup](policy/README.md), [BRANE connection](backend/brane_client.py), [case access interface](backend/integrations.py) | Configure the assigned department and governed model route. Deliver redacted policy versions and route observations for Ilaria. |
-| Tasos | [Synthetic case and facility](data/trade/demo.json), [fixture packets and credit calculation](backend/agent/packets.py), [packet display](console/src/PacketList.tsx) | Supply validated live desk packets through `prepare_packets(snapshot, mode)`. Each fact carries a case-scoped versioned source. |
+| Tasos | [Synthetic case and facility](data/trade/demo.json), [agent runtime](backend/agent/runtime.py), [packet display](console/src/PacketList.tsx) | Supply validated desk packets through `prepare_packets(snapshot, mode, run_id=…, authorize=…)`. Each fact carries a case-scoped versioned source. |
 | Ilaria | [Case answer key](legal/case-answer-key.md), [evidence instructions](docs/evidence/README.md), [utility scorecard](eval/utility-scorecard.csv) | Review the desk language and expectations, complete the cited policy matrix and assemble actual evidence. |
 | Nikita | [Case API](backend/main.py), [workflow](backend/workflow.py), [staff console](console/src/main.tsx), [API tests](tests/test_trade_workflow.py) | Run the six-role workflow, exercise E3/E4, and hand over the observed results. |
 
@@ -42,9 +42,12 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 | --- | --- |
 | `make test` | Run the backend and workspace checks against disposable data. |
 | `make evidence` | Execute E3/E4 and write the observed fixture results under `.clearance/evidence/`. |
+| `python -m tools.agent_utility` | Score both synthetic revisions against Ilaria's answer key and export `.clearance/evidence/agent-utility-fixture.json`. |
 | `make doctor` | Check local database, logins, console build and configured mode. |
 | `make brane-check` | Check that the assigned live endpoint accepts the credential for a read-only team policy request. |
 | `make dev-console` | Run the Vite development server on port 5173. Run the API on port 8000 alongside it. |
 | `make build` | Type-check and bundle the console for the single-origin server. |
 
 The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Export overrides in the shell before starting the app. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md) · [Planned workflows](docs/team-build-plan.md#2-support-multiple-banking-workflows)
+
+The packet builder uses server-computed facts and a versioned synthetic policy library. The model drafts within a closed set of review wording for each desk. Unsupported numbers, references, requests or wording leave the revision unsealed. After Matvei confirms the live settings, `python -m tools.agent_utility --mode live` exports a separate live scorecard. Missing model usage, manual timing and staff timing remain explicit in the report. [BRANE setup](policy/README.md) · [Case answer key](legal/case-answer-key.md)

@@ -26,6 +26,7 @@ from .workflow import (
     detail,
     issue,
     on_version,
+    visible_run_analysis,
 )
 from .workflow import record, require_open, require_role, review, seal, unavailable
 
@@ -55,7 +56,10 @@ def local_demo(request: Request):
 
 
 class Intake(Body):
-    fixture_id: Literal["LC-DEMO-001", "LC-COMPLETE", "LC-INSUFFICIENT", "LC-OVER-MANDATE"]
+    fixture_id: Literal[
+        "LC-DEMO-001", "LC-COMPLETE", "LC-INSUFFICIENT", "LC-OVER-MANDATE",
+        "LC-EXPIRED-FACILITY", "LC-INVALID-FACILITY",
+    ]
     customer_ref: str = Field(min_length=1, max_length=80)
     facility_ref: str = Field(min_length=1, max_length=80)
     amount_minor: int = Field(gt=0)
@@ -132,16 +136,26 @@ def finish_run(path, case_id, run_id, actor):
         r, s = record(db, case_id, actor)
         run = dict(db.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone())
 
-    def report(desk, stage):
+    def report_task(desk, stage):
         if desk not in DESKS or stage not in ("started", "prepared"):
             raise ValueError("Unknown packet task")
         with transaction(path, write=True) as db:
             event(db, s, {"id": "case-agent", "role": "analysis"}, f"task.{desk}.{stage}", run_id)
 
-    packets = None
+    def authorize():
+        try:
+            with transaction(path) as db:
+                _, active = record(db, case_id, actor)
+                if active["revision"] == run["revision"]:
+                    return
+        except Problem:
+            pass
+        raise PermissionError("Case or revision is no longer available")
+
+    result = None
     if r["revision"] == run["revision"] and not r["packet_hash"]:
         try:
-            packets = integrations.prepare_packets(s, run["mode"], report)
+            result = integrations.prepare_packets(s, run["mode"], run_id=run_id, authorize=authorize, report=report_task)
         except Exception:
             # Provider errors may contain restricted payloads. Persist only a safe status.
             pass
@@ -149,12 +163,27 @@ def finish_run(path, case_id, run_id, actor):
         r, current = record(db, case_id, actor)
         if r["packet_hash"] or current["revision"] != run["revision"]:
             status = "superseded"
+        elif result is None:
+            status = "analysis_unavailable"
+        elif (result.case_ref, result.revision, result.run_id, result.mode) != (
+            case_id, current["revision"], run_id, run["mode"]
+        ):
+            status = "analysis_invalid"
+        elif result.status != "prepared":
+            status = result.status
         else:
             try:
-                seal(db, current, packets, run)
+                seal(db, current, result.packets, {**run, "policy_version": result.policy_version})
                 status = "sealed"
             except (ValueError, TypeError, KeyError):
-                status = "analysis_unavailable"
+                status = "analysis_invalid"
+        if result is not None:
+            report = {
+                "policy_version": result.policy_version, "reason": result.reason,
+                "model_calls": result.model_calls, "tool_reads": result.tool_reads,
+                "observations": result.observations,
+            }
+            db.execute("INSERT INTO run_analysis VALUES(?,?)", (run_id, canonical(report)))
         db.execute("UPDATE runs SET status=?,ended_at=? WHERE run_id=?", (status, now(), run_id))
         event(
             db,
@@ -209,9 +238,9 @@ def create_app(db_path=None, principals=None, *, mode=None):
         if deployment_mode not in ("fixture", "live"):
             raise ValueError("CLEARANCE_MODE must be fixture or live.")
         if deployment_mode == "live" and mode is None:
-            from .brane_client import live_config
+            from .brane_client import live_run_config
 
-            live_config()
+            live_run_config()
         app.state.mode = deployment_mode
         initialize(path, people)
         app.state.path, app.state.principals = path, people
@@ -280,7 +309,8 @@ def create_app(db_path=None, principals=None, *, mode=None):
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
         mode = request.app.state.mode
-        return {**actor, "configured_mode": mode, "analysis_available": mode == "fixture", "desk_picker": local_demo(request)}
+        return {**actor, "configured_mode": mode, "analysis_available": integrations.analysis_ready(mode),
+                "desk_picker": local_demo(request)}
 
     @app.get(CASES)
     def cases(request: Request, actor=Depends(authenticated)):
@@ -369,7 +399,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
             ).fetchone()
             if not result:
                 unavailable()
-            return dict(result)
+            return {**dict(result), "analysis": visible_run_analysis(db, run_id, actor["role"])}
 
     @app.post(CASE + "/requests")
     def ask(
