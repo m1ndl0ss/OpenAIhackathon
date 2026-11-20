@@ -11,13 +11,13 @@ make setup
 make run
 ```
 
-Open [the local staff console](http://127.0.0.1:8000) and choose **Coverage**. Use **Switch desk** to continue as another employee in the same tab. Each desk opens its assigned queue. The local fixture demo supports one-click entry. Live mode uses staff tokens.
+Open [the local staff console](http://127.0.0.1:8000) and choose **Coverage**. The agent dashboard shows that desk’s assigned requests, the organizer’s routing map and recent case activity. **Preview route** animates a sample handoff. **Run analysis** prepares the three fixture packets and **Replay run** animates the recorded handoffs. **Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. The local fixture demo supports one-click entry. Live mode uses staff tokens.
 
 Setup installs the dependencies, builds the React console, creates six private synthetic logins, seeds SQLite and prepares evidence worksheets. Running setup again keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation.
 
 ## Walk the case
 
-Choose the named role on the desk picker. When returning to an already-open tab, click **Refresh** to load the latest case.
+Choose the named role on the desk picker. The dashboard refreshes automatically while visible. Use **Open case** for findings, messages and decisions. In the case workspace, click **Refresh** when returning to an already-open tab.
 
 1. **Coverage** (`coverage`) selects `LC-001` in the queue and clicks **Run analysis**.
 2. **Credit Risk** (`credit_risk`) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.

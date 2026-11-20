@@ -131,10 +131,17 @@ def finish_run(path, case_id, run_id, actor):
     with transaction(path) as db:
         r, s = record(db, case_id, actor)
         run = dict(db.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone())
+
+    def report(desk, stage):
+        if desk not in DESKS or stage not in ("started", "prepared"):
+            raise ValueError("Unknown packet task")
+        with transaction(path, write=True) as db:
+            event(db, s, {"id": "case-agent", "role": "analysis"}, f"task.{desk}.{stage}", run_id)
+
     packets = None
     if r["revision"] == run["revision"] and not r["packet_hash"]:
         try:
-            packets = integrations.prepare_packets(s, run["mode"])
+            packets = integrations.prepare_packets(s, run["mode"], report)
         except Exception:
             # Provider errors may contain restricted payloads. Persist only a safe status.
             pass

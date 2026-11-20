@@ -2,6 +2,8 @@ import SignIn, { Brand } from './SignIn'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import PacketList from './PacketList'
+import RequestDashboard from './RequestDashboard'
+import { FolderOpen, LayoutDashboard, RefreshCw } from 'lucide-react'
 import { bank, BankError, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type Submit, type Summary } from './api'
 
 const sessionKey = 'clearance.staff-token'
@@ -88,6 +90,8 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
 }
 
 function Workspace({ token, staff, end }: { token: string; staff: Staff; end: () => void }) {
+  const [view, setView] = useState<'dashboard' | 'case'>('dashboard')
+  const [syncError, setSyncError] = useState('')
   const [queue, setQueue] = useState<Summary[]>([])
   const [selected, setSelected] = useState('')
   const [file, setFile] = useState<CaseFile | null>(null)
@@ -100,29 +104,41 @@ function Workspace({ token, staff, end }: { token: string; staff: Staff; end: ()
   const lock = useRef(false)
   const retryKeys = useRef(new Map<string, string>())
 
-  const load = useCallback(async (id?: string) => {
+  const load = useCallback(async (id?: string, background = false) => {
     const request = ++sequence.current
-    setLoading(true); setError('')
+    if (!background) { setLoading(true); setError('') }
     try {
       const cases = await bank<Summary[]>(token, '/cases')
       const target = cases.find(item => item.case_id === id)?.case_id || cases[0]?.case_id || ''
       const path = '/cases/' + encodeURIComponent(target)
       const [detail, history] = target ? await Promise.all([bank<CaseFile>(token, path), bank<AuditEvent[]>(token, path + '/audit')]) : [null, []]
       if (request !== sequence.current) return
-      setQueue(cases); setSelected(target); tabValue(selectedKey, target); setFile(detail); setAudit(history)
+      setSyncError(''); setQueue(cases); setSelected(target); tabValue(selectedKey, target); setFile(detail); setAudit(history)
     } catch (err) {
       if (request !== sequence.current) return
       if (err instanceof BankError && err.status === 401) { end(); return }
+      if (background && err instanceof BankError && (err.status === 0 || err.status >= 500)) {
+        setSyncError('Updates paused. Showing the last available activity.')
+        return
+      }
       setError(textError(err)); setFile(null); setAudit([]); setQueue([])
     } finally { if (request === sequence.current) setLoading(false) }
   }, [token, end])
   useEffect(() => { void load(tabValue(selectedKey) || undefined); return () => { sequence.current++ } }, [load])
 
   useEffect(() => {
-    if (file?.last_run?.status !== 'pending' || loading || busy) return
-    const timer = window.setTimeout(() => { void load(file.case_id) }, 1000)
-    return () => window.clearTimeout(timer)
-  }, [file, loading, busy, load])
+    const pending = file?.last_run?.status === 'pending'
+    if (loading || busy || (!pending && view !== 'dashboard')) return
+    let stopped = false
+    let timer: number
+    const poll = async () => {
+      if (!document.hidden) await load(selected, true)
+      if (!stopped) schedule()
+    }
+    const schedule = () => { timer = window.setTimeout(poll, pending ? 800 : 3500) }
+    schedule()
+    return () => { stopped = true; window.clearTimeout(timer) }
+  }, [selected, file?.last_run?.status, loading, busy, view, load])
 
   const submit: Submit = async (suffix, body, message) => {
     if (lock.current) return false
@@ -144,9 +160,14 @@ function Workspace({ token, staff, end }: { token: string; staff: Staff; end: ()
       setError(textError(err)); return false
     } finally { lock.current = false; setBusy(false) }
   }
-  return <div className="workspace"><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={end}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
-    <div className="shell"><aside className="sidebar"><div className="eyebrow">Work queue</div><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
-      <nav aria-label="Assigned cases">{queue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'page' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
+  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={end}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
+    <div className="shell"><aside className="sidebar">
+      <nav className="workspace-nav" aria-label="Workspace">
+        <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><LayoutDashboard size={17}/>Agent dashboard</button>
+        <button aria-current={view === 'case' ? 'page' : undefined} onClick={() => setView('case')}><FolderOpen size={17}/>Case workspace</button>
+      </nav>
+      <div className="sidebar-cases"><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
+      <nav aria-label="Assigned cases">{queue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
         <strong>{item.case_id}</strong><span>{item.customer_ref}</span><small>{label(item.status)} · Rev. {item.revision}</small>
       </button>)}</nav>
       {staff.role === 'coverage' && <button className="intake" disabled={busy || loading} onClick={async () => {
@@ -164,11 +185,11 @@ function Workspace({ token, staff, end }: { token: string; staff: Staff; end: ()
           if (err instanceof BankError && err.status > 0 && err.status < 500) retryKeys.current.delete('intake')
           setError(textError(err))
         } finally { lock.current = false; setBusy(false) }
-      }}>Open synthetic intake</button>}
+      }}>Open synthetic intake</button>}</div>
     </aside><main className="case-main">
-      <div className="toolbar"><span>Trade finance <i>/</i> Case workspace</span><button className="text-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}>Refresh</button></div>
-      {error && <Notice danger>{error}</Notice>}{notice && <Notice>{notice}</Notice>}
-      {file ? <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
+      <div className="toolbar"><span>Trade finance <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><RefreshCw size={13}/>Refresh</button></div>
+      {error && <Notice danger>{error}</Notice>}{syncError && <Notice>{syncError}</Notice>}{notice && <Notice>{notice}</Notice>}
+      {file ? view === 'dashboard' ? <RequestDashboard key={file.case_id} file={file} audit={audit} queue={queue} staff={staff} busy={busy || loading || !!syncError} submit={submit} open={() => setView('case')} select={id => { setNotice(''); void load(id) }} /> : <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
     </main></div></div>
 }
 

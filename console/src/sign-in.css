@@ -16,7 +16,7 @@ header.entry-header {
 .mode-pill i { width: 6px; height: 6px; border-radius: 50%; background: #83c79d; }
 .entry-body { max-width: 1230px; margin: auto; padding: clamp(32px, 7vh, 80px) clamp(20px, 4vw, 60px); }
 .entry-kicker { color: #d4a888; font: 600 .72rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .13em; }
-.entry-intro h1 { font: 550 clamp(2.4rem, 4.2vw, 4.1rem)/1.05 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; letter-spacing: -.065em; margin: .23em 0 .2em; }
+.entry-intro h1 { font: 550 clamp(2.4rem, 4.2vw, 4.1rem)/1.05 "Montserrat Variable",sans-serif; letter-spacing: -.065em; margin: .23em 0 .2em; }
 .entry-intro p { color: #b7b6b3; max-width: 55ch; }
 .entry-layout { margin-top: clamp(23px, 4vh, 45px); display: grid; grid-template-columns: minmax(210px, .85fr) minmax(0, 2.15fr); gap: 16px; align-items: stretch; }
 .case-brief { position: relative; isolation: isolate; overflow: hidden; min-height: 320px; background: #2c211c; border: 1px solid #523b2f; border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -28,7 +28,7 @@ header.entry-header {
 .paper-lines { display:block; width:90%; height:10px; border-block:1px solid #dba67a; }
 .paper-sign { display:block; width:44%; border-top:1px solid #c99164; }
 .brief-info { padding: 22px clamp(18px,2.3vw,34px) 25px; }
-.brief-info h2 { font: 500 clamp(1.9rem,2.8vw,2.8rem)/1.03 Georgia,serif; letter-spacing:-.05em; margin: 12px 0 21px; }
+.brief-info h2 { font: 500 clamp(1.9rem,2.8vw,2.8rem)/1.03 "Montserrat Variable",sans-serif; letter-spacing:-.05em; margin: 12px 0 21px; }
 .brief-meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:5px 10px; align-items:center; color:#e3c8b5; padding-top:14px; border-top:1px solid #634b3c; font-size:.81rem; font-variant-numeric:tabular-nums; }
 .desk-grid { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:12px; }
 button.desk-choice { --tint:#e7a878; --tint-bg:#422e22; background:#191a1b; border:1px solid #373739; border-radius:12px; color:#faf8f3; padding:clamp(14px,1.5vw,22px); text-align:left; display:flex; flex-direction:column; align-items:stretch; transition:background .16s,border-color .16s; }

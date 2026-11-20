@@ -1,5 +1,5 @@
 :root {
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 15px/1.5 "Montserrat Variable", sans-serif;
   color: #edece9; background: #101112; font-synthesis: none; color-scheme:dark;
   --accent: #efa570; --dark: #151617; --muted: #aaa9a6; --line: #353638;
   --canvas: #101112; --white: #fff; --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -13,12 +13,12 @@ button:hover:not(:disabled) { background: #28292c; border-color: #747578; }
 button:disabled { cursor: default; opacity: .48; }
 :focus-visible { outline: 3px solid #f2b184; outline-offset: 3px; }
 h1,h2,h3,p,dl { margin: 0; }
-h1 { font: 500 clamp(2rem, 3vw, 3.15rem)/1.13 Georgia, serif; letter-spacing: -.045em; }
+h1 { font: 500 clamp(2rem, 3vw, 3.15rem)/1.13 "Montserrat Variable",sans-serif; letter-spacing: -.045em; }
 h2 { font-size: 1.14rem; letter-spacing: -.025em; line-height: 1.4; }
 h3 { font-size: 1rem; }
 code { font: .84em/1.4 var(--mono); overflow-wrap: anywhere; }
 header,.login-bar { background: var(--dark); color: #fbfff9; min-height: 69px; display:flex; align-items:center; gap: 22px; padding: 10px 28px; }
-.brand { display:inline-flex; align-items:center; gap:10px; font: 650 1.55rem/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; letter-spacing:-.05em; }
+.brand { display:inline-flex; align-items:center; gap:10px; font: 650 1.55rem/1 "Montserrat Variable",sans-serif; letter-spacing:-.05em; }
 .brand-mark { display:flex; align-items:center; justify-content:center; gap:3px; width:28px; height:28px; transform:skew(-15deg); }
 .brand-mark i { display:block; width:6px; height:15px; border-radius:2px; background:var(--accent); }
 .brand-mark i:nth-child(2) {height:25px;}

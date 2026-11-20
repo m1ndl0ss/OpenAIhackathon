@@ -326,7 +326,7 @@ def test_bank_enforces_credit_and_officer_limits(bank, fixture, amount):
 def test_unavailable_analysis_never_seals_the_file(bank, monkeypatch):
     from backend import integrations
 
-    def unavailable_provider(snapshot, mode):
+    def unavailable_provider(snapshot, mode, report=None):
         raise RuntimeError("Synthetic upstream detail for this test; keep it internal.")
 
     monkeypatch.setattr(integrations, "prepare_packets", unavailable_provider)
@@ -378,9 +378,9 @@ def test_overlapping_analysis_can_only_seal_once(bank, monkeypatch):
     overlap = Barrier(2)
     prepare = integrations.prepare_packets
 
-    def prepare_together(snapshot, mode):
+    def prepare_together(snapshot, mode, report=None):
         overlap.wait(timeout=10)
-        return prepare(snapshot, mode)
+        return prepare(snapshot, mode, report)
 
     monkeypatch.setattr(integrations, "prepare_packets", prepare_together)
     runs = concurrent_posts(bank, STAGE + "/runs", "coverage", {"mode": "fixture", "revision": 1},
@@ -397,11 +397,11 @@ def test_amendment_during_analysis_discards_old_completion(bank, monkeypatch):
     started, finish = Event(), Event()
     prepare = integrations.prepare_packets
 
-    def delayed(snapshot, mode):
+    def delayed(snapshot, mode, report=None):
         started.set()
         if not finish.wait(timeout=10):
             raise TimeoutError("The synthetic run was not released")
-        return prepare(snapshot, mode)
+        return prepare(snapshot, mode, report)
 
     monkeypatch.setattr(integrations, "prepare_packets", delayed)
     with ThreadPoolExecutor(max_workers=1) as pool:
@@ -417,3 +417,13 @@ def test_amendment_during_analysis_discards_old_completion(bank, monkeypatch):
     assert read(bank, STAGE + f"/runs/{run_id}")["status"] == "superseded"
     updated = read(bank, STAGE)
     assert updated["revision"] == 2 and updated["packet_hash"] is None
+
+
+def test_tracker_records_only_task_status_for_current_run(bank):
+    _, run_id = seal(bank, STAGE)
+    events = [e for e in read(bank, STAGE + "/audit") if e["action"].startswith("task.")]
+    assert [e["action"] for e in events] == [
+        f"task.{desk}.{stage}" for desk in DESKS for stage in ("started", "prepared")
+    ]
+    assert all(e["detail"] == run_id and e["revision"] == 1 and e["actor_id"] == "case-agent"
+               for e in events)

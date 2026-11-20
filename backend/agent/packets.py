@@ -24,7 +24,7 @@ def headroom_after(snapshot):
     return limit - drawn - committed - amount
 
 
-def fixture_packets(snapshot):
+def fixture_packets(snapshot, report=None):
     invoice = snapshot.get("invoice_ref")
     facility_ref = f"{snapshot['facility_ref']}@1"
     refs = snapshot["evidence_refs"]
@@ -42,6 +42,8 @@ def fixture_packets(snapshot):
         ("credit_risk", facility_ref, "POL-CREDIT-01@1"),
         ("compliance", source_for("INTAKE-"), "POL-COMPLIANCE-01@1"),
     ):
+        if report:
+            report(desk, "started")
         missing = desk != "credit_risk" and not invoice
         packet = {
             "desk": desk,
@@ -66,4 +68,6 @@ def fixture_packets(snapshot):
                 packet["summary"] = ("The facility covers the proposed instrument." if remaining >= 0
                                      else "The proposed instrument exceeds available headroom.")
         packets[desk] = packet
+        if report:
+            report(desk, "prepared")
     return packets
