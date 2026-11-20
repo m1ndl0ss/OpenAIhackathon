@@ -1,0 +1,4 @@
+case_id,revision,mode,policy_version,question,expected,observed,source_reference,verdict,manual_seconds,agent_assisted_seconds,model_usage,limitations
+LC-001,1,fixture,,What is missing?,Supplier invoice from Coverage,,,UNVERIFIED,,,,
+LC-001,1,fixture,,What capacity remains after issuance?,USD 500000,,,UNVERIFIED,,,,
+LC-001,2,fixture,,Who may resolve a Compliance hold?,Assigned Compliance reviewer,,,UNVERIFIED,,,,

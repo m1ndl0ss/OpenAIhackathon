@@ -1,0 +1,28 @@
+{
+  "case": {
+    "customer_ref": "ORG_DEMO_01",
+    "supplier_ref": "ORG_DEMO_02",
+    "facility_ref": "FAC-USD-01",
+    "amount_minor": 200000000,
+    "currency": "USD",
+    "expiry": "2027-01-31",
+    "as_of": "2026-11-20T14:00:00Z",
+    "facility": {
+      "limit_minor": 500000000,
+      "drawn_minor": 200000000,
+      "committed_minor": 50000000,
+      "currency": "USD",
+      "expiry": "2027-03-31"
+    },
+    "mandate_limit_minor": 300000000,
+    "mandate_currency": "USD"
+  },
+  "staff": [
+    {"id": "staff-coverage", "name": "Mira Vos", "role": "coverage"},
+    {"id": "staff-trade", "name": "Leon Park", "role": "trade_finance"},
+    {"id": "staff-credit", "name": "Asha Reed", "role": "credit_risk"},
+    {"id": "staff-compliance", "name": "Noor Bakker", "role": "compliance"},
+    {"id": "staff-final", "name": "Eva Lin", "role": "final_officer"},
+    {"id": "staff-ops", "name": "Amir Cole", "role": "operations"}
+  ]
+}
