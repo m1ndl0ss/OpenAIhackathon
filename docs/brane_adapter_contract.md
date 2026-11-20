@@ -1,5 +1,7 @@
 # BRANE adapter contract
 
+The submitted agent uses a closed set of seven drafting messages. Its adapter excludes raw case text and checks the deployed policy before each model request. The standalone experiments below also evaluate free-text inputs. [Integrated run](evidence/submission-live.json) · [Submission guide](../SUBMISSION.md)
+
 **Owner of this contract:** Matvei Kandalintsev (BRANE setup and security).
 **Implementer:** Anastasios — `backend/brane_client.py`.
 **Reference implementation:** `scripts/brane_client.py` in this repo. It is the

@@ -1,0 +1,78 @@
+# Clearance | Corporate banking through BRANE
+
+A relationship manager receives a USD 2 million import letter-of-credit request. Clearance prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout.
+
+## Open the demo
+
+From the repository root, run `make setup` with Python 3.11+ and Node 22.12+. For the live rehearsal, copy `.env.example` to `.env` on a fresh clone and enter the team's AI-Z credential in `BRANE_API_KEY`. The sample already names the assigned endpoint, OpenAI model and policy. An existing configured checkout can go straight to the two commands below.
+
+```sh
+make brane-check
+make run-live
+```
+
+Open the local rehearsal, choose **Coverage**, select **LC-001** and click **Run analysis**. The dashboard shows actual task starts, completions and the resulting review queue. **Open case** shows the file. **Switch desk** keeps the current case selected. Each launch of the live rehearsal has fresh cases and its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
+
+## What to show the jury
+
+| On screen | What to demonstrate |
+| --- | --- |
+| Coverage dashboard | Submit LC-001. The organizer runs three desk tasks. Each prepares a draft for a different reviewer. |
+| Credit Risk and Compliance | Credit sees USD 2.5m available before issuance and USD 500k remaining afterward. Compliance finds a missing supplier invoice, selects **Hold** and requests it from Coverage. The officer cannot approve the held file. |
+| Coverage and the three desks | Attach the invoice to the request and run revision 2. The old signature is historical. Trade and Credit clear the new file. Compliance selects its hold and the invoice it reviewed before clearing. |
+| Mandated officer and Operations | Show three signatures on the same revision. The officer records the decision. Operations records the simulated receipt. A retry returns the same receipt. |
+| Security evidence | Show one clean OpenAI route, a protected case, the raw-firewall failures, and the outage trace. In the outage the bank attempted its policy read, submitted zero model requests and sealed nothing. |
+
+The backup is a captioned sequence of actual browser captures from a separate live run on 20 November 2026. Its second revision is `RUN-8bedd380d1804240bfbc4b4626d965f4`. The machine-readable rehearsal below has its own run IDs. [Play the 37-second backup](docs/evidence/live-walkthrough.gif)
+
+## What ran
+
+The bank owns the facility arithmetic, evidence lookup, access checks and approval rules. For each desk, the model chooses between two approved wordings. The model request contains the desk, next-step code and those wordings. The adapter accepts only the bank's fixed drafting messages and verifies the active firewall policy before each call. The bank validates the reply and attaches the locally computed facts and source references. A response outside the approved choices leaves the file unsealed. [Architecture diagram](docs/corporate-banking-architecture.png) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py)
+
+On 20 November the committed application ran both case revisions through `openrouter:openai/gpt-6-luna` under `hardened-v2`. All six responses reported a cloud route. Three reported pseudonymisation and three reported direct passage. Each response has a provider request ID, routing headers, token usage and the policy digest read from the department immediately before the request. BRANE supplied those headers. The team had no downstream provider packet capture. [Live run and receipts](docs/evidence/submission-live.json) · [Application revision](https://github.com/m1ndl0ss/OpenAIhackathon/commit/3e3de3519102510855f3840772777c48994ed9f5)
+
+| Measured at the staff API | Revision 1 | Revision 2 |
+| --- | ---: | ---: |
+| Desk packets matching the case answer key and source checks | 3 of 3 | 3 of 3 |
+| Local tool reads / model calls | 8 / 3 | 8 / 3 |
+| Elapsed time from submission through packet and source checks | 15.85 s | 13.70 s |
+| Provider-reported tokens | 494 | 535 |
+| Invoice result | Missing, Coverage owns the request | Attached and cited |
+| Capacity after proposed issuance | USD 500,000 | USD 500,000 |
+
+The measured API rehearsal used six distinct scripted staff identities. It recorded a rejected decision while held, a rejected stale decision, three current desk clearances, one final approval and one durable simulated receipt. A separate fixture check repeats concurrent decisions and issuance after restarting the application. [Live workflow](docs/evidence/submission-live.json) · [Restart and concurrency checks](docs/evidence/workflow-fixture.csv) · [Independent case answer key](legal/case-answer-key.md)
+
+## Governance and the five security tests
+
+The submission matrix contains eleven rules with their sources, technical controls, observed results and remaining gaps. Examples from the implemented case follow. [Submission policy matrix](docs/evidence/submission-policy-matrix.csv) · [Corporate banking legal research](research/bank-data-classification/README.md)
+
+- **Minimise identifying and commercial data.** A private desk message and an invoice note each contained two forms of a synthetic name and a repeated email. Both notes were visible to the intended staff. The observed outbound requests contained zero matches for those markers or for the tested financial fields. GDPR Articles 5 and 25 inform the personal-data control. Keeping client amounts and facility references inside the bank is a separate confidentiality decision. [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/) · [Live transport observations](docs/evidence/submission-live.json)
+- **Restrict sensitive evidence.** The department routes special-category information and detailed screening notes locally in the documented cases. Other desks receive a disposition. The matrix distinguishes personal-data safeguards from the narrower statutory restrictions on disclosing AML reporting and analysis. [GDPR Article 9](https://eur-lex.europa.eu/eli/reg/2016/679/) · [Directive (EU) 2015/849, Article 39](https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX%3A32015L0849) · [Security observations](evidence/REPORT.md)
+- **Keep decision authority with the bank.** The synthetic mandate requires three current desk clearances followed by the officer's decision. A separate Operations identity records the issuance. The gateway also refused an autonomous-decision request in the security team's run. [Bank mandate and answer key](legal/case-answer-key.md) · [Measured policy rules](docs/evidence/submission-policy-matrix.csv)
+- **Stop when the firewall cannot be verified.** The app checks the configured policy digest and enabled rules before sending a model request. A controlled outage denied network access at the Python socket boundary. Only a read of the assigned firewall was attempted. [Outage trace](docs/evidence/firewall-outage.json)
+
+| Official gate | Result and scope |
+| --- | --- |
+| T1 · Permitted request | The live Credit Risk draft reached OpenAI with a clean cloud verdict on both revisions. The resulting packets matched the answer key. |
+| T2 · Protected data | The live bank omitted the tested private fields before BRANE. The standalone suite also observed placeholder routing and inspected a separate policy preview. |
+| T3 · Repeated details | The integrated bank passed the repeated-contact and name-form check. The standalone firewall **failed** one raw name variant. Its separate, locally tokenised T3b passed. |
+| T4 · Untrusted instructions | The security team's recorded inputs stayed local. The integrated app accepts only seven bank-owned message combinations and excludes desk messages and invoice notes from model input. |
+| T5 · Firewall unavailable | The network-denied bank attempted one policy GET, zero model POSTs and zero other destinations. The case stayed unsealed. The standalone worksheet's T5 concerns an unavailable screening result and tests a separate condition. |
+
+The security team's standalone suite went from **1/12 baseline** to **18/20 hardened**. The suites differ in size. The latest hardened suite repeated all 20 checks three times. Raw name coverage and preservation of ordinary trade wording are the two recorded failures. Both matter if a future workflow starts forwarding document text. The submitted app only accepts prewritten drafting inputs and exact permitted replies. [Final ten-row protocol](docs/evidence/submission-tests.csv) · [Original gateway results](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md)
+
+## Business case
+
+The bank's immediate problem is rework between desks when a document changes. In this case the organizer prepared six cited desk packets over two revisions, identified the missing invoice and its owner, and stopped staff from acting on an old signature. The two rounds together took **29.55 seconds** and used **1,029 tokens**. This measures preparation and validation. Staff reading, judgment and sign-off still take time. [Utility scorecard](eval/utility-scorecard.csv)
+
+For a planning example, assume 500 cases per year, EUR 60 per staff-hour and three staff minutes saved per case. That yields 25 staff-hours, or EUR 1,500 of capacity per year. At an assumed EUR 0.10 per case in variable costs, EUR 1,450 remains before fixed costs. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity and compare error corrections and total operating cost. Additional workflows in the team plan are future scope. [Measured inputs](docs/evidence/submission-live.json) · [Expansion plan](docs/team-build-plan.md#2-support-multiple-banking-workflows)
+
+## Reproduce the evidence
+
+```sh
+make test
+make evidence
+make live-evidence
+```
+
+The first two commands run locally. The third uses the team credential to exercise both revisions through the real staff API and BRANE on a disposable database. The generated reports are under `.clearance/evidence/`. The committed evidence records the original run with its timestamp and receipt. [Evidence index](docs/evidence/README.md) · [Deployed policy definition](policy/hardened-v2.json)

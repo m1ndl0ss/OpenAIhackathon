@@ -38,6 +38,7 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
   const controls = { file, staff, submit, busy }
   const receipt = file.receipt
   const mode = file.last_run?.mode || file.mode
+  const verifiedPolicy = file.last_run?.analysis?.observations.find(item => item.policy_hash)?.policy_hash
   return <>
     <div className="case-heading"><div><div className="eyebrow">Documentary credit · {file.case_id}</div><h1>Import letter of credit</h1><p className="subhead">Applicant <strong>{file.customer_ref}</strong> <span>·</span> Revision {file.revision}</p></div><Badge value={file.status} /></div>
     <div className="case-stats">
@@ -80,8 +81,10 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
           {file.last_run && <><dt>Last run</dt><dd>{label(file.last_run.status)} <code>{file.last_run.run_id}</code></dd></>}
           {file.last_run?.analysis && <>
             <dt>Configured policy</dt><dd>{file.last_run.analysis.policy_version}</dd>
+            {verifiedPolicy && <><dt>Verified policy digest</dt><dd><code>{verifiedPolicy}</code></dd></>}
             {file.last_run.analysis.observations.filter(item => item.route !== 'fixture').map((item, index) =>
-              <Fragment key={index}><dt>BRANE route</dt><dd>{label(item.route)}{' '}
+              <Fragment key={index}><dt>{label(item.task.replace(/^draft_/, ''))} route</dt><dd>{label(item.route)}{' '}
+                {item.model && <code>{item.model}</code>}{' '}
                 {(item.log_ref || item.provider_request_id) && <code>{item.log_ref || item.provider_request_id}</code>}
               </dd></Fragment>)}
           </>}

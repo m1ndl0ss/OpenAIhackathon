@@ -185,4 +185,4 @@ Amounts, headroom, mandate and expiry checks are **computed by bank code**, neve
 
 ## Sources and template
 
-Use the generated `.clearance/evidence/policy-matrix.csv` for cited requirements and the [official template](../docs/MAIN_Participant_Starter_Kit/MAIN_Policy_Matrix_Template.csv) for column definitions. Mark the provenance of synthetic bank policy separately from legal sources. Review the wording against the [build specification](../docs/corporate-banking-hackathon-spec.md) before submission.
+Use the [submission policy matrix](../docs/evidence/submission-policy-matrix.csv) for cited requirements and the [official template](../docs/MAIN_Participant_Starter_Kit/MAIN_Policy_Matrix_Template.csv) for column definitions. Mark the provenance of synthetic bank policy separately from legal sources. Review the wording against the [build specification](../docs/corporate-banking-hackathon-spec.md) before submission.

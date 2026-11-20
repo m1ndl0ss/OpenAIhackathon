@@ -1,12 +1,10 @@
-# BRANE team setup
+# BRANE configuration
 
-The default fixture workflow works offline. Matvei owns the team department, BRANE policy and security testing. The provider-specific setup and allowed configuration values are in the [official starter kit](../docs/MAIN_Participant_Starter_Kit/starter-kit/README.md).
+The bank uses the assigned Redwood department at `https://brane.ai-z.io/api/v1`. The live OpenAI model is `openrouter:openai/gpt-6-luna`. The submitted policy is `hardened-v2`. The digest is the first 32 hex characters of SHA-256 over the authored policy fields. The observed value is `sha256:7238362ad6b930085f5f850bc1dbf6cf`. [Policy definition](hardened-v2.json) · [Baseline snapshot](baseline-open.json)
 
-1. Obtain the assigned team endpoint and credential from AI-Z. Copy `.env.example` to the ignored `.env`, set the assigned HTTPS API base, `BRANE_API_KEY` and `TEAM_BUILD` there. Run `set -a; . ./.env; set +a` in the shell used for the check. The key stays on the server.
-2. Run `make brane-check`. It reads the team's current policy and reports connection status. Save a redacted export of the starting configuration before editing any live rules. Record the department alias, policy version, capture date and available trace fields.
-3. Map the reviewed rules in Ilaria’s worksheet to the actual BRANE controls. Keep baseline and hardened exports separate. Share sanitised exports here after review. Store the originals under the ignored local evidence directory.
-4. Connect the assigned model route in [the server adapter](../backend/brane_client.py). Tasos plugs the validated model output into [the packet interface](../backend/integrations.py). Preserve role and case scope on tool reads. Sensitive unknowns, refusals and outages must leave the current file unsealed.
+1. On a fresh clone, copy `.env.example` to `.env`. Enter the team credential under `BRANE_API_KEY`. The application reads only the BRANE settings from this file and respects environment overrides.
+2. Run `make setup` and `make brane-check`. The read-only check compares the deployed policy with the committed configuration and checks for disabled semantic rules.
+3. Run `make run-live` for one-click role selection with a fresh, temporary, synthetic bank database. Run `make live-evidence` for a separate scripted staff-API rehearsal and measured report.
+4. For a persistent local staff deployment, export `CLEARANCE_MODE=live` before `make run`. That deployment requires individual staff tokens. Use the disposable launcher for the stage demonstration.
 
-The probe reads policy. The analysis adapter calls BRANE only in live mode, with the server's assigned endpoint and model. Set `BRANE_MODEL` to the assigned model ID and `BRANE_POLICY_VERSION` to the label of Matvei's configured department policy. The version supplied by the operator is recorded separately from any version returned by BRANE. Set `CLEARANCE_MODE=live` before starting the server. A missing or inconsistent BRANE routing verdict leaves the case unsealed.
-
-Fixture runs, mocked adapter tests and policy probes provide no live model or cloud-egress evidence. Use the approved BRANE read-back to establish what reached an external provider.
+The adapter verifies the policy immediately before each model call and checks the returned route, action and redaction information. It accepts only the bank's fixed desk prompts. An unavailable or inconsistent verdict leaves the case unsealed. The team’s security harness and its historical baseline use the same assigned department, and the baseline is preserved as recorded evidence. [Bank adapter](../backend/brane_client.py) · [Judge-facing test protocol](../docs/evidence/submission-tests.csv) · [Organizers' original starter kit](../docs/MAIN_Participant_Starter_Kit/starter-kit/README.md)

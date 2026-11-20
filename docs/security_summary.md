@@ -2,6 +2,8 @@
 
 Owner: Matvei · Branch: `security/brane-policy-v1` · Live policy: hardened-v2
 
+This records the standalone security workstream. The integrated bank, outage result and revised evidence matrix are available in the [submission guide](../SUBMISSION.md).
+
 ## What was done
 
 **Secrets hygiene**

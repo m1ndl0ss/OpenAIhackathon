@@ -62,7 +62,14 @@ export interface AnalysisRun {
   status: string
   analysis?: {
     policy_version: string
-    observations: { task: string; route: string; log_ref?: string | null; provider_request_id?: string | null }[]
+    observations: {
+      task: string
+      route: string
+      model?: string | null
+      policy_hash?: string | null
+      log_ref?: string | null
+      provider_request_id?: string | null
+    }[]
   } | null
 }
 export interface CaseFile extends Summary {

@@ -1,0 +1,26 @@
+{
+  "check": "T5 \u00b7 unavailable BRANE",
+  "utc": "2026-11-20T17:30:19+00:00",
+  "verdict": "PASS",
+  "environment": "Isolated egress-denied Python process",
+  "boundary": "Independent Python audit hook denies DNS and IP socket operations for the bank process.",
+  "run_id": "RUN-8e4c06df0a0a4104821967706052b0c3",
+  "mode": "live",
+  "bank_run_status": "analysis_unavailable",
+  "http_attempts": [
+    {
+      "method": "GET",
+      "host": "brane.ai-z.io",
+      "path": "/api/v1/policy"
+    }
+  ],
+  "denied_network_attempts": [
+    {
+      "event": "socket.getaddrinfo",
+      "host": "brane.ai-z.io"
+    }
+  ],
+  "model_post_attempts": 0,
+  "sealed": false,
+  "receipt": false
+}
