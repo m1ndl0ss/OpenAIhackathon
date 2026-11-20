@@ -1,4 +1,5 @@
 export interface Staff {
+  desk_picker: boolean
   id: string
   name: string
   configured_mode: 'live' | 'fixture'
@@ -96,8 +97,9 @@ export class BankError extends Error {
   }
 }
 
-export async function bank<T>(token: string, path: string, body?: object, key?: string): Promise<T> {
-  const headers: Record<string, string> = { Authorization: 'Bearer ' + token }
+export async function bank<T>(token: string | null, path: string, body?: object, key?: string): Promise<T> {
+  const headers: Record<string, string> = {}
+  if (token) headers.Authorization = 'Bearer ' + token
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
     headers['Idempotency-Key'] = key || crypto.randomUUID()

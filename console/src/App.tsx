@@ -1,3 +1,4 @@
+import SignIn, { Brand } from './SignIn'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import PacketList from './PacketList'
@@ -14,35 +15,8 @@ function tabValue(key: string, next?: string | null): string | null {
   } catch { return null }
 }
 
-function Brand() {
-  return <div className="brand"><span className="brand-mark" aria-hidden="true">C</span>Clearance</div>
-}
 function Badge({ value }: { value: string }) {
   return <span className={'pill ' + value}>{label(value)}</span>
-}
-function Login({ start }: { start: (staff: Staff, token: string) => void }) {
-  const [token, setToken] = useState('')
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const field = useRef<HTMLInputElement>(null)
-  return <main className="login-page"><div className="login-bar"><Brand /><span>Corporate banking</span></div>
-    <div className="login-center"><section className="login-card">
-      <div className="eyebrow">Trade finance</div><h1>Staff sign-in</h1>
-      <p>Open your assigned cases with your local demo credential.</p>
-      <form className="action-form" onSubmit={async e => {
-        e.preventDefault()
-        if (busy || !token.trim()) return
-        setBusy(true); setError('')
-        try { const staff = await bank<Staff>(token.trim(), '/me'); start(staff, token.trim()) }
-        catch (err) { setError(textError(err)); field.current?.focus() }
-        finally { setBusy(false) }
-      }}>
-        <label>Staff token<input ref={field} type="password" required autoComplete="off" spellCheck={false} autoCapitalize="none" value={token} onChange={e => setToken(e.target.value)} /></label>
-        {error && <p className="error" role="alert">{error}</p>}
-        <button className="primary" disabled={busy || !token.trim()}>{busy ? 'Signing in…' : 'Sign in'}</button>
-      </form>
-    </section></div>
-  </main>
 }
 function fmtDate(value: string | undefined, time = false) {
   if (!value) return '—'
@@ -170,7 +144,7 @@ function Workspace({ token, staff, end }: { token: string; staff: Staff; end: ()
       setError(textError(err)); return false
     } finally { lock.current = false; setBusy(false) }
   }
-  return <div className="workspace"><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button onClick={end}>Sign out</button></div></header>
+  return <div className="workspace"><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={end}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
     <div className="shell"><aside className="sidebar"><div className="eyebrow">Work queue</div><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
       <nav aria-label="Assigned cases">{queue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'page' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
         <strong>{item.case_id}</strong><span>{item.customer_ref}</span><small>{label(item.status)} · Rev. {item.revision}</small>
@@ -204,7 +178,7 @@ export default function App() {
   const [restoreError, setRestoreError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const end = useCallback(() => {
-    tabValue(sessionKey, null); tabValue(selectedKey, null)
+    tabValue(sessionKey, null)
     setSaved(null); setRestoreError(''); setSession(null)
   }, [])
   useEffect(() => {
@@ -223,7 +197,7 @@ export default function App() {
   if (saved) return <main className="login-page"><div className="login-bar"><Brand /></div><div className="login-center"><section className="login-card action-form">
     <h1>Staff session</h1>{restoreError ? <><Notice danger>{restoreError}</Notice><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={end}>Sign out</button></> : <p role="status">Verifying your staff credential…</p>}
   </section></div></main>
-  return session ? <Workspace {...session} end={end} /> : <Login start={(staff, token) => {
-    tabValue(sessionKey, token); tabValue(selectedKey, null); setSession({ staff, token })
+  return session ? <Workspace {...session} end={end} /> : <SignIn start={(staff, token) => {
+    tabValue(sessionKey, token); setSession({ staff, token })
   }} />
 }

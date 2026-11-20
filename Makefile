@@ -25,7 +25,7 @@ build:
 	npm run build --prefix console
 
 run:
-	$(ENV_PY) -m uvicorn backend.main:app --host 127.0.0.1 --port $(PORT)
+	CLEARANCE_DEMO_LOGIN=1 $(ENV_PY) -m uvicorn backend.main:app --no-proxy-headers --host 127.0.0.1 --port $(PORT)
 
 dev-console:
 	npm run dev --prefix console

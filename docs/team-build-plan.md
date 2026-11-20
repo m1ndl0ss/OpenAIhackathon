@@ -2,7 +2,7 @@
 
 ## 1. Run the letter-of-credit workflow and finish the challenge demo
 
-The local console supports a USD 2 million import letter of credit in fixture mode. Start the app with `make setup` and `make run`. In a second terminal run `make login ROLE=coverage`, sign in and open `LC-001`. The walkthrough takes you from the missing invoice to a single simulated receipt. [Run and sign in](../README.md#run-from-a-fresh-clone) · [Role-by-role walkthrough](../README.md#walk-the-case)
+The local console supports a USD 2 million import letter of credit in fixture mode. Start the app with `make setup` and `make run`. In the local console choose **Coverage** and open `LC-001`. The walkthrough takes you from the missing invoice to a single simulated receipt. [Run and sign in](../README.md#run-from-a-fresh-clone) · [Role-by-role walkthrough](../README.md#walk-the-case)
 
 Trade Finance, Credit Risk and Compliance sign the current file. A separate mandated officer decides, and Operations records simulated issuance. The team still needs to connect and verify the live BRANE agent for the challenge. [Build specification](corporate-banking-hackathon-spec.md) · [Architecture diagram](corporate-banking-architecture.png)
 

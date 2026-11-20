@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import integrations
-from .demo import ROOT, settings
+from .demo import FIXTURE, ROOT, settings
 from .store import DESKS, ROLES, canonical, digest, event, grouped_assignments, identifier, initialize
 from .store import insert_case, now, snapshot, transaction
 from .workflow import (
@@ -37,6 +37,21 @@ Desk = Literal["coverage", "trade_finance", "credit_risk", "compliance", "final_
 
 class Body(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, str_strip_whitespace=True)
+
+
+class DemoDesk(Body):
+    desk_id: str = Field(min_length=1, max_length=80)
+
+
+def local_demo(request: Request):
+    loopback = {"127.0.0.1", "::1"}
+    return bool(
+        request.app.state.demo_sessions
+        and request.client and request.client.host in loopback
+        and request.url.hostname in loopback | {"localhost"}
+        and request.headers.get("sec-fetch-site", "same-origin") in {"same-origin", "none"}
+        and request.headers.get("origin", str(request.base_url).rstrip("/")) == str(request.base_url).rstrip("/")
+    )
 
 
 class Intake(Body):
@@ -99,6 +114,10 @@ def authenticated(request: Request, authorization: Optional[str] = Header(defaul
         for token, actor in request.app.state.principals.items():
             if secrets.compare_digest(token, supplied):
                 return actor
+        if local_demo(request):
+            for token, actor in request.app.state.demo_sessions.values():
+                if secrets.compare_digest(token, supplied):
+                    return actor
     raise Problem(401, "unauthenticated", "Sign in with a valid staff session.")
 
 
@@ -190,6 +209,13 @@ def create_app(db_path=None, principals=None, *, mode=None):
         initialize(path, people)
         app.state.path, app.state.principals = path, people
         app.state.assignments = grouped_assignments(people)
+        app.state.demo_sessions = {}
+        if deployment_mode == "fixture" and os.getenv("CLEARANCE_DEMO_LOGIN") == "1":
+            fixture = json.loads(FIXTURE.read_text())
+            for staff in fixture["staff"]:
+                expected = {**staff, "customer_ref": fixture["case"]["customer_ref"]}
+                if expected in people.values():
+                    app.state.demo_sessions[staff["id"]] = (secrets.token_urlsafe(32), expected)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -228,10 +254,26 @@ def create_app(db_path=None, principals=None, *, mode=None):
             422,
         )
 
+    @app.get(PREFIX + "/entry")
+    def entry(request: Request):
+        if not local_demo(request):
+            return {"desks": []}
+        return {"desks": [
+            {key: actor[key] for key in ("id", "name", "role")}
+            for _, actor in request.app.state.demo_sessions.values()
+        ]}
+
+    @app.post(PREFIX + "/demo-session")
+    def demo_session(request: Request, body: DemoDesk):
+        if not local_demo(request) or body.desk_id not in request.app.state.demo_sessions:
+            unavailable()
+        token, actor = request.app.state.demo_sessions[body.desk_id]
+        return {"token": token, "staff": {**actor, "configured_mode": "fixture", "analysis_available": True, "desk_picker": True}}
+
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
         mode = request.app.state.mode
-        return {**actor, "configured_mode": mode, "analysis_available": mode == "fixture"}
+        return {**actor, "configured_mode": mode, "analysis_available": mode == "fixture", "desk_picker": local_demo(request)}
 
     @app.get(CASES)
     def cases(request: Request, actor=Depends(authenticated)):

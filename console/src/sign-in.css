@@ -1,0 +1,73 @@
+.entry-page {
+  min-height: 100svh;
+  background: #101112;
+  color: #f5f3ef;
+}
+header.entry-header {
+  min-height: 72px;
+  padding: 0 clamp(20px, 5vw, 80px);
+  border-bottom: 1px solid #323234;
+  background: #141516;
+  justify-content: space-between;
+}
+.entry-mast { display: flex; align-items: center; gap: 22px; }
+.mast-unit { color: #aaa9a7; border-left: 1px solid #38383b; padding-left: 22px; font-size: .87rem; }
+.mode-pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #35423b; background: #1a2620; color: #b4d9bc; padding: 5px 11px; border-radius: 24px; font-size: .8rem; white-space: nowrap; }
+.mode-pill i { width: 6px; height: 6px; border-radius: 50%; background: #83c79d; }
+.entry-body { max-width: 1230px; margin: auto; padding: clamp(32px, 7vh, 80px) clamp(20px, 4vw, 60px); }
+.entry-kicker { color: #d4a888; font: 600 .72rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .13em; }
+.entry-intro h1 { font: 550 clamp(2.4rem, 4.2vw, 4.1rem)/1.05 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; letter-spacing: -.065em; margin: .23em 0 .2em; }
+.entry-intro p { color: #b7b6b3; max-width: 55ch; }
+.entry-layout { margin-top: clamp(23px, 4vh, 45px); display: grid; grid-template-columns: minmax(210px, .85fr) minmax(0, 2.15fr); gap: 16px; align-items: stretch; }
+.case-brief { position: relative; isolation: isolate; overflow: hidden; min-height: 320px; background: #2c211c; border: 1px solid #523b2f; border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between; }
+.brief-graphic { flex: 1; min-height: 190px; position: relative; overflow:hidden; background: repeating-linear-gradient(136deg,transparent 0 12px,#eca66e12 12px 13px), radial-gradient(ellipse at 11% 22%,#78472f,transparent 68%); mask-image: linear-gradient(#000 65%,transparent); }
+.paper-front,.paper-back { position:absolute; top: 15%; left: 24%; width: 48%; aspect-ratio: 1.35; border:1px solid #c58d67; border-radius:6px; transform: rotate(-13deg) skewX(4deg); }
+.paper-back { transform: translate(8%,19%) rotate(5deg); background: #5c3928; }
+.paper-front { display:grid; align-content:start; padding: 8% 9%; gap:11px; background:linear-gradient(140deg,#97623e,#67412f 65%); box-shadow:0 10px 26px #2b190e66, inset 0 1px 0 #eec9a35c; }
+.paper-seal { display:block; width:17px; height:17px; background:#e1af82; border:3px double #71462e; border-radius:50%; }
+.paper-lines { display:block; width:90%; height:10px; border-block:1px solid #dba67a; }
+.paper-sign { display:block; width:44%; border-top:1px solid #c99164; }
+.brief-info { padding: 22px clamp(18px,2.3vw,34px) 25px; }
+.brief-info h2 { font: 500 clamp(1.9rem,2.8vw,2.8rem)/1.03 Georgia,serif; letter-spacing:-.05em; margin: 12px 0 21px; }
+.brief-meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:5px 10px; align-items:center; color:#e3c8b5; padding-top:14px; border-top:1px solid #634b3c; font-size:.81rem; font-variant-numeric:tabular-nums; }
+.desk-grid { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:12px; }
+button.desk-choice { --tint:#e7a878; --tint-bg:#422e22; background:#191a1b; border:1px solid #373739; border-radius:12px; color:#faf8f3; padding:clamp(14px,1.5vw,22px); text-align:left; display:flex; flex-direction:column; align-items:stretch; transition:background .16s,border-color .16s; }
+button.desk-choice:hover:not(:disabled),button.desk-choice:focus-visible { border-color:var(--tint); background:#202122; }
+.desk-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+.desk-avatar { display:grid; place-items:center; width:37px; height:37px; border-radius:11px; font: 600 .84rem/1 var(--mono); letter-spacing:.02em; background:var(--tint-bg); color:var(--tint); border:1px solid color-mix(in srgb,var(--tint) 23%,transparent); }
+.desk-arrow { color:#9d9b98; font-size:1.12rem; font-weight:400; }
+.desk-choice strong { font-size:1.07rem; line-height:1.2; letter-spacing:-.025em; }
+.desk-name { font-size:.82rem; color:#bdbab6; font-weight:450; margin-top:4px; }
+.desk-duty { display:block; margin-top:13px; color:#aba9a5; font-size:.83rem; line-height:1.45; font-weight:400; }
+button.desk-trade_finance { --tint:#a1c4ee; --tint-bg:#243447; }
+button.desk-credit_risk { --tint:#c7b0ef; --tint-bg:#342b43; }
+button.desk-compliance { --tint:#9fcec3; --tint-bg:#233a35; }
+button.desk-final_officer { --tint:#e7c582; --tint-bg:#403522; }
+button.desk-operations { --tint:#aebcdb; --tint-bg:#2b3141; }
+.entry-body>.error { margin-top:16px; }
+@media(max-width:980px) {
+  .entry-layout {grid-template-columns:minmax(180px,.8fr) minmax(0,1.8fr);}
+  .desk-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .brief-graphic {flex:none; min-height:195px;}
+}
+@media(max-width:740px) {
+  .entry-layout {grid-template-columns:1fr; gap:15px;}
+  .case-brief {min-height:0; display:block;}
+  .brief-info {padding:14px 19px; position:relative; width:68%;}
+  .brief-info h2 {font-size:1.55rem; margin:4px 0;}
+  .brief-info h2 br {display:none;}
+  .brief-meta {justify-content:flex-start; gap:14px; border:0; padding:0;}
+  .brief-graphic {position:absolute; inset:0 0 0 auto; width:35%; min-height:0; mask-image:linear-gradient(90deg,transparent,#000 28%);}
+  .paper-front,.paper-back {width:48%; top:16%;}
+  .paper-front {padding:6% 8%; gap:5px;}
+  .desk-top {margin-bottom:12px;}
+}
+@media(max-width:470px) {
+  .mast-unit {display:none;}
+  .desk-grid {gap:8px;}
+  .entry-body {padding:24px 14px 30px;}
+  .entry-header .brand {font-size:1.35rem;}
+  .desk-choice strong {font-size:1rem;}
+  button.desk-choice {padding:12px;}
+}
+@media(prefers-reduced-motion:reduce) {button.desk-choice {transition:none;}}

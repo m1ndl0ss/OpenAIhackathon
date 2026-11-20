@@ -11,16 +11,16 @@ make setup
 make run
 ```
 
-Open [the local staff console](http://127.0.0.1:8000). In a second terminal, run `make login ROLE=coverage` and paste the generated token into the sign-in screen. Use `make logins` to list all six staff roles. Use a separate browser tab for each role or sign out between actions. Tokens belong to this checkout. Keep them out of screenshots and commits.
+Open [the local staff console](http://127.0.0.1:8000) and choose **Coverage**. Use **Switch desk** to continue as another employee in the same tab. Each desk opens its assigned queue. The local fixture demo supports one-click entry. Live mode uses staff tokens.
 
 Setup installs the dependencies, builds the React console, creates six private synthetic logins, seeds SQLite and prepares evidence worksheets. Running setup again keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation.
 
 ## Walk the case
 
-Use `make login ROLE=<role>` with the role shown below. When returning to an already-open tab, click **Refresh** to load the latest case.
+Choose the named role on the desk picker. When returning to an already-open tab, click **Refresh** to load the latest case.
 
-1. **Coverage** (`coverage)) selects `LC-001` in the queue and clicks **Run analysis**.
-2. **Credit Risk** (`credit_risk)) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.
+1. **Coverage** (`coverage`) selects `LC-001` in the queue and clicks **Run analysis**.
+2. **Credit Risk** (`credit_risk`) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.
 3. **Coverage** refreshes, selects the Compliance request under **Attach supplier invoice**, enters an evidence note, then clicks **Attach invoice and revise file**. Click **Run analysis** for revision 2. The hold stays open and the earlier Credit signature is historical.
 4. **Trade Finance** (`trade_finance`) and **Credit Risk** each sign **Clear** on revision 2. **Compliance** chooses **Clear**, selects its open hold, selects `DOC-INV-01@1` as the reviewed evidence, enters a reason and signs.
 5. **Final officer** (`final_officer`) selects **Approve**, enters a reason and clicks **Record final decision**. **Operations** (`operations`) clicks **Simulate issuance**. Refresh the case to see the same saved receipt.
