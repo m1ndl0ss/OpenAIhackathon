@@ -4,7 +4,7 @@ import json
 
 from . import departments
 from .store import DESKS, event, now
-from .workflow import conflict, detail, require_open
+from .workflow import conflict, detail, require_open, valid_invoice
 
 SERVICE = {"id": "case-service", "role": "workflow"}
 
@@ -16,13 +16,13 @@ def roles(profile):
 
 
 def contacts(profile, assignments, names):
-    _, reviewers, final = roles(profile)
+    owner, reviewers, final = roles(profile)
 
     def person(role):
         recipient = assignments[role]
         return {"id": recipient, "role": role, "name": names.get(recipient, recipient)}
 
-    return {"reviewers": [person(role) for role in reviewers], "final": person(final)}
+    return {"owner": person(owner), "reviewers": [person(role) for role in reviewers], "final": person(final)}
 
 
 def deliver(db, row, s, stage, sender):
@@ -121,6 +121,12 @@ def present(db, row, s, view, actor, names):
     final["status"] = decision["decision"] if decision else "awaiting" if ready and final_delivery else "waiting"
     sent = any(person["sent_at"] for person in plan["reviewers"])
     current = bool(row["packet_hash"]) and row["mode"] == view["configured_mode"]
+    plan["evidence_action"] = None
+    if current and not decision:
+        if p and not s["evidence_verified"]:
+            plan["evidence_action"] = "verify"
+        elif not p and not valid_invoice(s):
+            plan["evidence_action"] = "attach_invoice"
     plan["can_send"] = current and not decision and not sent and actor["role"] == owner
     if decision:
         plan["stage"] = "closed"

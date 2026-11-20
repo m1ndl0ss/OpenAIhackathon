@@ -14,8 +14,8 @@ make run-live
 Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount.
 
 1. **Submit request** starts the organizer and opens the routing diagram. Its recommendation appears above the Human approval panel.
-2. **Send for desk review** delivers the packet to Sam Reed in Payments and Amir Cole in Operations. Use **Review request** for your own desk or **Open demo desk** for the other reviewer. Each person can find the request in **My approvals**, inspect the evidence and sign or place a hold.
-3. With both signatures and checks complete, the panel shows that the request has arrived in Ari Fox’s inbox. Open Ari’s desk and record the final decision. The case history identifies who signed and who approved.
+2. **Send for desk review** delivers the packet to Sam Reed in Payments and Amir Cole in Operations. Click **Review finding** for Sam, inspect the current evidence, enter a reason and click **Sign desk finding**. Click **Review as Amir Cole** and sign the Operations finding. **Use demo reason** supplies an editable example for either person.
+3. With **2 of 2 signed**, click **Final approve** beside Ari Fox. Enter Ari’s decision reason and confirm with **Final approve**. The dashboard shows **Approved by Ari Fox** and the case history records the individual signatures.
 
 For the preloaded letter-of-credit walkthrough, choose **Coverage → LC-001 → Run analysis**. Sealing a preloaded case sends it to its reviewers automatically. Each fresh live rehearsal has its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
 

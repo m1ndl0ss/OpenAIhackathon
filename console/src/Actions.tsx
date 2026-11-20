@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { label, money, roles, type CaseFile, type DeskRequest, type Staff, type Submit } from './api'
 
 type Controls = { file: CaseFile; staff: Staff; busy: boolean; submit: Submit }
@@ -10,21 +10,37 @@ const complianceQuestions = [
 const complianceReply = 'Compliance has reviewed the request. See the current desk disposition.'
 const signed = (file: CaseFile) => ({ revision: file.revision, packet_hash: file.packet_hash })
 
-function ReviewForm({ file, staff, busy, submit }: Controls) {
-  const [choice, setChoice] = useState('')
-  const [reason, setReason] = useState('')
-  const [code, setCode] = useState('DOCUMENT_REQUIRED')
-  const [resolved, setResolved] = useState<string[]>([])
-  const [source, setSource] = useState('')
+export function ReasonField({ label, value, change, example, busy }: {
+  label: string; value: string; change: (value: string) => void; example?: string; busy: boolean
+}) {
+  const id = useId()
+  return <div className="sign-reason"><div><label htmlFor={id}>{label}</label>
+    {example && <button type="button" disabled={busy} onClick={() => change(example)}>Use demo reason</button>}</div>
+    <textarea {...reasonProps} id={id} disabled={busy} value={value} onChange={e => change(e.target.value)} aria-describedby={id + '-hint'} />
+    <small id={id + '-hint'}>Enter at least 10 characters.</small></div>
+}
+
+export function ReviewForm({ file, staff, busy, submit }: Controls) {
   const current = file.reviews.find(item => item.desk === staff.role)
   const ownHolds = file.holds.filter(hold => hold.desk === staff.role)
-  const needsEvidence = choice === 'clear' && ownHolds.length > 0
   const requiresInvoice = ownHolds.some(hold => hold.reason_code === 'DOCUMENT_REQUIRED')
+  const missingInvoice = file.human_approval?.evidence_action === 'attach_invoice'
+  const blocked = file.clearance_issue || (requiresInvoice && missingInvoice ? 'Coverage must attach the requested invoice to release your hold.' : '')
+  const [choice, setChoice] = useState(blocked ? 'hold' : 'clear')
+  const [reason, setReason] = useState('')
+  const [code, setCode] = useState(missingInvoice ? 'DOCUMENT_REQUIRED' : 'MANUAL_REVIEW')
+  const [resolved, setResolved] = useState<string[]>([])
+  const [source, setSource] = useState('')
+  const needsEvidence = choice === 'clear' && ownHolds.length > 0
   const references = requiresInvoice ? (file.invoice_ref ? [file.invoice_ref] : []) : file.sources.map(item => item.ref)
 
-  return <form id="approval-action" tabIndex={-1} className="action-form" onSubmit={async event => {
+  const example = choice === 'hold' ? 'Further checks are required before my desk can clear this revision.'
+    : 'I reviewed the ' + label(staff.role) + ' evidence and cleared revision ' + file.revision + '.'
+  const canSign = choice === 'hold' ? !ownHolds.length : !blocked && (!needsEvidence || (resolved.length === ownHolds.length && !!source))
+  if (blocked && ownHolds.length) return <p className="inline-note">Your hold is recorded. {blocked}</p>
+  return <form className="action-form" onSubmit={async event => {
     event.preventDefault()
-    if (!choice) return
+    if (busy || !canSign || reason.trim().length < 10) return
     const body = {
       ...signed(file), disposition: choice, reason: reason.trim(),
       reason_code: choice === 'clear' ? 'CHECKS_COMPLETE' : code,
@@ -34,17 +50,17 @@ function ReviewForm({ file, staff, busy, submit }: Controls) {
     }
     await submit('/reviews/' + staff.role, body, 'Your desk finding was recorded.')
   }}>
-    <h2>Your desk finding</h2>
-    <p className="muted">{staff.name} · {label(staff.role)} · Revision {file.revision}</p>
+    {blocked && <p className="inline-note">{blocked}</p>}
     <fieldset disabled={busy}><legend>Disposition</legend>
       <div className="options">
-        {['clear', 'hold'].map(value => <label key={value}><input type="radio" name="finding" value={value} required checked={choice === value} onChange={() => setChoice(value)} />{value === 'clear' ? 'Clear' : 'Hold'}</label>)}
+        {['clear', 'hold'].map(value => <label key={value}><input type="radio" name="finding" value={value} required
+          disabled={value === 'clear' ? !!blocked : ownHolds.length > 0} checked={choice === value} onChange={() => { setChoice(value); setReason('') }} />{value === 'clear' ? 'Clear' : 'Hold'}</label>)}
       </div>
     </fieldset>
-    {choice === 'hold' && <label>Reason code<select value={code} onChange={e => setCode(e.target.value)}>
+    {choice === 'hold' && !ownHolds.length && <label>Reason code<select value={code} onChange={e => setCode(e.target.value)}>
       {['DOCUMENT_REQUIRED', 'MANUAL_REVIEW', 'FACILITY_EXCEPTION'].map(value => <option key={value} value={value}>{label(value)}</option>)}
     </select></label>}
-    {choice === 'hold' && code === 'DOCUMENT_REQUIRED' && <p className="inline-note">Coverage will receive a request for the supplier invoice.</p>}
+    {choice === 'hold' && !ownHolds.length && code === 'DOCUMENT_REQUIRED' && <p className="inline-note">Coverage will receive a request for the supplier invoice.</p>}
     {needsEvidence && <fieldset><legend>Resolve your open holds</legend>
       {ownHolds.map(hold => <label className="check" key={hold.hold_id}><input type="checkbox" required checked={resolved.includes(hold.hold_id)} onChange={e => setResolved(e.target.checked ? [...resolved, hold.hold_id] : resolved.filter(id => id !== hold.hold_id))} />{label(hold.reason_code)} <code>{hold.hold_id}</code></label>)}
       <label>Reviewed evidence<select required value={source} onChange={e => setSource(e.target.value)}>
@@ -52,27 +68,28 @@ function ReviewForm({ file, staff, busy, submit }: Controls) {
       </select></label>
       {!references.length && <p className="inline-note">Coverage must attach the requested invoice first.</p>}
     </fieldset>}
-    <label>Reason for this finding<textarea {...reasonProps} value={reason} onChange={e => setReason(e.target.value)} /></label>
-    <button className="primary" disabled={busy || !choice || reason.trim().length < 10 || (needsEvidence && (resolved.length !== ownHolds.length || !source))}>Sign desk finding</button>
+    <ReasonField label="Reason for this finding" value={reason} change={setReason} example={staff.desk_picker ? example : undefined} busy={busy} />
+    <button type="submit" className="primary" disabled={busy || !canSign || reason.trim().length < 10}>{needsEvidence ? 'Release hold and sign' : choice === 'hold' ? 'Sign hold finding' : 'Sign desk finding'}</button>
   </form>
 }
 
-function DecisionForm({ file, staff, busy, submit }: Controls) {
-  const [decision, setDecision] = useState('')
-  const [reason, setReason] = useState('')
+export function DecisionForm({ file, staff, busy, submit }: Controls) {
   const overLimit = !file.within_mandate
-  return <form id="approval-action" tabIndex={-1} className="action-form" onSubmit={async e => {
+  const [decision, setDecision] = useState(overLimit ? 'refer' : 'approve')
+  const [reason, setReason] = useState('')
+  const examples: Record<string, string> = { approve: 'I reviewed all signed findings and approve this revision within my mandate.',
+    decline: 'I reviewed the signed findings and decline this request.', refer: 'I refer this request to the higher credit authority for a decision.' }
+  return <form className="action-form" onSubmit={async e => {
     e.preventDefault()
+    if (busy || reason.trim().length < 10) return
     await submit('/decision', { ...signed(file), decision, reason: reason.trim() }, 'Final decision recorded.')
   }}>
-    <h2>Final decision</h2>
-    <p className="muted">{staff.name} · Mandate {money(file.mandate_minor, file.mandate_currency)}</p>
-    <label>Decision<select required value={decision} onChange={e => setDecision(e.target.value)}>
-      <option value="">Choose a decision</option>
+    <p className="muted">{overLimit ? 'The request exceeds your mandate. Refer it to the higher credit authority.' : 'Your approval mandate is ' + money(file.mandate_minor, file.mandate_currency) + '.'}</p>
+    <label>Decision<select required value={decision} disabled={busy} onChange={e => { setDecision(e.target.value); setReason('') }}>
       {(overLimit ? ['refer'] : ['approve', 'decline', 'refer']).map(value => <option key={value} value={value}>{label(value)}</option>)}
     </select></label>
-    <label>Decision reason<textarea {...reasonProps} value={reason} onChange={e => setReason(e.target.value)} /></label>
-    <button className="primary" disabled={busy || !decision || reason.trim().length < 10}>Record final decision</button>
+    <ReasonField label="Decision reason" value={reason} change={setReason} example={staff.desk_picker ? examples[decision] : undefined} busy={busy} />
+    <button type="submit" className="primary" disabled={busy || reason.trim().length < 10}>{decision === 'approve' ? 'Final approve' : decision === 'refer' ? 'Record referral' : 'Record decline'}</button>
   </form>
 }
 
@@ -107,7 +124,7 @@ function Reply({ file, item, busy, submit, staff }: Controls & { item: DeskReque
   </form>
 }
 
-function InvoiceForm({ file, staff, busy, submit }: Controls) {
+export function InvoiceForm({ file, staff, busy, submit }: Controls) {
   const [request, setRequest] = useState('')
   const [note, setNote] = useState('')
   const requests = file.requests.filter(item => item.to_desk === staff.role && item.blocking && !['resolved','closed'].includes(item.status))
@@ -118,12 +135,11 @@ function InvoiceForm({ file, staff, busy, submit }: Controls) {
       ...(request && { request_id: request }), note: note.trim(),
     }, 'Supplier invoice attached. The amended file requires a new packet and fresh desk signatures.')
   }}>
-    <h2>Attach supplier invoice</h2>
     <p className="muted">Synthetic document <code>{file.invoice_document_id}</code></p>
     {requests.length > 0 && <label>Related request<select required value={request} onChange={e => setRequest(e.target.value)}>
       <option value="">Choose a request</option>{requests.map(item => <option key={item.request_id} value={item.request_id}>{label(item.from_desk)} · {item.question}</option>)}
     </select></label>}
-    <label>Evidence note<textarea {...reasonProps} value={note} onChange={e => setNote(e.target.value)} /></label>
+    <ReasonField label="Evidence note" value={note} change={setNote} busy={busy} example={staff.desk_picker ? 'I attached the supplier invoice for the current amount and currency.' : undefined} />
     <button className="primary" disabled={busy || note.trim().length < 10 || (requests.length > 0 && !request)}>Attach invoice and revise file</button>
   </form>
 }
@@ -153,9 +169,7 @@ export function ActionPanel(props: Controls) {
       {!file.analysis_available && <p className="inline-note">The configured analysis service is unavailable.</p>}
       <button className="primary" disabled={busy} onClick={() => submit('/runs', { revision: file.revision, mode }, 'Run recorded. Check the current analysis result.')}>Run analysis</button>
     </section>}
-    {allowed('review') && <section className="card"><ReviewForm {...props} /></section>}
-    {allowed('attach_invoice') && <section className="card"><InvoiceForm {...props} /></section>}
-    {allowed('decide') && <section className="card"><DecisionForm {...props} /></section>}
+    {allowed('attach_invoice') && !file.human_approval?.evidence_action && <section className="card"><h2>Attach supplier invoice</h2><InvoiceForm {...props} /></section>}
     {allowed('issue') && !file.receipt && <section className="card action-form">
       <h2>Operations instruction</h2>
       <p>Record simulated issuance of {money(file.amount_minor, file.currency)} against approved revision {file.revision}.</p>

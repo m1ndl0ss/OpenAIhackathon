@@ -2,7 +2,7 @@ import SignIn, { type PreferredDesk } from './SignIn'
 import { Brand, DeskIcon } from './Brand'
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
-import { ApprovalInbox, ApprovalPanel } from './Approvals'
+import { ApprovalInbox, ApprovalPanel, type ApprovalEditor, type ApprovalTask } from './Approvals'
 import PacketList from './PacketList'
 import DepartmentWorkspace from './DepartmentWorkspace'
 import RequestDashboard from './RequestDashboard'
@@ -11,7 +11,7 @@ import {
   ArrowsClockwiseIcon, ArrowsLeftRightIcon, ChatCircleTextIcon, CirclesFourIcon,
   ClockCounterClockwiseIcon, FilePlusIcon, FolderOpenIcon, ListBulletsIcon, SignOutIcon, TrayIcon,
 } from '@phosphor-icons/react'
-import { bank, BankError, caseLabel, deskName, desks, label, money, textError, type ApprovalRecipient, type AuditEvent, type CaseFile, type Staff, type StaffFile, type StaffSession, type Submit, type Summary } from './api'
+import { bank, BankError, caseLabel, deskName, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type StaffContact, type StaffFile, type StaffSession, type Submit, type Summary } from './api'
 
 const sessionKey = 'clearance.staff-token'
 const selectedKey = 'clearance.selected-case'
@@ -88,7 +88,7 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
         {file.decision && <section className="card"><h2>Final disposition</h2><p><strong>{label(file.decision.decision)}</strong> · {file.decision.actor_id} · Rev. {file.decision.revision}</p></section>}
         {receipt && <section className="card receipt"><h2>Simulated issuance receipt</h2><p><code>{receipt.receipt_id}</code></p><p>{receipt.actor_id} · Rev. {receipt.revision}</p></section>}
       </div>
-      <aside className="stack"><ActionPanel key={file.case_id + ':' + file.revision + ':' + file.packet_hash + ':' + file.reviews.map(r => r.event_id).join(',')} {...controls} />
+      <aside className="stack"><ActionPanel key={file.case_id + ':' + file.revision + ':' + file.packet_hash} {...controls} />
         <section className="card context"><h2>File details</h2><dl>
           <dt>Invoice</dt><dd>{file.invoice_ref || 'Outstanding'}</dd>
           {file.headroom_after_minor != null && <><dt>Headroom after issue</dt><dd>{money(file.headroom_after_minor, file.currency)}</dd></>}
@@ -117,10 +117,10 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
 
 type WorkspaceView = 'dashboard' | 'case' | 'approvals'
 
-function Workspace({ token, staff, end, initialView, initialCase, compose, reviewDesk, focusAction }: {
+function Workspace({ token, staff, end, initialView, initialCase, compose, reviewDesk, initialEditor }: {
   token: string; staff: Staff; end: (nextView?: WorkspaceView, preferred?: PreferredDesk) => void; initialView: WorkspaceView
   initialCase: string; compose: (workflow: string, caseId: string, view: WorkspaceView) => void
-  reviewDesk: (session: StaffSession, caseId: string) => void; focusAction: boolean
+  reviewDesk: (session: StaffSession, editor: ApprovalEditor, view: WorkspaceView) => void; initialEditor: ApprovalEditor | null
 }) {
   const [view, setView] = useState<WorkspaceView>(initialView)
   const [syncError, setSyncError] = useState('')
@@ -133,8 +133,7 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [visit, setVisit] = useState(focusAction ? 1 : 0)
-  const focusedVisit = useRef(0)
+  const [editor, setEditor] = useState(initialEditor)
   const sequence = useRef(0)
   const lock = useRef(false)
   const retryKeys = useRef(new Map<string, string>())
@@ -163,17 +162,8 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
   useEffect(() => { void load(initialCase || tabValue(selectedKey) || undefined); return () => { sequence.current++ } }, [load, initialCase])
 
   useEffect(() => {
-    if (!loading && file && view === 'case' && visit > focusedVisit.current) {
-      focusedVisit.current = visit
-      const action = document.getElementById('approval-action')
-      action?.focus({ preventScroll: true })
-      action?.scrollIntoView({ block: 'center' })
-    }
-  }, [visit, file, loading, view])
-
-  useEffect(() => {
     const pending = file?.last_run?.status === 'pending'
-    if (loading || busy || (!pending && view === 'case')) return
+    if (loading || busy) return
     let stopped = false
     let timer: number
     const poll = async () => {
@@ -213,24 +203,29 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
   const filteredQueue = workflowFilter ? queue.filter(item => item.workflow_id === workflowFilter) : queue
   const myApprovals = queue.filter(item => item.my_approval)
   function openReview(caseId: string) {
-    setNotice(''); setView('case'); setVisit(n => n + 1)
+    const item = myApprovals.find(entry => entry.case_id === caseId)
+    if (!item?.my_approval) return
+    setNotice(''); setEditor({caseId, revision:item.revision, task:item.my_approval}); setView('dashboard')
     if (caseId !== selected) void load(caseId)
   }
-  async function openRecipient(person: ApprovalRecipient) {
+  async function openRecipient(person: StaffContact, task: ApprovalTask) {
     if (lock.current || !file) return
-    if (person.id === staff.id) { openReview(file.case_id); return }
+    const nextEditor = {caseId:file.case_id, revision:file.revision, task}
+    setNotice('')
+    if (person.id === staff.id) { setEditor(nextEditor); return }
     if (!staff.desk_picker) return
     lock.current = true; setBusy(true); setError('')
     try {
       const next = await bank<StaffSession>(null, '/demo-session', {desk_id: person.id})
-      reviewDesk(next, file.case_id)
+      reviewDesk(next, nextEditor, view)
     } catch (err) { setError(textError(err)) }
     finally { lock.current = false; setBusy(false) }
   }
   const controls = { staff, submit, busy: busy || loading || !!syncError }
   const stage = file?.human_approval?.stage
   const approval = file && stage && stage !== 'preparing' && stage !== 'other_mode'
-    ? <ApprovalPanel file={file} open={openRecipient} {...controls} /> : null
+    ? <ApprovalPanel file={file} open={openRecipient} task={editor?.caseId === file.case_id && editor.revision === file.revision ? editor.task : null}
+        close={() => setEditor(null)} {...controls} /> : null
   let content: ReactNode
   if (view === 'approvals') {
     content = loading ? <p role="status">Loading your inbox…</p>
@@ -242,11 +237,10 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
     content = <RequestDashboard key={file.case_id} file={file} audit={audit} queue={filteredQueue} approval={approval}
       open={() => setView('case')} select={id => { setNotice(''); void load(id) }} {...controls} />
   } else {
-    const viewKey = file.case_id + ':' + visit
     content = <>{approval}<SubmittedDetails file={file} />
       {file.department_case
-        ? <DepartmentWorkspace key={viewKey} file={file} history={<History audit={audit} file={file} />} {...controls} />
-        : <CaseContents key={viewKey} file={file} audit={audit} {...controls} />}</>
+        ? <DepartmentWorkspace key={file.case_id} file={file} history={<History audit={audit} file={file} />} {...controls} />
+        : <CaseContents key={file.case_id} file={file} audit={audit} {...controls} />}</>
   }
   let handoff: PreferredDesk | undefined
   if (file?.department_case) {
@@ -292,11 +286,11 @@ export default function App() {
   const [preferred, setPreferred] = useState<PreferredDesk>()
   const [composing, setComposing] = useState<string | null>(null)
   const [initialCase, setInitialCase] = useState('')
-  const [focusAction, setFocusAction] = useState(false)
+  const [initialEditor, setInitialEditor] = useState<ApprovalEditor | null>(null)
   const end = useCallback((nextView: WorkspaceView = 'dashboard', preferredDesk?: PreferredDesk) => {
     setPreferred(preferredDesk)
     setInitialCase('')
-    setFocusAction(false)
+    setInitialEditor(null)
     setInitialView(nextView)
     tabValue(sessionKey, null)
     setSaved(null); setRestoreError(''); setSession(null)
@@ -319,13 +313,13 @@ export default function App() {
   </section></div></main>
   if (composing !== null) return <RequestComposer preferred={composing} session={session} cancel={() => setComposing(null)} created={(owner, caseId) => {
     tabValue(sessionKey, owner.token); tabValue(selectedKey, caseId)
-    setSession(owner); setInitialCase(caseId); setFocusAction(false); setInitialView('dashboard'); setComposing(null); window.scrollTo(0, 0)
+    setSession(owner); setInitialCase(caseId); setInitialEditor(null); setInitialView('dashboard'); setComposing(null); window.scrollTo(0, 0)
   }} />
-  return session ? <Workspace key={session.staff.id} {...session} initialCase={initialCase} initialView={initialView} end={end} focusAction={focusAction} reviewDesk={(next, caseId) => {
-    tabValue(sessionKey, next.token); tabValue(selectedKey, caseId)
-    setSession(next); setInitialCase(caseId); setInitialView('case'); setFocusAction(true)
+  return session ? <Workspace key={session.staff.id} {...session} initialCase={initialCase} initialView={initialView} end={end} initialEditor={initialEditor} reviewDesk={(next, editor, view) => {
+    tabValue(sessionKey, next.token); tabValue(selectedKey, editor.caseId)
+    setSession(next); setInitialCase(editor.caseId); setInitialView(view); setInitialEditor(editor)
   }} compose={(workflow, caseId, view) => {
-    setFocusAction(false); setInitialCase(caseId); setInitialView(view); setComposing(workflow)
+    setInitialEditor(null); setInitialCase(caseId); setInitialView(view); setComposing(workflow)
   }} /> : <SignIn preferred={preferred} compose={() => setComposing('')} start={(staff, token) => {
     tabValue(sessionKey, token); setSession({ staff, token })
   }} />

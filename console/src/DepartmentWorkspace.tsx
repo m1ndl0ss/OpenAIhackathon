@@ -3,32 +3,39 @@ import { ClipboardTextIcon, ClockCounterClockwiseIcon, FingerprintSimpleIcon, Fi
 import { deskName, label, type DepartmentFile, type Staff, type Submit } from './api'
 import { DeskIcon } from './Brand'
 import PacketList from './PacketList'
+import { ReasonField } from './Actions'
 
-function DepartmentActions({ file, staff, busy, submit }: { file: DepartmentFile; staff: Staff; busy: boolean; submit: Submit }) {
+type Controls = { file: DepartmentFile; staff: Staff; busy: boolean; submit: Submit }
+
+export function DepartmentSignature({ file, staff, busy, submit }: Controls) {
   const [reason, setReason] = useState('')
   const meta = file.department_case
-  const allowed = file.permitted_actions
-  const signedActions = allowed.filter(k => ['sign', 'hold', 'complete', 'refer'].includes(k))
-  const names: Record<string, string> = { sign: 'Sign desk review', hold: 'Place on hold', complete: 'Approve request', refer: 'Refer for further review' }
+  const final = staff.role === meta.approver
+  const ownHold = file.holds.some(h => h.desk === staff.role)
+  const actions = file.permitted_actions.filter(k => ['sign', 'hold', 'complete', 'refer'].includes(k))
+  const names: Record<string, string> = { sign: ownHold ? 'Release hold and sign' : 'Sign desk finding', hold: 'Place on hold', complete: 'Final approve', refer: 'Refer for further review' }
   async function act(action: string) {
-    const body = { action, revision: file.revision, ...(action === 'verify' ? {} : {
+    const body = { action, revision: file.revision,
       packet_hash: file.packet_hash, reason: reason.trim(), expected_event_id: file.reviews.find(r => r.desk === staff.role)?.event_id ?? null,
-    }) }
-    const message = { verify: 'Supporting record verified. A new revision is ready for analysis.', sign: 'Desk review signed.',
-      hold: 'Desk hold recorded.', complete: 'Department outcome recorded.', refer: 'Department referral recorded.' }[action]
+    }
+    const message = { sign: 'Desk finding signed.', hold: 'Desk hold recorded.', complete: 'Final approval recorded.', refer: 'Department referral recorded.' }[action]
     if (await submit('/workflow-action', body, message || 'Action recorded.')) setReason('')
   }
-  return <section className="card action-form" id="approval-action" tabIndex={-1}>
-    <h2>{allowed.includes('complete') ? 'Your final decision' : signedActions.length ? 'Your desk review' : 'Your desk action'}</h2>
-    <p className="muted">{staff.name} · {deskName(file, staff.role)} · Revision {file.revision}</p>
-    {allowed.includes('complete') && <p>Approval records the following outcome. <strong>{meta.outcome}</strong>.</p>}
-    {allowed.includes('verify') && <div className="action-form"><p>Verify the registered synthetic record, <strong>{meta.source}</strong>, to attach it to a new revision.</p>
-      <button disabled={busy} onClick={() => act('verify')}><FilesIcon size={16} />Verify supporting record</button></div>}
-    {allowed.includes('run') && <button className="primary" disabled={busy || file.last_run?.status === 'pending'} onClick={() => submit('/runs', {revision:file.revision, mode:file.configured_mode}, 'Analysis run submitted.')}>Run analysis</button>}
-    {!!signedActions.length && <><label>Reason for this action<textarea minLength={10} maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} /></label>
-      {signedActions.map((k,i) => <button className={i === 0 ? 'primary' : ''} key={k} disabled={busy || reason.trim().length < 10} onClick={() => act(k)}>{names[k]}</button>)}</>}
-    {!allowed.length && <p>{file.next_action}</p>}
-  </section>
+  const example = final ? 'I reviewed the signed desk findings and the supporting record for my final decision.'
+    : 'I reviewed the available evidence and the ' + deskName(file, staff.role) + ' findings for this revision.'
+  return <div className="action-form">
+    {final && <p>Approval records the following outcome. <strong>{meta.outcome}</strong>.</p>}
+    {!meta.evidence_verified && <p className="inline-note">The analyst must verify the supporting record before this desk can sign a clearance.</p>}
+    {actions.length > 0 && <><ReasonField label={final ? 'Decision reason' : 'Reason for this finding'} value={reason} change={setReason}
+      busy={busy} example={staff.desk_picker ? example : undefined} />
+      <div className="sign-actions">{actions.map((k,i) => <button type="button" className={i === 0 ? 'primary' : ''} key={k}
+        disabled={busy || reason.trim().length < 10} onClick={() => act(k)}>{names[k]}</button>)}</div></>}
+  </div>
+}
+
+export function VerifyRecord({ file, busy, submit }: Controls) {
+  return <div className="action-form"><p>Verify the registered synthetic record, <strong>{file.department_case.source}</strong>, to attach it to a new revision.</p>
+    <button disabled={busy} onClick={() => submit('/workflow-action', {action:'verify', revision:file.revision}, 'Supporting record verified. Run analysis on the new revision.')}><FilesIcon size={16} />Verify supporting record</button></div>
 }
 
 export default function DepartmentWorkspace({file, staff, busy, submit, history}: {
@@ -60,7 +67,11 @@ export default function DepartmentWorkspace({file, staff, busy, submit, history}
       <PacketList packets={file.packets} sources={file.sources} currency="" mode={meta.local_only ? 'bank_local' : file.mode} />
       {file.receipt && <section className="card receipt"><h2>Recorded outcome</h2><p>{file.decision?.decision === 'refer' ? 'Referred for further review' : meta.outcome}</p>
         <p><code>{file.receipt.receipt_id}</code> · Rev. {file.receipt.revision}</p></section>}
-    </div><aside className="stack"><DepartmentActions key={file.case_id + '-' + file.revision} {...{file,staff,busy,submit}} />
+    </div><aside className="stack">
+      {(file.permitted_actions.includes('run') || (file.permitted_actions.includes('verify') && !file.human_approval?.evidence_action)) && <section className="card action-form"><h2>Prepare this revision</h2>
+        {file.permitted_actions.includes('verify') && !file.human_approval?.evidence_action && <VerifyRecord {...{file,staff,busy,submit}} />}
+        {file.permitted_actions.includes('run') && <button className="primary" disabled={busy || file.last_run?.status === 'pending'} onClick={() => submit('/runs', {revision:file.revision, mode:file.configured_mode}, 'Analysis run submitted.')}>Run analysis</button>}
+      </section>}
       <section className="card"><div className="card-head"><h2>Case evidence</h2><FingerprintSimpleIcon size={19} /></div>
         {file.sources.map(s => <details key={s.ref} className="packet"><summary>{s.label}</summary><p>{s.detail}</p><code>{s.ref}</code></details>)}</section>
       {lastRun?.analysis && <section className="card context"><h2>Last drafting run</h2><dl>

@@ -8,7 +8,8 @@
 | [Editable payment request](request-intake.jpg) | The originating desk can enter a subject, payment rail, amount, currency, review date and supporting reference before submission. |
 | [Organizer routing replay](request-routing.gif) | A submitted Payments & Cash request moves from the analyst to the organizer, then to the evidence, policy and handover agents. This recording replays an offline case at 2.35 seconds per handoff. |
 | [Submitted payment](request-result.jpg) | The recommendation shows the people who will receive the packet for desk review and final approval. |
-| [Final approver’s inbox delivery](human-approval.jpg) | In the offline demo, Sam Reed and Amir Cole have signed. The packet is in Ari Fox’s inbox and awaits Ari’s decision. |
+| [Final approval form](human-approval.jpg) | In the offline demo, Sam Reed and Amir Cole have signed. Ari Fox can inspect the packet, enter a reason and approve or refer the request from the dashboard. |
+| [Signed letter of credit](signed-letter-of-credit.jpg) | The live rehearsal shows three named desk findings and Eva Lin’s recorded approval of revision 2 of synthetic case LC-001 after Coverage supplied the invoice. |
 | [Merged BRANE client checks](brane-check-failure.csv) | Five faults repeated three times returned zero answer text. Three healthy controls returned a verified response. The observer checked each destination and port from the client process. |
 | [Network-denied outage](firewall-outage.json) | T5 in its official firewall-unavailable meaning. An independent Python audit hook denied DNS and IP socket operations. The bank attempted its policy lookup, submitted zero model requests and left the case unsealed. |
 | [Submission test worksheet](submission-tests.csv) | The five official scenarios and the team's five edge cases. Each row identifies the application, gateway or controlled-outage evidence. |

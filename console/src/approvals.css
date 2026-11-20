@@ -7,6 +7,21 @@
 .approval-columns > div { padding:14px 18px; min-width:0; }
 .approval-columns > div + div { border-left:1px solid #dbe4d9; }
 .approval-columns h3 { margin:0 0 8px; color:#556455; text-transform:uppercase; letter-spacing:.08em; font: .68rem/1.4 var(--mono); }
+.sign-count { display:inline-block; margin-left:7px; padding:2px 6px; border:1px solid #d4dfcf; border-radius:12px; color:#3e5944; letter-spacing:0; text-transform:none; }
+.approval-evidence { display:flex; align-items:center; flex-wrap:wrap; gap:9px; padding:11px 18px; border-top:1px solid #eddec8; background:#fff7e9; color:#674018; }
+.approval-evidence > svg { flex:none; }.approval-evidence > p { flex:1; min-width:min(200px,100%); font-size:.84rem; }
+.approval-evidence button { font-size:.76rem; }
+.sign-editor { padding:16px 20px 19px; border-top:1px solid #cbdac9; background:#f8faf5; scroll-margin:15px; }
+.sign-editor:focus { outline:none; }.sign-editor:focus-visible { outline:2px solid var(--positive); outline-offset:-3px; }
+.sign-editor-heading, .sign-reason > div { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.sign-editor-heading { margin-bottom:13px; }.sign-editor-heading h3 { font-size:1.08rem; }.sign-editor-heading p { margin:4px 0 0; color:var(--muted); font-size:.83rem; }
+.sign-editor .action-form { max-width:660px; }.sign-editor .action-form > button { justify-self:start; }
+.sign-reason { display:grid; gap:5px; }.sign-reason small { font-size:.72rem; color:var(--muted); }.sign-reason button { min-height:28px; font-size:.75rem; }
+.sign-actions { display:flex; flex-wrap:wrap; gap:7px; }.approval-person button.primary { background:#244738; border-color:#244738; }
+.approval-person button:disabled { opacity:.65; }
+.sign-packets { margin:0 0 13px; max-width:660px; font-size:.84rem; }.sign-packets > summary { color:#275443; font-weight:600; }.sign-packets[open] > summary { margin-bottom:6px; }
+.approval-approve .approval-heading { background:#dff1c0; }.approval-approve .approval-heading h2 { display:flex; align-items:center; gap:8px; color:#25492c; }
+.approval-refer .approval-heading, .approval-decline .approval-heading { background:#fff0db; }
 .approval-columns ul, .approval-inbox ul { list-style:none; padding:0; margin:0; }
 .approval-person { display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:7px 0; }
 .person-icon { flex:none; width:31px; height:31px; border-radius:50%; display:grid; place-items:center; background:#edf3e8; color:#395a43; }

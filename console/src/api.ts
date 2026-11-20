@@ -31,9 +31,11 @@ export interface ApprovalRecipient extends StaffContact {
   sent_at: string | null
 }
 export interface HumanApproval {
+  owner: StaffContact
   reviewers: ApprovalRecipient[]
   final: ApprovalRecipient
   can_send: boolean
+  evidence_action: 'verify' | 'attach_invoice' | null
   stage: 'preparing' | 'other_mode' | 'ready' | 'review' | 'decision' | 'closed'
 }
 
@@ -121,6 +123,7 @@ export interface CaseFile extends FileBase {
   invoice_ref: string | null
   invoice_document_id: string
   within_mandate: boolean
+  clearance_issue: string | null
   mandate_currency: string
   mandate_minor: number | null
   headroom_after_minor: number | null

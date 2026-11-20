@@ -21,15 +21,15 @@ The routing diagram follows the request from the originating desk through the or
 
 Click **Send for desk review** under the recommendation. Each named reviewer receives the current revision in **My approvals**. For a payment exception, Sam Reed and Amir Cole each review and sign. Once both have signed and the evidence checks pass, Redwood sends the request to **Ari Fox** for a final decision. Ari can approve the request or refer it for further review. The case shows each signature and who still needs to act.
 
-In the local demo, **Open demo desk** next to a name takes you directly to that person’s action on the same case. **My approvals** shows their inbox, and **Open case** shows the evidence. A persistent staff deployment uses individual tokens. The preloaded walkthrough cases reach their reviewers automatically when you run analysis.
+In the **Human approval** panel, click **Review finding** for your desk or **Review as** beside a colleague’s name in the local demo. The form shows the signer, revision and evidence. Enter a reason or click **Use demo reason**, then **Sign desk finding**. The signature count updates immediately. **Final approve** opens the assigned officer’s decision form once all required desks have cleared. Staff deployments use individual tokens. Preloaded walkthrough cases reach their reviewers automatically when you run analysis.
 
 Setup installs the dependencies, builds the React console, creates the six original demo identities and two identities per specialist desk, seeds SQLite and prepares evidence worksheets. An existing checkout can run `make seed` and `make build`, then restart its server to pick up the new directory. Setup keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation. The console uses Neue Haas Grotesk Display when installed and bundles Inter, IBM Plex Mono and its icons for offline use. [Bundled font and icon licenses](console/public/design-licenses.txt)
 
 ## Try a specialist desk
 
 1. Choose **Corporate banking → Payments & Cash**. The analyst’s dashboard opens with two cases. Select **PAY-001** and click **Run analysis**. The routing map follows evidence review, policy review and the handover draft.
-2. Open the case as **Sam Reed**, inspect the return-match record, enter a reason and click **Sign desk review**. In the Human approval panel, open **Amir Cole**’s demo desk and sign the Operations review.
-3. The case now shows delivery to **Ari Fox** for final approval. Open Ari’s demo desk or select the case in Ari’s **My approvals**. Enter a reason and click **Approve request** to confirm the return match, or **Refer for further review**. The outcome and its reference appear in the file.
+2. As **Sam Reed**, click **Review finding**, inspect the return-match record, enter a reason and click **Sign desk finding**. Click **Review as Amir Cole** to sign the Operations finding on the same screen.
+3. Under **Ari Fox**, click **Final approve**. Inspect the signed packet, enter a reason and click **Final approve** to confirm the return match, or **Refer for further review**. The dashboard identifies the person who made the decision. The case workspace includes the outcome reference.
 4. Try **PAY-002** as the analyst for an incomplete record. **Verify supporting record** creates revision 2. Run the organizer again to prepare that revision for the human reviewers. To submit another payment, click **New request**, choose **Payment exception triage**, enter the payment details and click **Submit request**.
 
 Use the four department groups or search for a desk. Each specialist has its own examples, prompts, evidence and final action. M&A, AML & Financial Crime and Regulatory Surveillance keep all three drafting tasks inside the bank. The other 23 specialist desks use BRANE in live mode. All outcomes are simulated internal records. [Browse the 26 desks and their examples](docs/department-workflows.md) · [See the organizer running a payment case](docs/evidence/specialist-workflow.jpg)
@@ -47,13 +47,13 @@ Open the [live staff console](http://127.0.0.1:8001). Choose **Coverage**, then 
 
 ## Walk the case
 
-Choose the named role on the desk picker. The dashboard refreshes automatically while visible. Use **Open case** for findings, messages and decisions. From that screen, **Switch desk** opens the picker and returns the next assigned reviewer directly to the same case. In the case workspace, click **Refresh** when returning to an already-open tab.
+Choose the named role on the desk picker. The dashboard, case workspace and personal inbox refresh automatically while visible. Use **Human approval** to sign or inspect the packet, and **Open case** for messages and case history.
 
 1. **Coverage** (`coverage`) selects `LC-001` in the queue and clicks **Run analysis**.
-2. **Credit Risk** (`credit_risk`) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.
-3. **Coverage** refreshes, selects the Compliance request under **Attach supplier invoice**, enters an evidence note, then clicks **Attach invoice and revise file**. Click **Run analysis** for revision 2. The hold stays open and the earlier Credit signature is historical.
-4. **Trade Finance** (`trade_finance`) and **Credit Risk** each sign **Clear** on revision 2. **Compliance** chooses **Clear**, selects its open hold, selects `DOC-INV-01@1` as the reviewed evidence, enters a reason and signs.
-5. **Final officer** (`final_officer`) selects **Approve**, enters a reason and clicks **Record final decision**. **Operations** (`operations`) clicks **Simulate issuance**. Refresh the case to see the same saved receipt.
+2. Click **Review as Asha Reed** for Credit Risk, choose **Clear**, enter a reason and click **Sign desk finding**. **Noor Bakker** in Compliance chooses **Hold** and **Invoice required**, enters a reason and clicks **Sign hold finding**. Coverage receives the request.
+3. Click **Attach supplier invoice** to open **Mira Vos**’s evidence form. Select the Compliance request, enter an evidence note and click **Attach invoice and revise file**. Click **Run analysis** for revision 2. The hold stays open and the earlier Credit signature is historical.
+4. **Leon Park** in Trade Finance and **Asha Reed** each sign **Clear** on revision 2. **Noor Bakker** selects the open hold, cites `DOC-INV-01@1`, enters a reason and clicks **Release hold and sign**.
+5. With **3 of 3 signed**, click **Final approve** beside **Eva Lin**. Confirm the decision and reason in Eva’s form. The dashboard shows **Approved by Eva Lin**. **Operations** can then open the case and click **Simulate issuance**.
 
 `LC-002` starts with a complete invoice. Use it to demonstrate that a Compliance hold alone prevents final approval. `make reset` replaces the local demo cases with their original seeded state and keeps logins and evidence worksheets. Stop the local server before resetting a rehearsal.
 

@@ -70,6 +70,9 @@ def test_each_form_submits_and_routes(desk, workflow, example):
     assert case['recommendation']['tone'] == ('review' if example == 0 else 'attention')
     plan = case['human_approval']
     assert plan['stage'] == 'ready' and plan['can_send'] and plan['final']['status'] == 'waiting'
+    assert plan['owner'] == form['owner'] and plan['owner']['role'] == form['owner_role']
+    expected_evidence = 'attach_invoice' if workflow == departments.TRADE else 'verify'
+    assert plan['evidence_action'] == (expected_evidence if example == 1 else None)
     assert [p['id'] for p in plan['reviewers']] == [p['id'] for p in form['reviewers']]
     assert plan['final']['id'] == form['final']['id'] and plan['final']['id'] not in {p['id'] for p in plan['reviewers']}
     if example == 0:
@@ -80,7 +83,7 @@ def test_each_form_submits_and_routes(desk, workflow, example):
         assert sent['final']['sent_at'] is None
 
 
-@pytest.mark.parametrize('workflow', [departments.TRADE, 'payments-cash-correspondent'])
+@pytest.mark.parametrize('workflow', [departments.TRADE, *departments.CURRENT])
 def test_deliveries_require_named_people_and_a_human_final_decision(desk, workflow):
     form = desk[1][workflow]
     cid = submit(desk, form).json()['case_id']
@@ -116,7 +119,8 @@ def test_deliveries_require_named_people_and_a_human_final_decision(desk, workfl
     for role in reviewers:
         assert inbox(desk, cid, role) == 'review'
     assert inbox(desk, cid, final) is None and approve(final).status_code == 409
-    assert inbox(desk, cid, 'coverage' if specialist else 'operations') is None
+    other = next(role for role in ('coverage', 'operations', 'credit_risk', 'compliance') if role not in [*reviewers, final])
+    assert inbox(desk, cid, other) is None
 
     for role in reviewers:
         assert inbox(desk, cid, final) is None
@@ -142,6 +146,7 @@ def test_deliveries_require_named_people_and_a_human_final_decision(desk, workfl
     assert approve(final).status_code == 201
     closed = file(desk, cid, final)
     assert closed['decision']['actor_id'] == form['final']['id'] and closed['human_approval']['final']['status'] == 'approve'
+    assert {r['actor_id'] for r in closed['reviews']} == {p['id'] for p in form['reviewers']}
     assert inbox(desk, cid, final) is None
 
 

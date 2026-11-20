@@ -308,6 +308,8 @@ def test_bank_enforces_credit_and_officer_limits(bank, fixture, amount):
     credit = review(bank, path, case, "credit_risk")
     if fixture == "LC-INSUFFICIENT":
         assert credit.status_code == 409 and credit.json()["code"] == "evidence_incomplete"
+        assert read(bank, path, "credit_risk")["clearance_issue"] == credit.json()["message"]
+        assert read(bank, path, "compliance")["clearance_issue"] is None
         assert read(bank, path)["status"] == "in_review"
     else:
         ok(credit)

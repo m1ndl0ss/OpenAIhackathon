@@ -85,6 +85,13 @@ def capacity(s):
     return value is not None and value >= 0
 
 
+def clearance_issue(s, desk):
+    if desk == "trade_finance" and not valid_invoice(s):
+        return "Coverage must attach the current supplier invoice before Trade Finance can clear this file."
+    if desk == "credit_risk" and not capacity(s):
+        return "The facility record must show enough available credit before Credit Risk can clear this file."
+
+
 def current_headroom(s):
     return headroom(s) if facility_source(s) in s["evidence_refs"] else None
 
@@ -257,7 +264,7 @@ def detail(db, r, s, actor, configured_mode="fixture"):
         permitted.append("request")
         if any(q["to_desk"] == role and q["status"] == "open" for q in requests):
             permitted.append("reply")
-        if role == "coverage" and not s["invoice_ref"]:
+        if role == "coverage" and not valid_invoice(s):
             permitted.append("attach_invoice")
         if role == "final_officer" and status == "ready_for_decision":
             permitted.append("decide")
@@ -308,6 +315,7 @@ def detail(db, r, s, actor, configured_mode="fixture"):
         "mandate_currency": s["mandate_currency"],
         "within_mandate": within_mandate(s),
         "headroom_after_minor": current_headroom(s) if role in ("credit_risk", "final_officer") else None,
+        "clearance_issue": clearance_issue(s, role),
         "permitted_actions": permitted,
         "reviews": findings,
         "holds": holds,
@@ -394,8 +402,9 @@ def review(db, r, s, actor, body):
     if body.disposition == "clear":
         if body.reason_code != "CHECKS_COMPLETE" or body.request_to or body.required_evidence:
             raise Problem(422, "invalid_finding", "Choose the clearance reason without a new request.")
-        if (desk == "trade_finance" and not valid_invoice(s)) or (desk == "credit_risk" and not capacity(s)):
-            conflict("evidence_incomplete", "This desk's required evidence does not support clearance.")
+        issue = clearance_issue(s, desk)
+        if issue:
+            conflict("evidence_incomplete", issue)
         if set(body.resolves_hold_ids) != owned:
             conflict(
                 "hold_resolution_required",
