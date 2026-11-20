@@ -462,7 +462,7 @@ To restore the delivered open policy:
 | --- | --- |
 | `evidence/MAIN_Five_Tests_Template.csv` | hand-in: T1–T5 + E1–E5, from the latest `v2` run only |
 | `evidence/clearance_policy_matrix.csv` | hand-in: Ilaria's cited CB-01…CB-11 with our columns turned from *Planned/Expected* into *Observed*. Her legal column is untouched |
-| `evidence/clearance_policy_matrix.source.csv` | Ilaria's original, unmodified, for provenance |
+| `evidence/clearance_policy_matrix.source.csv` | Ilaria's file as she maintains it (columns C and D are hers); revision history in git |
 | `evidence/MAIN_Policy_Matrix_Template.csv` | rule-level R1–R8 view generated from `policy/hardened-v2.json`; legal cells marked `TO VERIFY (Ilaria)` |
 | `evidence/REPORT.md` | this file |
 | `evidence/redwood-hardened-v2_*.csv` | 3 runs × 20 checks, template columns |

@@ -4,15 +4,21 @@ Turn Ilaria's cited policy matrix from "Planned / Expected" into "Observed".
 
   python3 scripts/update_clearance_matrix.py
 
-  in:  evidence/clearance_policy_matrix.source.csv   Ilaria's file, never modified
+  in:  evidence/clearance_policy_matrix.source.csv   Ilaria's file, as she maintains it
   out: evidence/clearance_policy_matrix.csv          the deliverable
+
+The source file carries Ilaria's own revisions (she owns columns C and D and
+revises them directly); git holds the history. This script never edits her
+columns, it only rewrites Matvei's on top.
 
 Division of ownership (spec §9: "Ilaria owns the cited matrix. Matvei owns
 enforcement and evidence."):
 
-  * Ilaria's column 4, "Legal or governance source", is NOT touched by this
-    script. It is her cited work -- Wwft, DORA, Basel CRI10, CJEU C-184/20, EDPB
-    01/2025, the Dutch implementation acts -- and nothing here second-guesses it.
+  * Ilaria's columns C ("Why needed") and D ("Legal or governance source") are
+    NOT touched by this script. They are her cited work -- Wwft, DORA, Basel
+    CRI10, CJEU C-184/20, EDPB 01/2025, the Dutch implementation acts -- and
+    nothing here second-guesses them. Where a measurement qualifies something she
+    states, the qualification goes in Matvei's columns and points at hers.
   * Matvei's columns are rewritten from measured evidence: how the rule is
     actually enforced, the product gap actually observed, the actual X-Brane-*
     headers, and the test IDs that prove it.
@@ -117,9 +123,11 @@ UPDATES: Dict[str, Dict[str, str]] = {
         COL_TESTS: "E3 / T5b  (FIU_REPORT_STATUS: not implemented, unverified)",
     },
     "CB-04": {
-        COL_DECISION: "LOCAL ONLY (not BLOCK -- see enforcement cell)",
+        COL_DECISION: "LOCAL ONLY for the classification step; BLOCK for any use in the "
+                      "commercial assessment",
         COL_ENFORCED:
-            f"CONTRADICTED BY MEASUREMENT. Two corrections to the planned text. (1) The seven "
+            f"CORRECTED FROM THE PLANNED TEXT (the original is in clearance_policy_matrix."
+            f"source.csv; earlier revisions in git). Two corrections. (1) The seven "
             f"special categories are configured LOCAL, not refuse, on {POLICY}: refusing them "
             "outright would block the legitimate mandate-validity question the desk has to answer. "
             "Refusal is reserved for USING a protected attribute in the assessment "
@@ -244,12 +252,16 @@ UPDATES: Dict[str, Dict[str, str]] = {
         COL_TESTS: "T2 (shows the exposure) -- no BRANE rule, unverified",
     },
     "CB-10": {
-        COL_DECISION: "LOCAL ONLY (not BLOCK -- see enforcement cell)",
+        COL_DECISION: "LOCAL ONLY",
         COL_ENFORCED:
             f"CORRECTED. The five civil identifiers are configured LOCAL on {POLICY}, not refuse. "
             "Refusing them would stop a Compliance classification step on a restricted attachment, "
             "which the workflow needs; local keeps the raw value inside the perimeter and still "
-            "answers. Observed firing: category:DATE_OF_BIRTH->local in E3.",
+            "answers. Observed firing: category:DATE_OF_BIRTH->local in E3. ONE QUALIFICATION ON "
+            "COLUMN C: 'the value stays inside the bank' holds only where the detector applies the "
+            "right label. We measured a case where it did not -- a passport number came back "
+            "labelled ACCOUNT_NUMBER, whose action is placeholder, so it was pseudonymised and sent "
+            "to the cloud model instead of kept local. See the product gap note.",
         COL_GAP:
             "MEASURED DOWNGRADE: the passport number NX1234567 was labelled ACCOUNT_NUMBER, not "
             "PASSPORT, so it was pseudonymised and sent to the cloud model instead of being kept "
