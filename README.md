@@ -17,7 +17,7 @@ Setup installs the dependencies, builds the React console, creates six private s
 
 ## Walk the case
 
-Choose the named role on the desk picker. The dashboard refreshes automatically while visible. Use **Open case** for findings, messages and decisions. In the case workspace, click **Refresh** when returning to an already-open tab.
+Choose the named role on the desk picker. The dashboard refreshes automatically while visible. Use **Open case** for findings, messages and decisions. From that screen, **Switch desk** opens the picker and returns the next assigned reviewer directly to the same case. In the case workspace, click **Refresh** when returning to an already-open tab.
 
 1. **Coverage** (`coverage`) selects `LC-001` in the queue and clicks **Run analysis**.
 2. **Credit Risk** (`credit_risk`) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.
@@ -41,7 +41,7 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 | Command | Result |
 | --- | --- |
 | `make test` | Run the backend and workspace checks against disposable data. |
-| `make evidence` | Execute E3/E4 and write the observed fixture results under `.clearance/evidence/`. |
+| `make evidence` | Exercise the E3 hold and E4 revision/receipt controls, score both agent scenarios, and write the fixture reports under `.clearance/evidence/`. |
 | `python -m tools.agent_utility` | Score both synthetic revisions against Ilaria's answer key and export `.clearance/evidence/agent-utility-fixture.json`. |
 | `make doctor` | Check local database, logins, console build and configured mode. |
 | `make brane-check` | Check that the assigned live endpoint accepts the credential for a read-only team policy request. |
@@ -50,4 +50,4 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 
 The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Export overrides in the shell before starting the app. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md) · [Planned workflows](docs/team-build-plan.md#2-support-multiple-banking-workflows)
 
-The packet builder uses server-computed facts and a versioned synthetic policy library. The model drafts within a closed set of review wording for each desk. Unsupported numbers, references, requests or wording leave the revision unsealed. After Matvei confirms the live settings, `python -m tools.agent_utility --mode live` exports a separate live scorecard. Missing model usage, manual timing and staff timing remain explicit in the report. [BRANE setup](policy/README.md) · [Case answer key](legal/case-answer-key.md)
+The bank calculates capacity, looks up evidence and retrieves the current synthetic policy. The drafting prompt contains the desk, the next-step code and two approved wordings. The bank validates the returned wording and attaches the local figures and citations. After Matvei confirms the live settings, `python -m tools.agent_utility --mode live` exports a separate live scorecard. [BRANE setup](policy/README.md) · [Case answer key](legal/case-answer-key.md)

@@ -46,6 +46,8 @@ const runLabels: Record<string, string> = {
   pending: 'Processing',
   sealed: 'Packet sealed',
   analysis_unavailable: 'Unavailable',
+  analysis_refused: 'Analysis refused',
+  analysis_invalid: 'Draft failed validation',
   superseded: 'Superseded',
 }
 const tracks = [
@@ -110,6 +112,8 @@ function eventName(action: string) {
     'run.started': 'Organizer received request',
     'run.sealed': 'Review packets sealed',
     'run.analysis_unavailable': 'Analysis unavailable',
+    'run.analysis_refused': 'BRANE refused the request',
+    'run.analysis_invalid': 'Draft failed validation',
     'run.superseded': 'Run superseded',
     'review.hold': 'Desk placed hold',
     'review.clear': 'Desk signed clear',
@@ -160,7 +164,9 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
       ?.action.split('.')
       .at(-1)
     if (stage === 'prepared' || run?.status === 'sealed') return 'Packet ready'
-    if (run?.status === 'analysis_unavailable') return 'Unavailable'
+    if (run?.status.startsWith('analysis_')) {
+      return stage === 'started' ? runLabels[run.status] ?? 'Stopped' : 'No packet'
+    }
     if (run?.status === 'pending' && stage === 'started') return 'Working'
     return 'Waiting'
   })

@@ -47,6 +47,7 @@ test:
 
 evidence:
 	$(ENV_PY) -m tools.workflow_evidence --output .clearance/evidence/workflow-fixture.csv
+	$(ENV_PY) -m tools.agent_utility --mode fixture
 
 reset:
 	$(ENV_PY) -m backend.demo reset

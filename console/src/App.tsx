@@ -101,8 +101,12 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
   </>
 }
 
-function Workspace({ token, staff, end }: { token: string; staff: Staff; end: () => void }) {
-  const [view, setView] = useState<'dashboard' | 'case'>('dashboard')
+type WorkspaceView = 'dashboard' | 'case'
+
+function Workspace({ token, staff, end, initialView }: {
+  token: string; staff: Staff; end: (nextView?: WorkspaceView) => void; initialView: WorkspaceView
+}) {
+  const [view, setView] = useState<WorkspaceView>(initialView)
   const [syncError, setSyncError] = useState('')
   const [queue, setQueue] = useState<Summary[]>([])
   const [selected, setSelected] = useState('')
@@ -172,7 +176,7 @@ function Workspace({ token, staff, end }: { token: string; staff: Staff; end: ()
       setError(textError(err)); return false
     } finally { lock.current = false; setBusy(false) }
   }
-  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={end}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
+  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={() => end(staff.desk_picker ? view : 'dashboard')}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
     <div className="shell"><aside className="sidebar">
       <nav className="workspace-nav" aria-label="Workspace">
         <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><LayoutDashboard size={17}/>Agent dashboard</button>
@@ -210,7 +214,9 @@ export default function App() {
   const [saved, setSaved] = useState(() => tabValue(sessionKey))
   const [restoreError, setRestoreError] = useState('')
   const [attempt, setAttempt] = useState(0)
-  const end = useCallback(() => {
+  const [initialView, setInitialView] = useState<WorkspaceView>('dashboard')
+  const end = useCallback((nextView: WorkspaceView = 'dashboard') => {
+    setInitialView(nextView)
     tabValue(sessionKey, null)
     setSaved(null); setRestoreError(''); setSession(null)
   }, [])
@@ -228,9 +234,9 @@ export default function App() {
     return () => { active = false }
   }, [saved, attempt, end])
   if (saved) return <main className="login-page"><div className="login-bar"><Brand /></div><div className="login-center"><section className="login-card action-form">
-    <h1>Staff session</h1>{restoreError ? <><Notice danger>{restoreError}</Notice><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={end}>Sign out</button></> : <p role="status">Verifying your staff credential…</p>}
+    <h1>Staff session</h1>{restoreError ? <><Notice danger>{restoreError}</Notice><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={() => end()}>Sign out</button></> : <p role="status">Verifying your staff credential…</p>}
   </section></div></main>
-  return session ? <Workspace {...session} end={end} /> : <SignIn start={(staff, token) => {
+  return session ? <Workspace {...session} initialView={initialView} end={end} /> : <SignIn start={(staff, token) => {
     tabValue(sessionKey, token); setSession({ staff, token })
   }} />
 }

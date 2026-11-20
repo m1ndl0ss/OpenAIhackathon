@@ -350,7 +350,7 @@ def test_live_adapter_contract_can_seal_both_revisions(bank, monkeypatch):
     monkeypatch.setattr(brane_client, "live_run_config", lambda: ("", "", "hardened-test", "test-model"))
 
     def governed_reply(**request):
-        packet = json.loads(request["messages"][1]["content"])["approved_packets"][1]
+        packet = {"summary": json.loads(request["messages"][1]["content"])["wordings"][1]}
         return ModelTurn("local", json.dumps(packet), {"provider_request_id": "synthetic-trace"})
 
     monkeypatch.setattr(brane_client, "send_turn", governed_reply)

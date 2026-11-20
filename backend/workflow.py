@@ -284,7 +284,7 @@ def validate_packets(s, packets):
     if not isinstance(packets, dict) or set(packets) != set(expected):
         raise ValueError("Incomplete desk bundle")
     for desk, packet in packets.items():
-        validate_draft(packet, expected[desk]["approved_packets"])
+        validate_draft(packet, expected[desk])
 
 
 def local_document(s):

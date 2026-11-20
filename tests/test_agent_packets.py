@@ -65,7 +65,7 @@ def test_live_calls_receive_only_their_desk_context(monkeypatch, configured_live
     def send(**turn):
         case_payload = json.loads(turn["messages"][1]["content"])
         seen.append((turn, case_payload))
-        return ModelTurn("local", json.dumps(case_payload["approved_packets"][1]), {
+        return ModelTurn("local", json.dumps({"summary": case_payload["wordings"][1]}), {
             "usage": {"total_tokens": 20}, "provider_request_id": "provider-demo",
         })
 
@@ -75,21 +75,22 @@ def test_live_calls_receive_only_their_desk_context(monkeypatch, configured_live
     assert result.model_calls == len(seen) == 3
     for turn, context in seen:
         assert turn["case_ref"] == "LC-001" and turn["tool_schema"] == ()
-        assert "SCREEN-" not in json.dumps(context)
-        is_credit = turn["task"] == "draft_credit_risk"
-        assert ("capacity" in context) == is_credit
-        assert ("FAC-USD-01" in json.dumps(context)) == is_credit
+        assert set(context) == {"desk", "next_step", "wordings"}
+        assert turn["task"] == "draft_" + context["desk"]
+        assert len(context["wordings"]) == 2
+        for private_value in ("LC-001", "FAC-USD-01", "ORG_DEMO", "SCREEN-", "DOC-INV-", "2027-", "00000"):
+            assert private_value not in json.dumps(turn["messages"])
         assert turn["timeout"] <= 60
 
 
 @pytest.mark.parametrize("invalid", ["amount", "source", "text", "owner", "extra", "duplicate"])
 def test_invalid_model_output_never_yields_a_bundle(monkeypatch, configured_live, invalid):
     def send(**turn):
-        packet, *_ = json.loads(turn["messages"][1]["content"])["approved_packets"]
+        packet = {"summary": json.loads(turn["messages"][1]["content"])["wordings"][0]}
         if invalid == "amount":
-            packet["facts"][0]["value"] += 1
+            packet["facts"] = [{"field": "amount_minor", "value": 1}]
         elif invalid == "source":
-            packet["evidence_refs"].append("SCREEN-01@1")
+            packet["evidence_refs"] = ["SCREEN-01@1"]
         elif invalid == "text":
             packet["summary"] = "Approved with unsupported information."
         elif invalid == "owner":
@@ -98,7 +99,7 @@ def test_invalid_model_output_never_yields_a_bundle(monkeypatch, configured_live
             packet["signature"] = "approve"
         data = json.dumps(packet)
         if invalid == "duplicate":
-            data = '{"desk":"compliance",' + data[1:]
+            data = '{"summary":"other",' + data[1:]
         return ModelTurn("direct", data)
 
     monkeypatch.setattr(brane_client, "send_turn", send)
