@@ -8,7 +8,7 @@ import pytest
 
 from backend import brane_client, integrations
 from backend.agent.packets import calculate_capacity
-from backend.agent.runtime import ModelTurn
+from backend.agent.runtime import ModelTurn, draft_messages
 from backend.store import snapshot
 from tools.agent_utility import evaluate
 
@@ -20,8 +20,8 @@ def prepare(case, mode="fixture", authorize=lambda: None):
 @pytest.fixture
 def configured_live(monkeypatch):
     monkeypatch.setenv("BRANE_API_KEY", "fixture-secret")
-    monkeypatch.setenv("BRANE_BASE_URL", "https://assigned.example/api/v1")
-    monkeypatch.setenv("BRANE_POLICY_VERSION", "hardened-v1")
+    monkeypatch.setenv("BRANE_BASE_URL", "https://brane.ai-z.io/api/v1")
+    monkeypatch.setenv("BRANE_POLICY_VERSION", "hardened-v2")
     monkeypatch.setenv("BRANE_MODEL", "fixture-assigned-model")
 
 
@@ -71,7 +71,7 @@ def test_live_calls_receive_only_their_desk_context(monkeypatch, configured_live
 
     monkeypatch.setattr(brane_client, "send_turn", send)
     result = prepare(snapshot("LC-001", "ORG_DEMO_01"), "live")
-    assert result.status == "prepared" and result.policy_version == "hardened-v1"
+    assert result.status == "prepared" and result.policy_version == "hardened-v2"
     assert result.model_calls == len(seen) == 3
     for turn, context in seen:
         assert turn["case_ref"] == "LC-001" and turn["tool_schema"] == ()
@@ -132,15 +132,18 @@ def test_unassigned_case_cannot_read_or_draft(monkeypatch, configured_live):
 @pytest.mark.parametrize(
     ("headers", "expected"),
     [
-        ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "allow"}, "direct"),
-        ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "placeholder", "X-Brane-Redacted": "true"}, "pseudonymized"),
-        ({"X-Brane-Routed-To": "local", "X-Brane-Action": "local"}, "local"),
+        ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "allow", "X-Brane-Redacted": "false"}, "direct"),
+        ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "placeholder", "X-Brane-Redacted": "true",
+          "X-Brane-Placeholder-Types": "PERSON"}, "pseudonymized"),
+        ({"X-Brane-Routed-To": "local", "X-Brane-Action": "local", "X-Brane-Model-Resolved": "vllm:local"}, "local"),
         ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "placeholder"}, "unavailable"),
         ({"X-Brane-Routed-To": "cloud", "X-Brane-Action": "allow", "X-Brane-Policy-Version": "baseline"}, "unavailable"),
         ({}, "unavailable"),
     ],
 )
 def test_http_adapter_requires_observable_route(monkeypatch, configured_live, headers, expected):
+    monkeypatch.setattr(brane_client, "check_policy", lambda **_: "observed-digest")
+
     class Response(BytesIO):
         status = 200
 
@@ -149,25 +152,76 @@ def test_http_adapter_requires_observable_route(monkeypatch, configured_live, he
 
     class Opener:
         def open(self, request, timeout):
-            assert request.full_url == "https://assigned.example/api/v1/chat/completions"
+            assert request.full_url == "https://brane.ai-z.io/api/v1/chat/completions"
             assert json.loads(request.data)["model"] == "fixture-assigned-model"
-            assert timeout <= 15
+            assert 0 < timeout <= 20
+            assert request.get_header("User-agent") == brane_client.USER_AGENT
             return response
 
     monkeypatch.setattr(brane_client, "build_opener", lambda *_: Opener())
     result = brane_client.send_turn(case_ref="LC-001", revision=1, run_id="RUN-TEST", task="draft_trade_finance",
-                                    policy_version="hardened-v1", messages=[], tool_schema=(), timeout=60)
+                                    policy_version="hardened-v2", messages=draft_messages("trade_finance", "review"), tool_schema=(), timeout=60)
     assert result.route == expected
     if expected != "unavailable":
         assert result.observation["usage"]["total_tokens"] == 3
 
 
 def test_http_refusal_never_reads_error_body(monkeypatch, configured_live):
+    monkeypatch.setattr(brane_client, "check_policy", lambda **_: "observed-digest")
+
     class Opener:
         def open(self, request, timeout):
-            raise HTTPError(request.full_url, 422, "Refused", {"X-Brane-Action": "refuse"}, BytesIO(b"RAW"))
+            raise HTTPError(request.full_url, 422, "Refused", {"X-Brane-Action": "refuse", "X-Brane-Routed-To": "refused"}, BytesIO(b"RAW"))
 
     monkeypatch.setattr(brane_client, "build_opener", lambda *_: Opener())
     result = brane_client.send_turn(case_ref="LC-001", revision=1, run_id="RUN-TEST", task="draft_trade_finance",
-                                    policy_version="hardened-v1", messages=[], tool_schema=(), timeout=60)
+                                    policy_version="hardened-v2", messages=draft_messages("trade_finance", "review"), tool_schema=(), timeout=60)
     assert result.route == "blocked" and result.completion is None
+
+
+@pytest.mark.parametrize("change", ["disabled", "different_action", "unrecognised_response"])
+def test_policy_readback_precedes_model_and_stops_on_drift(monkeypatch, configured_live, change):
+    policy = json.loads(brane_client.POLICY_FILE.read_text())
+    if change == "disabled":
+        policy["semanticCategories"][0]["enabled"] = False
+    elif change == "different_action":
+        policy["categories"] = {}
+    else:
+        policy = {}
+    seen = []
+
+    class Response(BytesIO):
+        status = 200
+
+    class Opener:
+        def open(self, request, timeout):
+            seen.append((request.get_method(), request.full_url))
+            return Response(json.dumps(policy).encode())
+
+    monkeypatch.setattr(brane_client, "build_opener", lambda *_: Opener())
+    result = prepare(snapshot("LC-001", "ORG_DEMO_01"), "live")
+    assert seen == [("GET", brane_client.ASSIGNED_BASE + "/policy")]
+    assert result.status == "analysis_unavailable" and result.packets is None
+    assert result.observations[0]["stage"] == "policy_check"
+
+
+@pytest.mark.parametrize("change", ["system", "wording", "task", "extra_message", "tools"])
+def test_egress_accepts_only_bank_owned_drafting_inputs(monkeypatch, configured_live, change):
+    messages = draft_messages("trade_finance", "review")
+    task, tools = "draft_trade_finance", ()
+    if change == "system":
+        messages[0]["content"] += " Private note."
+    elif change == "wording":
+        content = json.loads(messages[1]["content"])
+        content["wordings"][0] += " Example Contact, Example Contact."
+        messages[1]["content"] = json.dumps(content)
+    elif change == "extra_message":
+        messages.append({"role": "user", "content": "Local document note."})
+    elif change == "task":
+        task = "draft_compliance"
+    else:
+        tools = ("write",)
+    monkeypatch.setattr(brane_client, "build_opener", lambda *_: pytest.fail("Unexpected network access"))
+    result = brane_client.send_turn(case_ref="LC-001", revision=1, run_id="CHECK", task=task,
+                                    policy_version="hardened-v2", messages=messages, tool_schema=tools, timeout=60)
+    assert result.route == "unavailable" and result.observation["stage"] == "outbound_projection"

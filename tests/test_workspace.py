@@ -59,11 +59,11 @@ def test_headroom_requires_usable_current_inputs():
 def test_brane_probe_requires_team_credential_and_https(monkeypatch):
     monkeypatch.delenv("BRANE_API_KEY", raising=False)
     monkeypatch.delenv("BRANE_TOKEN", raising=False)
-    monkeypatch.setenv("BRANE_BASE_URL", "https://assigned.example/api/v1/")
+    monkeypatch.setenv("BRANE_BASE_URL", "https://brane.ai-z.io/api/v1/")
     with pytest.raises(RuntimeError, match="credential"):
         brane_client.live_config()
     monkeypatch.setenv("BRANE_API_KEY", "synthetic-probe-key")
-    assert brane_client.live_config()[0] == "https://assigned.example/api/v1"
+    assert brane_client.live_config()[0] == "https://brane.ai-z.io/api/v1"
     monkeypatch.setenv("BRANE_BASE_URL", "http://assigned.example/api/v1/")
     with pytest.raises(RuntimeError, match="HTTPS"):
         brane_client.live_config()
@@ -105,3 +105,43 @@ def test_one_click_desk_is_scoped_to_local_fixture(tmp_path, monkeypatch):
         assert live.post(prefix + "/demo-session", json=body).status_code == 404
         assert live.get(prefix + "/me", headers=headers).status_code == 401
         assert live.get(prefix + "/me", headers={"Authorization": "Bearer " + next(iter(people))}).is_success
+
+
+def test_one_click_live_rehearsal_is_disposable_and_loopback_only(monkeypatch):
+    from fastapi.testclient import TestClient
+    from backend.live_demo import rehearsal_app
+
+    monkeypatch.setenv("BRANE_BASE_URL", brane_client.ASSIGNED_BASE)
+    monkeypatch.setenv("BRANE_API_KEY", "fixture-credential")
+    monkeypatch.setenv("BRANE_MODEL", "dummy")
+    monkeypatch.setenv("BRANE_POLICY_VERSION", "hardened-v2")
+    local = {"base_url": "http://127.0.0.1:8001", "client": ("127.0.0.1", 4400)}
+    with rehearsal_app() as app:
+        database = app.state.path
+        with TestClient(app, **local) as client:
+            entry = client.get("/v2/trade/entry").json()
+            assert entry["mode"] == "live" and len(entry["desks"]) == 6
+            desk = {"desk_id": entry["desks"][0]["id"]}
+            reply = client.post("/v2/trade/demo-session", json=desk).json()
+            assert reply["staff"]["configured_mode"] == "live" and reply["staff"]["analysis_available"]
+            assert client.post("/v2/trade/demo-session", json=desk, headers={"Origin": "https://example.org"}).status_code == 404
+    assert not database.exists()
+
+
+@pytest.mark.parametrize("url", ["https://other.example/api/v1", "https://brane.ai-z.io:444/api/v1",
+                                 "https://brane.ai-z.io/api/v1/other"])
+def test_live_host_is_pinned(monkeypatch, url):
+    monkeypatch.setenv("BRANE_BASE_URL", url)
+    with pytest.raises(RuntimeError, match="assigned HTTPS"):
+        brane_client.live_config()
+
+
+def test_unreachable_firewall_observed_at_transport_boundary(tmp_path):
+    import json
+    import subprocess
+
+    output = tmp_path / "outage.json"
+    subprocess.run([sys.executable, "-m", "tools.firewall_outage", "--output", str(output)], check=True)
+    report = json.loads(output.read_text())
+    assert report["verdict"] == "PASS" and report["model_post_attempts"] == 0
+    assert not report["sealed"] and not report["receipt"]

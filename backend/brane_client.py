@@ -1,121 +1,150 @@
-"""Server-side BRANE policy probe and governed model transport."""
+"""Server-side transport for the assigned AI-Z department and its approved policy."""
 
 import json
 import os
 import re
+from datetime import datetime, timezone
+from pathlib import Path
+from time import monotonic
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import Request, build_opener
 
-from .agent.runtime import ModelTurn
+from scripts.brane_client import ASSIGNED_BASE, USER_AGENT, NoRedirect, policy_hash
 
+from .agent.runtime import ModelTurn, permitted_turn
 
-class _NoRedirect(HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
+POLICY_VERSION = "hardened-v2"
+POLICY_FILE = Path(__file__).resolve().parents[1] / "policy" / f"{POLICY_VERSION}.json"
 
 
 def live_config():
-    base_url = os.getenv("BRANE_BASE_URL", "https://brane.ai-z.io/api/v1").rstrip("/")
-    address = urlsplit(base_url)
-    if (address.scheme != "https" or not address.hostname or address.username is not None
-            or address.password is not None or address.query or address.fragment):
-        raise RuntimeError("BRANE_BASE_URL must be the assigned HTTPS API base URL.")
+    base = os.getenv("BRANE_BASE_URL", ASSIGNED_BASE).rstrip("/")
+    if base != ASSIGNED_BASE:
+        raise RuntimeError("BRANE_BASE_URL must be the assigned HTTPS API base.")
     token = os.getenv("BRANE_API_KEY") or os.getenv("BRANE_TOKEN")
     if not token:
-        raise RuntimeError("Set BRANE_API_KEY to the AI-Z team credential before running the live check.")
-    return base_url, token
-
-
-def check_policy():
-    base_url, token = live_config()
-    request = Request(base_url + "/policy", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
-    try:
-        with build_opener(_NoRedirect()).open(request, timeout=10) as response:
-            if response.status != 200:
-                raise RuntimeError("BRANE did not return the team policy.")
-            policy = json.load(response)
-    except HTTPError as error:
-        raise RuntimeError(f"BRANE policy check returned HTTP {error.code}.") from None
-    except (ValueError, URLError, TimeoutError, OSError):
-        raise RuntimeError("BRANE policy check unavailable. Check the assigned host and network.") from None
-    if not isinstance(policy, dict) or not any(field in policy for field in ("categories", "summary", "routingMode")):
-        raise RuntimeError("BRANE response did not contain a recognised team policy.")
+        raise RuntimeError("Set BRANE_API_KEY to the AI-Z team credential.")
+    return base, token
 
 
 def live_run_config():
     base, token = live_config()
-    policy = os.getenv("BRANE_POLICY_VERSION", "")
+    version = os.getenv("BRANE_POLICY_VERSION", "")
     model = os.getenv("BRANE_MODEL", "")
-    if not all(re.fullmatch(r"[A-Za-z0-9_./:-]{1,100}", value) for value in (policy, model)):
-        raise RuntimeError("Set the assigned BRANE model and configured policy version for live analysis.")
-    return base, token, policy, model
+    if version != POLICY_VERSION or not re.fullmatch(r"[A-Za-z0-9_./:-]{1,100}", model):
+        raise RuntimeError(f"Set the assigned BRANE model and BRANE_POLICY_VERSION={POLICY_VERSION}.")
+    return base, token, version, model
+
+
+def headers_for(token):
+    return {"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT, "Accept": "application/json"}
+
+
+def read_json(response, limit):
+    body = response.read(limit + 1)
+    if len(body) > limit:
+        raise ValueError("Response exceeds the allowed size")
+    return json.loads(body)
+
+
+def check_policy(timeout=10):
+    base, token, _, _ = live_run_config()
+    request = Request(base + "/policy", headers=headers_for(token))
+    try:
+        with build_opener(NoRedirect()).open(request, timeout=timeout) as response:
+            if response.status != 200:
+                raise RuntimeError("The team policy could not be verified.")
+            policy = read_json(response, 262_144)
+        expected = policy_hash(json.loads(POLICY_FILE.read_text(encoding="utf-8")))
+        observed = policy_hash(policy)
+        rules = policy["semanticCategories"]
+        if observed != expected or any(rule.get("enabled") is False for rule in rules):
+            raise RuntimeError("Deployed BRANE policy differs from the committed policy.")
+        return observed
+    except HTTPError as error:
+        with error:
+            raise RuntimeError(f"BRANE policy check returned HTTP {error.code}.") from None
+    except (AttributeError, KeyError, TypeError, ValueError, URLError, TimeoutError, OSError):
+        raise RuntimeError("BRANE policy unavailable or unrecognised.") from None
 
 
 def send_turn(*, case_ref, revision, run_id, task, policy_version, messages, tool_schema, timeout):
+    if tool_schema or not permitted_turn(task, messages):
+        return ModelTurn("unavailable", observation={"stage": "outbound_projection"})
+    deadline = monotonic() + timeout
     try:
         base, token, configured_policy, model = live_run_config()
+        if policy_version != configured_policy:
+            return ModelTurn("unavailable")
+        verified_hash = check_policy(timeout=min(timeout, 10))
     except RuntimeError:
-        return ModelTurn("unavailable")
-    if policy_version != configured_policy or tool_schema:
-        return ModelTurn("unavailable")
+        return ModelTurn("unavailable", observation={"stage": "policy_check"})
 
+    remaining = deadline - monotonic()
+    if remaining <= 0:
+        return ModelTurn("unavailable", observation={"stage": "policy_check", "policy_hash": verified_hash})
     request = Request(
         base + "/chat/completions",
         data=json.dumps({"model": model, "messages": messages, "stream": False}).encode("utf-8"),
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
+        headers={**headers_for(token), "Content-Type": "application/json"}, method="POST",
     )
+    audit = {"policy_hash": verified_hash, "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     try:
-        with build_opener(_NoRedirect()).open(request, timeout=min(timeout, 15)) as response:
+        with build_opener(NoRedirect()).open(request, timeout=min(remaining, 20)) as response:
+            audit.update(observation_for(response.headers, response.status))
             if response.status != 200:
-                return ModelTurn("unavailable")
+                return ModelTurn("unavailable", observation=audit)
             route = {
-                ("cloud", "allow"): "direct",
-                ("cloud", "placeholder"): "pseudonymized",
-                ("local", "local"): "local",
-            }.get((response.headers.get("X-Brane-Routed-To"), response.headers.get("X-Brane-Action")))
-            reported_version = response.headers.get("X-Brane-Policy-Version")
-            if (not route or route == "pseudonymized" and response.headers.get("X-Brane-Redacted") != "true"
+                ("cloud", "allow", "false"): "direct",
+                ("cloud", "placeholder", "true"): "pseudonymized",
+            }.get((audit["routed_to"], audit["action"], audit["redacted"]))
+            if audit["routed_to"] == "local" and audit["action"] == "local" and (audit["model"] or "").startswith("vllm:"):
+                route = "local"
+            reported_version = audit["reported_policy_version"]
+            if (not route or route == "pseudonymized" and not audit["redaction_classes"]
                     or reported_version and reported_version != configured_policy):
-                return ModelTurn("unavailable")
-            data = response.read(65_537)
-            if len(data) > 65_536:
-                return ModelTurn("unavailable")
-            content = json.loads(data)
+                return ModelTurn("unavailable", observation=audit)
+            content = read_json(response, 65_536)
             message = content["choices"][0]["message"]
             completion = None if message.get("tool_calls") else message.get("content")
-            observation = observation_for(response.headers, content, reported_version)
-            return ModelTurn(route, completion, observation)
+            audit["provider_request_id"] = audit["provider_request_id"] or safe_id(content.get("id"))
+            audit["model"] = audit["model"] or safe_id(content.get("model"))
+            usage = content.get("usage")
+            usage = usage if isinstance(usage, dict) else {}
+            audit["usage"] = {
+                key: value if type(value := usage.get(key)) is int and value >= 0 else None
+                for key in ("prompt_tokens", "completion_tokens", "total_tokens")
+            }
+            return ModelTurn(route, completion, audit)
     except HTTPError as error:
         with error:
-            if error.code == 422 and (
-                error.headers.get("X-Brane-Action") == "refuse"
-                or error.headers.get("X-Brane-Routed-To") == "refused"
-            ):
-                return ModelTurn("blocked", observation=observation_for(error.headers, {}))
-            return ModelTurn("unavailable", transient=error.code in (429, 502, 503, 504))
+            audit.update(observation_for(error.headers, error.code))
+            if error.code == 422 and audit["routed_to"] == "refused" and audit["action"] == "refuse":
+                return ModelTurn("blocked", observation=audit)
+            return ModelTurn("unavailable", observation=audit, transient=error.code in (429, 502, 503, 504))
     except (URLError, TimeoutError, OSError):
-        return ModelTurn("unavailable", transient=True)
+        return ModelTurn("unavailable", observation=audit, transient=True)
     except (AttributeError, IndexError, KeyError, TypeError, ValueError):
-        return ModelTurn("unavailable")
+        return ModelTurn("unavailable", observation=audit)
 
 
-def observation_for(headers, content, reported_version=None):
-    def safe_id(value):
-        return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_./:,-]{1,128}", value) else None
+def safe_id(value):
+    if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9_./:,> -]{1,512}", value):
+        return None
+    if any(token and token in value for token in (os.getenv("BRANE_API_KEY"), os.getenv("BRANE_TOKEN"))):
+        return None
+    return value
 
-    usage = content.get("usage")
-    usage = usage if isinstance(usage, dict) else {}
+
+def observation_for(headers, status):
+    fields = {
+        "routed_to": "Routed-To", "action": "Action", "redacted": "Redacted", "model": "Model-Resolved",
+        "redaction_classes": "Placeholder-Types", "pii_types": "Pii-Types", "pii_detected": "Pii-Detected",
+        "allowed_types": "Allowed-Types", "semantic_matches": "Semantic-Matches", "local_cause": "Local-Cause",
+        "rule_id": "Refused-By", "policy_triggers": "Policy-Triggers", "lane": "Lane", "log_ref": "Log-Ref",
+        "reported_policy_version": "Policy-Version",
+    }
     return {
-        "provider_request_id": safe_id(headers.get("X-Request-ID") or content.get("id")),
-        "rule_id": safe_id(headers.get("X-Brane-Refused-By")),
-        "model": safe_id(headers.get("X-Brane-Model-Resolved") or content.get("model")),
-        "redaction_classes": safe_id(headers.get("X-Brane-Placeholder-Types")),
-        "log_ref": safe_id(headers.get("X-Brane-Log-Ref")),
-        "reported_policy_version": safe_id(reported_version),
-        "usage": {
-            k: usage.get(k) if type(usage.get(k)) is int and usage[k] >= 0 else None
-            for k in ("prompt_tokens", "completion_tokens", "total_tokens")
-        },
+        **{key: safe_id(headers.get("X-Brane-" + suffix)) for key, suffix in fields.items()},
+        "http_status": status, "provider_request_id": safe_id(headers.get("X-Request-ID")),
     }

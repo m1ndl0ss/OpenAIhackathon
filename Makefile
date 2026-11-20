@@ -2,8 +2,9 @@ PYTHON ?= $(shell command -v python3.12 || command -v python3.11 || command -v p
 ENV_PY = .venv/bin/python
 ROLE ?= coverage
 PORT ?= 8000
+LIVE_PORT ?= 8001
 
-.PHONY: setup deps seed build run dev-console doctor brane-check logins login test evidence reset
+.PHONY: setup deps seed build run run-live dev-console doctor brane-check logins login test evidence live-evidence reset
 
 setup: deps
 	$(ENV_PY) -m backend.demo setup
@@ -27,6 +28,9 @@ build:
 run:
 	CLEARANCE_DEMO_LOGIN=1 $(ENV_PY) -m uvicorn backend.main:app --no-proxy-headers --host 127.0.0.1 --port $(PORT)
 
+run-live:
+	$(ENV_PY) -m backend.live_demo --port $(LIVE_PORT)
+
 dev-console:
 	npm run dev --prefix console
 
@@ -48,6 +52,11 @@ test:
 evidence:
 	$(ENV_PY) -m tools.workflow_evidence --output .clearance/evidence/workflow-fixture.csv
 	$(ENV_PY) -m tools.agent_utility --mode fixture
+	$(ENV_PY) -m tools.firewall_outage
+	$(ENV_PY) -m tools.submission_rehearsal --mode fixture
+
+live-evidence:
+	$(ENV_PY) -m tools.submission_rehearsal
 
 reset:
 	$(ENV_PY) -m backend.demo reset

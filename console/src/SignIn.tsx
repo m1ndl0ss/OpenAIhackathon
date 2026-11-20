@@ -32,6 +32,7 @@ function CaseBrief() {
 
 export default function SignIn({ start }: { start: (staff: Staff, token: string) => void }) {
   const [desks, setDesks] = useState<Desk[] | null>(null)
+  const [live, setLive] = useState(false)
   const [retry, setRetry] = useState(0)
   const [error, setError] = useState('')
   const [pending, setPending] = useState('')
@@ -40,8 +41,13 @@ export default function SignIn({ start }: { start: (staff: Staff, token: string)
   useEffect(() => {
     let current = true
     setError('')
-    bank<{ desks: Desk[] }>(null, '/entry')
-      .then(result => { if (current) setDesks(result.desks) })
+    bank<{ desks: Desk[], mode?: string }>(null, '/entry')
+      .then(result => {
+        if (current) {
+          setLive(result.mode === 'live')
+          setDesks(result.desks)
+        }
+      })
       .catch(reason => { if (current) setError(textError(reason)) })
     return () => { current = false }
   }, [retry])
@@ -70,7 +76,7 @@ export default function SignIn({ start }: { start: (staff: Staff, token: string)
   const demo = Boolean(desks?.length)
   return <main className="entry-page">
     <header className="entry-header"><div className="entry-mast"><Brand /><span className="mast-unit">Corporate banking</span></div>
-      {desks && <span className="mode-pill"><i />{demo ? 'Local demo' : 'Staff access'}</span>}
+      {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : 'Local fixture') : 'Staff access'}</span>}
     </header>
     {demo ? <section className="entry-body">
       <div className="entry-intro"><div className="entry-kicker">Trade finance</div>

@@ -239,7 +239,9 @@ def create_app(db_path=None, principals=None, *, mode=None):
             raise ValueError("CLEARANCE_MODE must be fixture or live.")
         if deployment_mode == "live" and mode is None:
             from .brane_client import live_run_config
+            from scripts.brane_client import load_env
 
+            load_env()
             live_run_config()
         app.state.mode = deployment_mode
         initialize(path, people)
@@ -247,11 +249,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
         app.state.assignments = grouped_assignments(people)
         app.state.demo_sessions = {}
         if deployment_mode == "fixture" and os.getenv("CLEARANCE_DEMO_LOGIN") == "1":
-            fixture = json.loads(FIXTURE.read_text())
-            for staff in fixture["staff"]:
-                expected = {**staff, "customer_ref": fixture["case"]["customer_ref"]}
-                if expected in people.values():
-                    app.state.demo_sessions[staff["id"]] = (secrets.token_urlsafe(32), expected)
+            enable_demo_desks(app)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -294,7 +292,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
     def entry(request: Request):
         if not local_demo(request):
             return {"desks": []}
-        return {"desks": [
+        return {"mode": request.app.state.mode, "desks": [
             {key: actor[key] for key in ("id", "name", "role")}
             for _, actor in request.app.state.demo_sessions.values()
         ]}
@@ -304,7 +302,9 @@ def create_app(db_path=None, principals=None, *, mode=None):
         if not local_demo(request) or body.desk_id not in request.app.state.demo_sessions:
             unavailable()
         token, actor = request.app.state.demo_sessions[body.desk_id]
-        return {"token": token, "staff": {**actor, "configured_mode": "fixture", "analysis_available": True, "desk_picker": True}}
+        mode = request.app.state.mode
+        return {"token": token, "staff": {**actor, "configured_mode": mode,
+                                         "analysis_available": integrations.analysis_ready(mode), "desk_picker": True}}
 
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
@@ -518,6 +518,14 @@ def create_app(db_path=None, principals=None, *, mode=None):
     if (dist / "index.html").is_file():
         app.mount("/", StaticFiles(directory=dist, html=True), name="console")
     return app
+
+
+def enable_demo_desks(app):
+    fixture = json.loads(FIXTURE.read_text())
+    for staff in fixture["staff"]:
+        expected = {**staff, "customer_ref": fixture["case"]["customer_ref"]}
+        if expected in app.state.principals.values():
+            app.state.demo_sessions[staff["id"]] = (secrets.token_urlsafe(32), expected)
 
 
 app = create_app()

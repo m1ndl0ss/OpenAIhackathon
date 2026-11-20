@@ -92,6 +92,9 @@ def main():
     parser.add_argument("--mode", choices=("fixture", "live"), default="fixture")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.mode == "live":
+        from scripts.brane_client import load_env
+        load_env()
     score = evaluate(args.mode)
     output = args.output or Path(".clearance/evidence") / f"agent-utility-{args.mode}.json"
     output.parent.mkdir(parents=True, exist_ok=True)

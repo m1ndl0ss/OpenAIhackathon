@@ -162,8 +162,9 @@ def main():
             raise RuntimeError("Console build is missing. Run make build.")
         print("Console build ready.")
         if args.brane:
-            check_policy()
-            print("BRANE accepted the team credential on its policy endpoint.")
+            from scripts.brane_client import load_env
+            load_env()
+            print(f"BRANE policy matches the committed rules · {check_policy()}")
 
 
 if __name__ == "__main__":

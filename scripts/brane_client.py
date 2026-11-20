@@ -19,7 +19,6 @@ from __future__ import annotations
 import json
 import os
 import urllib.error
-import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -30,6 +29,13 @@ USER_AGENT = "Redwood-Security-Harness/1.0 (MAIN-Summit-2026)"
 
 # The one endpoint we are allowed to talk to. Anything else is a bug, not a fallback.
 ALLOWED_HOST = "brane.ai-z.io"
+ASSIGNED_BASE = f"https://{ALLOWED_HOST}/api/v1"
+ENV_KEYS = {"BRANE_BASE_URL", "BRANE_API_KEY", "BRANE_TOKEN", "BRANE_MODEL", "BRANE_POLICY_VERSION", "TEAM_BUILD"}
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
 
 
 class BraneConfigError(RuntimeError):
@@ -47,7 +53,7 @@ def load_env(path: Path = ENV_PATH) -> None:
         key, _, value = line.partition("=")
         key = key.strip()
         value = value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
+        if key in ENV_KEYS and key not in os.environ:
             os.environ[key] = value
 
 
@@ -55,14 +61,8 @@ def base_url() -> str:
     url = (os.environ.get("BRANE_BASE_URL") or "").rstrip("/")
     if not url:
         raise BraneConfigError("BRANE_BASE_URL is not set. Copy .env.example to .env.")
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https":
-        raise BraneConfigError(f"BRANE_BASE_URL must be https, got scheme '{parsed.scheme}'.")
-    if parsed.hostname != ALLOWED_HOST:
-        raise BraneConfigError(
-            f"BRANE_BASE_URL host must be {ALLOWED_HOST}, got '{parsed.hostname}'. "
-            "No other provider may be called from this harness."
-        )
+    if url != ASSIGNED_BASE:
+        raise BraneConfigError("BRANE_BASE_URL must be the assigned HTTPS API base.")
     return url
 
 
@@ -77,9 +77,9 @@ def api_key() -> str:
 
 
 def key_fingerprint() -> str:
-    """Safe, non-reversible description of the loaded key, for run logs."""
-    key = api_key()
-    return f"prefix={key[:9]}... length={len(key)}"
+    """Confirm configuration without disclosing any fragment of the credential."""
+    api_key()
+    return "configured"
 
 
 def team_build() -> str:
@@ -132,7 +132,7 @@ def request(
     req = urllib.request.Request(url, data=data, headers=_headers(auth, body is not None), method=method)
 
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.build_opener(NoRedirect()).open(req, timeout=timeout) as resp:
             status = str(resp.status)
             headers = {k.lower(): v for k, v in resp.headers.items()}
             raw = resp.read().decode("utf-8", errors="replace")

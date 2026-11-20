@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from time import monotonic
 
-from .packets import candidates, validate_draft
+from .packets import APPROVED_WORDINGS, candidates, validate_draft
 from .tools import DESK_TOPICS, CaseTools
 
 MAX_MODEL_CALLS = 6
@@ -84,6 +84,20 @@ def contexts(snapshot, catalog, read):
     }
 
 
+def draft_messages(desk, next_step):
+    """The bank owns every word in a model request, including the system instruction."""
+    content = {"desk": desk, "next_step": next_step, "wordings": APPROVED_WORDINGS[desk][next_step]}
+    return [{"role": "system", "content": SYSTEM},
+            {"role": "user", "content": json.dumps(content, ensure_ascii=False)}]
+
+
+def permitted_turn(task, messages):
+    desk = task.removeprefix("draft_")
+    return task == "draft_" + desk and any(
+        messages == draft_messages(desk, step) for step in APPROVED_WORDINGS.get(desk, {})
+    )
+
+
 def fixture_turn(**request):
     context = json.loads(request["messages"][-1]["content"])
     return ModelTurn("fixture", json.dumps({"summary": context["wordings"][0]}))
@@ -122,15 +136,11 @@ def run_agent(snapshot, catalog, *, run_id, mode, policy_version, send, authoriz
             if report:
                 report(desk, "started")
             # Bind figures and citations from bank records after the wording has been selected.
-            context = {"desk": desk, "next_step": options[0]["suggested_next_step"],
-                       "wordings": [option["summary"] for option in options]}
+            wordings = [option["summary"] for option in options]
             request = {
                 "case_ref": snapshot["case_id"], "revision": snapshot["revision"],
                 "run_id": run_id, "task": f"draft_{desk}", "policy_version": policy_version,
-                "messages": [
-                    {"role": "system", "content": SYSTEM},
-                    {"role": "user", "content": json.dumps(context, ensure_ascii=False)},
-                ],
+                "messages": draft_messages(desk, options[0]["suggested_next_step"]),
                 "tool_schema": (),
             }
             while True:
@@ -148,9 +158,9 @@ def run_agent(snapshot, catalog, *, run_id, mode, policy_version, send, authoriz
             if turn.route not in expected_routes:
                 return result("analysis_unavailable", reason="brane_unavailable")
             choice = packet_json(turn.completion)
-            if not isinstance(choice, dict) or set(choice) != {"summary"} or choice["summary"] not in context["wordings"]:
+            if not isinstance(choice, dict) or set(choice) != {"summary"} or choice["summary"] not in wordings:
                 return result("analysis_invalid", reason="unverified_packet")
-            packet = options[context["wordings"].index(choice["summary"])]
+            packet = options[wordings.index(choice["summary"])]
             packets[desk] = validate_draft(packet, options)
             if report:
                 report(desk, "prepared")

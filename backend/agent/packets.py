@@ -75,27 +75,23 @@ def request_for(desk, needs_invoice, capacity):
 
 
 # Closed wording keeps unsupported numbers, private notes and false approvals out of the UI.
-CREDIT_STATEMENTS = {
-    "unknown": (
-        "Credit capacity requires a verified facility snapshot.",
-        "Verify the facility evidence before reviewing credit capacity.",
-    ),
-    "insufficient": (
-        "The proposed instrument exceeds available headroom.",
-        "Refer the credit shortfall for human review.",
-    ),
-    "within_limit": (
-        "The facility covers the proposed instrument.",
-        "Review the calculated facility capacity for the proposed instrument.",
-    ),
-}
-TRADE_STATEMENTS = {
-    True: ("Coverage must supply the supplier invoice.", "Trade Finance review awaits the supplier invoice."),
-    False: ("The supplier invoice is on file for Trade Finance review.", "Review the invoice and current trade terms."),
-}
-COMPLIANCE_STATEMENTS = {
-    True: ("Coverage must supply the supplier invoice.", "Request the supplier invoice from Coverage."),
-    False: ("The supplier invoice is on file for Compliance review.", "Review the current intake evidence."),
+APPROVED_WORDINGS = {
+    "credit_risk": {
+        "request_facility": ("Credit capacity requires a verified facility snapshot.",
+                             "Verify the facility evidence before reviewing credit capacity."),
+        "refer_capacity": ("The proposed instrument exceeds available headroom.",
+                           "Refer the credit shortfall for human review."),
+        "review": ("The facility covers the proposed instrument.",
+                   "Review the calculated facility capacity for the proposed instrument."),
+    },
+    "trade_finance": {
+        "request_invoice": ("Coverage must supply the supplier invoice.", "Trade Finance review awaits the supplier invoice."),
+        "review": ("The supplier invoice is on file for Trade Finance review.", "Review the invoice and current trade terms."),
+    },
+    "compliance": {
+        "request_invoice": ("Coverage must supply the supplier invoice.", "Request the supplier invoice from Coverage."),
+        "review": ("The supplier invoice is on file for Compliance review.", "Review the current intake evidence."),
+    },
 }
 BLOCKERS = {
     "missing_facility": "Facility snapshot is missing.",
@@ -125,7 +121,6 @@ def candidates(desk, *, case, capacity, sources, policies):
             ]
         if capacity.blocker:
             limitations.append(BLOCKERS[capacity.blocker])
-        wording = CREDIT_STATEMENTS[capacity.status]
     else:
         refs = [ref for ref in sources if ref.startswith(ref_prefix)]
         if len(refs) != 1:
@@ -134,7 +129,6 @@ def candidates(desk, *, case, capacity, sources, policies):
             facts = [{"field": "amount_minor", "value": case["amount_minor"], "source_ref": refs[0]}]
         if invoice:
             refs.append(invoice)
-        wording = (TRADE_STATEMENTS if desk == "trade_finance" else COMPLIANCE_STATEMENTS)[not invoice]
     if not policies or any(ref not in sources for ref in refs):
         raise ValueError("Required evidence or policy source is unavailable")
     missing, action = request_for(desk, not invoice, capacity)
@@ -144,7 +138,7 @@ def candidates(desk, *, case, capacity, sources, policies):
             "evidence_refs": sorted(refs), "missing_items": missing, "suggested_next_step": action,
             "limitations": limitations,
         }
-        for summary in wording
+        for summary in APPROVED_WORDINGS[desk][action]
     ]
 
 
