@@ -54,6 +54,8 @@ import case_tokeniser as ct  # noqa: E402
 PASS, FAIL, UNVERIFIED = "PASS", "FAIL", "UNVERIFIED"
 
 CSV_COLUMNS = [
+    # Columns 1-10 are the MAIN template, byte for byte. Column 11 is ours: the
+    # dry-run vs live comparison added after red-team finding X3b.
     "Test ID",
     "Scenario type",
     "Expected result",
@@ -64,6 +66,7 @@ CSV_COLUMNS = [
     "Agent output & impact on answer usefulness",
     "Pass/Fail",
     "Team / Policy version",
+    "dry_vs_live",
 ]
 
 SYSTEM_PROMPT = (
@@ -1016,6 +1019,46 @@ def observe(check: Check) -> Dict[str, Any]:
     return obs
 
 
+def dry_decision(obs: Dict[str, Any]):
+    """(route, winning_action, triggers) as POST /policy/test saw it, or None."""
+    pt = obs.get("policy_test")
+    if not isinstance(pt, dict):
+        return None
+    dec = pt.get("decision")
+    if not isinstance(dec, dict):
+        return None
+    return (dec.get("route"), dec.get("winningAction"), tuple(dec.get("triggers") or ()))
+
+
+def live_decision(obs: Dict[str, Any]):
+    """(route, action, triggers) as the graded /chat/completions call reported."""
+    h = obs.get("headers") or {}
+    route = h.get("x-brane-routed-to")
+    if obs.get("status") == "422" and route is None:
+        route = "refused"
+    triggers = tuple((h.get("x-brane-policy-triggers") or "").split(",")) if \
+        h.get("x-brane-policy-triggers") else ()
+    return (route, h.get("x-brane-action"), triggers)
+
+
+def compare_decisions(obs: Dict[str, Any]) -> str:
+    """
+    AGREE / DISAGREE / N/A, comparing route and winning action between the dry run and
+    the graded call.
+
+    Red-team finding X3b: on one prompt /policy/test returned refuse
+    (category:SECRET_KEY->refuse) while /chat/completions returned cloud with
+    placeholders. Every per-occurrence claim in this report reads the dry run's payload
+    preview, so the two have to be recorded side by side rather than assumed equal.
+    Triggers are reported but not compared: the dry run and the live call legitimately
+    expose different trigger sets.
+    """
+    dry, live = dry_decision(obs), live_decision(obs)
+    if dry is None or live[0] is None:
+        return "N/A"
+    return "AGREE" if (dry[0], dry[1]) == (live[0], live[1]) else "DISAGREE"
+
+
 def pii_or_cause(obs: Dict[str, Any]) -> str:
     """The CSV's combined 'Pii-Types / Local-Cause' cell."""
     parts = [
@@ -1042,6 +1085,7 @@ def one_run(
 ) -> Dict[str, int]:
     revision = code_revision()
     tally = {PASS: 0, FAIL: 0, UNVERIFIED: 0}
+    agreement_counts: Dict[str, int] = {}
 
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1055,6 +1099,21 @@ def one_run(
             run_id = f"{policy_label}-r{run_index}-{check.check_id}-{uuid.uuid4().hex[:8]}"
             obs = observe(check)
             verdict, reason = check.verifier(obs)
+            agreement = compare_decisions(obs)
+            dry, live = dry_decision(obs), live_decision(obs)
+            if agreement == "DISAGREE":
+                detail = (f"dry run said route={dry[0]}/action={dry[1]}, live call said "
+                          f"route={live[0]}/action={live[1]}")
+                if check.probe_payload:
+                    # The verdict rests on the dry run's payload preview, and the dry run
+                    # did not describe the same decision. The route claim still stands on
+                    # the live headers; the payload-content claim does not.
+                    verdict = UNVERIFIED
+                    reason = (f"dry/live DISAGREE, so the payload-content claim is "
+                              f"unverifiable ({detail}). Route per the LIVE headers: "
+                              f"{live[0]}. Original finding, now unverified: {reason}")
+                else:
+                    reason = f"{reason} [dry/live DISAGREE: {detail}]"
             tally[verdict] += 1
 
             route_cell = hdr(obs, "routed-to") or f"HTTP_{obs['status']}"
@@ -1077,6 +1136,7 @@ def one_run(
                 answer_cell,
                 verdict,
                 policy_version,
+                agreement,
             ])
 
             pt = obs.get("policy_test") or {}
@@ -1117,6 +1177,11 @@ def one_run(
                     } if check.probe_payload else None,
                 },
                 "brane_refs": sorted(obs["headers"].keys()),
+                "dry_vs_live": agreement,
+                "dry_decision": {"route": dry[0], "winning_action": dry[1],
+                                 "triggers": list(dry[2])} if dry else None,
+                "live_decision": {"route": live[0], "action": live[1],
+                                  "triggers": [t for t in live[2] if t]},
                 "verdict": verdict,
                 "verdict_reason": reason,
                 "utility_note": check.utility_note,
@@ -1127,11 +1192,12 @@ def one_run(
             }
             jf.write(json.dumps(bc.scrub(record), ensure_ascii=False) + "\n")
 
+            agreement_counts[agreement] = agreement_counts.get(agreement, 0) + 1
             mark = {PASS: "PASS", FAIL: "FAIL", UNVERIFIED: "UNVR"}[verdict]
             print(f"  [{mark}] {check.check_id:4} route={route_cell:9} "
-                  f"redacted={redacted_cell:14} {reason[:96]}")
+                  f"redacted={redacted_cell:14} dry/live={agreement:8} {reason[:72]}")
 
-    return tally
+    return tally, agreement_counts
 
 
 def main() -> int:
@@ -1211,6 +1277,7 @@ def main() -> int:
     print(f"[plan]    {len(checks)} checks x {args.runs} run(s)\n")
 
     totals = {PASS: 0, FAIL: 0, UNVERIFIED: 0}
+    agreement_tally: Dict[str, int] = {}
     written: List[str] = []
     for run_index in range(1, args.runs + 1):
         stamp = bc.utc_stamp()
@@ -1219,8 +1286,10 @@ def main() -> int:
         jsonl_path = bc.REPO_ROOT / "evidence" / "raw" / f"{slug}.jsonl"
 
         print(f"[run {run_index}/{args.runs}] -> {bc.rel(csv_path)}")
-        tally = one_run(checks, policy_version, args.label, policy_hash_value,
-                        csv_path, jsonl_path, run_index, args.runs)
+        tally, run_agreement = one_run(checks, policy_version, args.label, policy_hash_value,
+                                       csv_path, jsonl_path, run_index, args.runs)
+        for k, v in run_agreement.items():
+            agreement_tally[k] = agreement_tally.get(k, 0) + v
         for k in totals:
             totals[k] += tally[k]
         written.append(bc.rel(csv_path))
@@ -1229,6 +1298,14 @@ def main() -> int:
 
     print(f"[total] {totals[PASS]} pass, {totals[FAIL]} fail, {totals[UNVERIFIED]} unverified "
           f"across {args.runs} run(s)")
+    if agreement_tally:
+        total_cmp = sum(agreement_tally.values())
+        comparable = total_cmp - agreement_tally.get("N/A", 0)
+        agree = agreement_tally.get("AGREE", 0)
+        rate = f"{agree}/{comparable}" if comparable else "0/0"
+        print(f"[dry/live] {rate} comparable rows AGREE "
+              f"({agreement_tally.get('DISAGREE', 0)} disagree, "
+              f"{agreement_tally.get('N/A', 0)} not comparable)")
     for w in written:
         print(f"[wrote] {w}")
 

@@ -34,10 +34,13 @@ This records the standalone security workstream. The integrated bank, outage res
 
 | | Baseline | v1 | v2 |
 |---|---|---|---|
-| Policy checks passed | 1/12 | 13/16 | **18/20** |
+| Policy checks passed | 1/12 | 13/16 | **17 pass, 2 fail, 1 mixed (of 20)** |
 | A5 check-failure scenarios | – | – | **6/6 (18/18 runs)** |
 
-3 runs per check on v1 and v2, identical results across runs. The baseline column is a single run: re-measuring it would mean reverting the live department. A5 is a separate harness (`scripts/check_failure_test.py`) because it injects faults rather than prompts.
+3 runs per check on v1 and v2. Results are identical across runs with one exception,
+recorded rather than smoothed: **`C3c` routed `local` twice and was refused once on
+byte-identical input**, so the LLM-judged semantic rule is sampled rather than
+deterministic. Its third run is `UNVERIFIED`. The baseline column is a single run: re-measuring it would mean reverting the live department. A5 is a separate harness (`scripts/check_failure_test.py`) because it injects faults rather than prompts.
 
 ### Test 5 is defined three ways by AI-Z; all three are now evidenced
 
@@ -48,6 +51,26 @@ This records the standalone security workstream. The integrated bank, outage res
 | **Track description** §03 and §06 | "Check failure: if the protection check is unavailable, the request is not sent. An automatic fallback to the cloud model fails this test" | **T5c/A5 PASS** 18/18: DNS failure, connection refused, timeout, HTTP 503, and HTTP 200 with a completion but no `X-Brane-Routed-To`, plus a healthy control |
 
 The three are not interchangeable. T5b is an unavailable *business* check with BRANE healthy; the track's test is BRANE *itself* being gone. Egress in A5 is observed by a `sys.addaudithook` on `socket.connect` / `socket.getaddrinfo` — independent of the client's own logging — and the only hosts contacted across the whole run were the scenario endpoints and `brane.ai-z.io`. Zero contact with any model provider.
+
+**Every check now records both policy decisions.** After red-team finding `X3b` — where
+`POST /policy/test` returned `refuse` and `/chat/completions` returned `cloud` on the same
+prompt — each evidence row carries a `dry_vs_live` column comparing route and winning
+action. On a `DISAGREE` row the payload-content claim is forced to `UNVERIFIED` and the
+route claim cites the live headers. **Agreement: 41 of 42 comparable rows (97.6%), 1
+disagree, 18 not comparable.** The template hand-in stays ten columns.
+
+**Red team.** Two suites against the verified policy: 20 attacks on BRANE and our masking
+(**19 held, 0 bypassed, 1 unverified**) and 10 on the bank application
+(**10 held**), which closes `A1`, `A3` and `A4`. The one bypass found — an attacker
+forging our own case token in an inbound document — is **fixed**: untrusted `[[…]]`
+sequences are neutralised on ingestion, and rehydration now requires an explicit
+bank-authored field plus the set of tokens minted in that run. `X10`, `X10b` (spacing and
+case) and `X10c` (nested brackets) all hold. Full write-up: `docs/redteam_findings.md`.
+
+**Policy drift is gated, proved offline (`D1`).** A tampered copy of the policy file
+(`PASSPORT` `local` → `placeholder`) makes `verify_policy.py` report DRIFT and
+`run_checks.py` refuse to start with no evidence written, and the live policy hash is
+identical before and after. The live department was never modified.
 
 **A5 also produced a finding:** the same test against the raw transport fails 0/18. An HTTP 200 carrying a completion with no `X-Brane-Routed-To` is indistinguishable from a governed answer at the transport layer — the governed client classifies it `unavailable` and discards 121 chars; the raw transport hands them to the caller. That is now a MUST with evidence in the adapter contract, and `brane_client.classify_outcome()` is the reference implementation.
 
@@ -78,6 +101,13 @@ Highlights on v2: T5a and E2 (indirect health) now route local; C3b refused by r
 ## Open
 
 - The staff API records case isolation, holds, concurrent retries and the permitted agent run. The merged A5 harness records destinations visible to the client process. OS-wide traffic remains outside the measurement. [Staff test worksheet](evidence/submission-tests.csv) · [Live case and receipt](evidence/submission-live.json) · [18-run A5 verification](evidence/brane-check-failure.csv)
+- **A1, A3 and A4 are closed** by the application red team (10 attacks, 2 runs each, all
+  held): cross-customer read, no session, cross-desk signature, approval with an open
+  hold, approval on one clearance, double signing, concurrent finalisation, issuance
+  before and twice after the decision, stale-binding replay, body role smuggling.
+- **Open for the desk:** `C3c` non-determinism (the semantic judge is sampled, not
+  deterministic) and the `/policy/test` vs live disagreement — questions 10b and 11 in
+  `REPORT.md`.
 - CB-09 (client commercial terms) has no BRANE rule.
-- AI-Z desk questions (8 in `REPORT.md`): which T5 is graded, post-policy egress observation, `Policy-Triggers` header, the v1 health-detector miss, `E1`–`E5` vs `A1`–`A5` numbering, surname-first false negative, meaning change, keyword cap.
+- AI-Z desk questions (11 in `REPORT.md`): which T5 is graded, post-policy egress observation, `Policy-Triggers` header, the v1 health-detector miss, `E1`–`E5` vs `A1`–`A5` numbering, surname-first false negative, meaning change, keyword cap.
 - Rotate the team API key.

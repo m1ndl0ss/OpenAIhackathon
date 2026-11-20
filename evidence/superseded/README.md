@@ -23,6 +23,15 @@ Two A5 check-failure runs are also here:
 | `redwood-A5-check-failure_…174815Z` | Correct results (18/18), but produced before the static endpoint check was scoped to code and configuration. Re-run as `…175417Z` against the current repo state. |
 | `redwood-A5-check-failure_…174905Z` | First raw-client contrast run. Correct verdicts (0/18) but every scenario reported only "outcome=None", which buried the one finding that matters. Re-run as `…175012Z`, which names the missing classification and the 121 leaked characters. |
 
+
+Three API red-team runs are also here:
+
+| Run | Why superseded |
+| --- | --- |
+| `redwood-api-redteam_…205617Z` | First version. The injected outsider principal duplicated an identity, so the app refused to start and every attack reported a harness error. |
+| `redwood-api-redteam_…205700Z` | **Four false passes.** `Y4`, `Y6`, `Y8` and `Y9` "held" on requests rejected at validation: the workflow only accepts `CHECKS_COMPLETE` for a clearance, and `reason_code: redteam` was refused with 422 before the invariant was reached. Every attack now asserts the state it needs via `need()` and reports UNVERIFIED if setup fails. |
+| `redwood-api-redteam_…210047Z` | Preconditions added, but `Y4`/`Y9` could not reach their state on the staged file (it refuses every clearance until the invoice arrives) and `Y8` reported a false bypass by counting accepted responses instead of receipts. Rebuilt on the complete fixture and on receipt identity. |
+
 The findings these runs produced are reported properly in `../REPORT.md` §4.5 (token
 shape determines whether BRANE re-detects an app-side token) and §5. The
 authoritative sets are:
@@ -34,3 +43,6 @@ authoritative sets are:
 - `../redwood-hardened-v2_20261120T165*.csv` — hardened-v2, 20 checks, 3 runs
 - `../redwood-A5-check-failure_20261120T175417Z.csv` — A5, governed client, 18/18
 - `../redwood-A5-check-failure_20261120T175012Z.csv` — A5, raw transport, 0/18 (the contrast)
+- `../redwood-redteam_20261120T204833Z.csv` — red team vs BRANE, X1-X15, 3 runs
+- `../redwood-redteam_20261120T210251Z.csv` — red team, neutral-wording variants X1b/X2b/X3b
+- `../redwood-api-redteam_20261120T210145Z.csv` — red team vs the application, Y1-Y10, 2 runs
