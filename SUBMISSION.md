@@ -2,6 +2,21 @@
 
 A relationship manager receives a USD 2 million import letter-of-credit request. Redwood prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. Redwood also has 26 specialist workflows spanning the rest of the bank. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
 
+## Hand-in at a glance
+
+| The brief asks for | Where to find it |
+| --- | --- |
+| A working AI agent with BRANE integration | `make run-live` (steps below) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py) · [Live run](docs/evidence/submission-live.json) |
+| Legal research with concrete sources | [Corporate banking legal research](research/bank-data-classification/README.md) · legal-source column of the policy matrix |
+| Policy matrix | [Submission policy matrix](docs/evidence/submission-policy-matrix.csv): 11 rules with sources, technical controls, observed results and product gaps |
+| Five security tests and five edge cases | [Submission test worksheet](docs/evidence/submission-tests.csv) · [Gateway-only worksheet](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md) |
+| Live demo and business case | The sections below · [Pitch script and evidence for every claim](docs/pitch.md) |
+| At least three justified, implemented rules | 11 rules; enforcement and evidence per rule in the matrix |
+| An agent that performs its task repeatedly | Both case revisions live, 26 specialist desks in a live rehearsal, 261 automated tests |
+| Synthetic data only | Every case, identity and document in `data/` is invented |
+
+The security evidence is frozen at tag [`evidence-freeze-v1`](https://github.com/m1ndl0ss/OpenAIhackathon/tree/evidence-freeze-v1), checked against policy `hardened-v2` (`sha256:7238362ad6b930085f5f850bc1dbf6cf`).
+
 ## Open the demo
 
 From the repository root, run `make setup` with Python 3.11+ and Node 22.12+. For the live rehearsal, copy `.env.example` to `.env` on a fresh clone and enter the team's AI-Z credential in `BRANE_API_KEY`. The sample already names the assigned endpoint, OpenAI model and policy. An existing configured checkout can go straight to the two commands below.
@@ -71,7 +86,7 @@ The submission matrix contains eleven rules with their sources, technical contro
 | T4 · Untrusted instructions | The security team's recorded inputs stayed local. The letter-of-credit workflow accepts seven bank-owned message combinations. Each specialist workflow checks its own registered tasks and wordings. Human notes and source documents stay out of the model input. |
 | T5 · Firewall unavailable | The network-denied bank attempted one policy GET, zero model POSTs and zero other destinations. The case stayed unsealed. The security client also passed 15 fault runs and three healthy controls. The client process contacted only each scenario’s assigned destination. [Security client results](docs/evidence/brane-check-failure.csv) |
 
-The security team's standalone suite went from **1/12 baseline** to **18/20 hardened**. The suites differ in size. The latest hardened suite repeated all 20 checks three times. Raw name coverage and preservation of ordinary trade wording are the two recorded failures. Both matter if a future workflow starts forwarding document text. The submitted app only accepts prewritten drafting inputs and exact permitted replies. [Final ten-row protocol](docs/evidence/submission-tests.csv) · [Original gateway results](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md)
+The security team's standalone suite went from **1/12 on the delivered open policy** to **17 of 20 clean on `hardened-v2`**, with every check run three times. Two failures stay visible: raw name coverage (T3) and preservation of ordinary trade wording (T3c). Both matter only if a future workflow forwards document text. The submitted app sends prewritten drafting inputs and accepts only exact permitted replies. One check, C3c, is non-deterministic: BRANE's semantic judge refused a harmless note once in three runs, so it over-blocks rather than leaks. Every check records BRANE's dry-run and live decisions side by side, and 41 of 42 comparable rows agree. A red team then ran 30 attacks: 20 against the firewall and our masking (19 held, 1 unverified) and 10 against the application (10 held). The one bypass found on the way, X10 in our own token handling, is fixed and re-tested. A drift test shows that a tampered policy stops every run before any model call. [Final ten-row protocol](docs/evidence/submission-tests.csv) · [Gateway results](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md) · [Red-team findings](docs/redteam_findings.md)
 
 ## Business case
 
