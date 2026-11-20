@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --prefix console --no-audit --no-fund",
+  "buildCommand": "node tools/prepare_public_demo.mjs && npm --prefix console run build -- --mode hosted",
+  "outputDirectory": "console/dist",
+  "functions": {
+    "api/demo.py": {
+      "includeFiles": "{backend/**,data/**,scripts/brane_client.py}"
+    }
+  },
+  "headers": [
+    { "source": "/api/demo", "headers": [{ "key": "Cache-Control", "value": "private, no-store" }] }
+  ]
+}

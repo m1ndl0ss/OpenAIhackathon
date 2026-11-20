@@ -1,3 +1,5 @@
+import { publicDemo, publicRequest } from './public-demo'
+
 export interface Staff {
   role_label?: string | null
   desk_picker: boolean
@@ -225,7 +227,7 @@ export async function bank<T>(token: string | null, path: string, body?: object,
   }
   let response: Response
   try {
-    response = await fetch('/v2/trade' + path, {
+    response = publicDemo ? await publicRequest(token, path, body, headers['Idempotency-Key']) : await fetch('/v2/trade' + path, {
       method: body === undefined ? 'GET' : 'POST', headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: 'no-store', credentials: 'omit', redirect: 'error',

@@ -1,3 +1,4 @@
+import { publicDemo } from './public-demo'
 import { useEffect, useRef, useState } from 'react'
 import { bank, label, textError, type Department, type Staff } from './api'
 import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, MagnifyingGlassIcon, PlusCircleIcon } from '@phosphor-icons/react'
@@ -102,12 +103,12 @@ export default function SignIn({ start, preferred, compose }: { compose: () => v
     ? [label(d.role), d.name, 'Letter of credit'].some(text => text.toLowerCase().includes(term)) : group === 'Letter of credit')
   return <main className="entry-page">
     <header className="entry-header"><div className="entry-mast"><Brand /><span className="mast-unit">Corporate banking</span></div>
-      {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : 'Local fixture') : 'Staff access'}</span>}
+      {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : publicDemo ? 'Public synthetic demo' : 'Local fixture') : 'Staff access'}</span>}
     </header>
     {demo ? <section className="entry-body">
       <div className="entry-intake"><div className="entry-intro"><div className="entry-kicker section-label">Staff directory</div>
         <h1>Choose your desk</h1>
-        <p>Start a corporate banking request or open a desk to review its cases.</p>
+        <p>{publicDemo ? 'Use invented details. Cases and approvals stay in this tab’s demo workspace.' : 'Start a corporate banking request or open a desk to review its cases.'}</p>
       </div><button className="primary start-request" onClick={compose} disabled={Boolean(pending)}><PlusCircleIcon size={19} />New request</button></div>
       {departments.length > 0 && <div className="directory-bar">
         <nav className="directory-groups" aria-label="Desk groups">{groups.map(([key, title]) =>
@@ -142,7 +143,7 @@ export default function SignIn({ start, preferred, compose }: { compose: () => v
       {error && <p role="alert" className="error">{error}</p>}
     </section> : <div className="login-center"><section className="login-card">
       {desks ? <><KeyholeIcon size={32} weight="duotone" /><h1>Staff sign-in</h1></> : <h1>Corporate banking</h1>}
-      {desks && <form className="action-form" onSubmit={event => { event.preventDefault(); void enter() }}>
+      {desks && !publicDemo && <form className="action-form" onSubmit={event => { event.preventDefault(); void enter() }}>
         <label>Staff token<input required type="password" value={token} onChange={e => setToken(e.target.value)} autoComplete="off" spellCheck={false} /></label>
         <button className="primary" disabled={Boolean(pending) || !token.trim()}>{pending ? 'Opening desk…' : 'Sign in'} <ArrowRightIcon size={16} /></button>
       </form>}

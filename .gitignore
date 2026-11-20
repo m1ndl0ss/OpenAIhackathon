@@ -18,3 +18,5 @@ console/dist/
 # Raw firewall captures and reversible case aliases are private.
 evidence/raw/
 local/
+.vercel/
+backend/_public_demo.key

@@ -45,7 +45,9 @@ class DemoDesk(Body):
     desk_id: str = Field(min_length=1, max_length=80)
 
 
-def local_demo(request: Request):
+def demo_desk_access(request: Request):
+    if getattr(request.app.state, "visitor_fixture", False):
+        return request.app.state.mode == "fixture" and bool(request.app.state.demo_sessions)
     loopback = {"127.0.0.1", "::1"}
     return bool(
         request.app.state.demo_sessions
@@ -130,7 +132,7 @@ def authenticated(request: Request, authorization: Optional[str] = Header(defaul
         for token, actor in request.app.state.principals.items():
             if secrets.compare_digest(token, supplied):
                 return actor
-        if local_demo(request):
+        if demo_desk_access(request):
             for token, actor in request.app.state.demo_sessions.values():
                 if secrets.compare_digest(token, supplied):
                     return actor
@@ -326,7 +328,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
 
     @app.get(PREFIX + "/entry")
     def entry(request: Request):
-        if not local_demo(request):
+        if not demo_desk_access(request):
             return {"desks": []}
         return {"mode": request.app.state.mode, "desks": [
             {key: actor[key] for key in ("id", "name", "role")}
@@ -346,7 +348,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
 
     @app.post(PREFIX + "/demo-session")
     def demo_session(request: Request, body: DemoDesk):
-        if not local_demo(request) or body.desk_id not in request.app.state.demo_sessions:
+        if not demo_desk_access(request) or body.desk_id not in request.app.state.demo_sessions:
             unavailable()
         token, actor = request.app.state.demo_sessions[body.desk_id]
         return {"token": token, "staff": staff_view(request, actor, True)}
@@ -354,12 +356,12 @@ def create_app(db_path=None, principals=None, *, mode=None):
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
         demo = request.app.state.demo_sessions.get(actor["id"])
-        return staff_view(request, actor, bool(demo and local_demo(request)
+        return staff_view(request, actor, bool(demo and demo_desk_access(request)
                           and request.headers["authorization"].split()[1] == demo[0]))
 
     @app.get(PREFIX + "/request-types")
     def request_types(request: Request, authorization: Optional[str] = Header(default=None)):
-        if authorization is None and local_demo(request):
+        if authorization is None and demo_desk_access(request):
             actors = [actor for _, actor in request.app.state.demo_sessions.values()]
         else:
             actors = [authenticated(request, authorization)]

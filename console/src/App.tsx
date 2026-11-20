@@ -1,3 +1,4 @@
+import { publicDemo } from './public-demo'
 import SignIn, { type PreferredDesk } from './SignIn'
 import { Brand, DeskIcon } from './Brand'
 import { Fragment, useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
@@ -168,7 +169,7 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
 
   useEffect(() => {
     const pending = file?.last_run?.status === 'pending'
-    if (loading || busy) return
+    if (loading || busy || (publicDemo && !pending)) return
     let stopped = false
     let timer: number
     const poll = async () => {

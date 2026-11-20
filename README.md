@@ -1,5 +1,13 @@
 # Redwood
 
+[![TRY IT — Open Redwood’s interactive corporate banking demo](docs/try-redwood.png)][redwood-demo]
+
+**[Open the public demo][redwood-demo]** and choose **Coverage → LC-001 → Run analysis** to see the agent’s recommendation. Switch desks to review the evidence and sign. You can also choose **New request → Fill demo example** to try another workflow. Each visitor gets a synthetic workspace in their browser tab. No account or API key is required.
+
+This first Vercel deployment expires **21 November 2026 at 01:45 CET** unless the team claims it. You can also [run the same demo locally](#run-redwood). The team’s [live BRANE run and model-call evidence](docs/evidence/submission-live.json) are available separately.
+
+[redwood-demo]: https://sonic-tungsten-2g30zww.tmp.now/
+
 Redwood helps corporate banking staff prepare a case for a human decision. In the example, a relationship manager requests a **USD 2 million letter of credit**. Trade Finance checks the documents, Credit Risk calculates the remaining capacity, and Compliance flags a missing supplier invoice. Once the invoice arrives, all three desks sign the revised file. A separate officer approves it, and Operations records a simulated issuance. All cases and staff identities are synthetic.
 
 ![The Redwood console shows a payment recommendation, its supporting record and the staff assigned to review it.](docs/evidence/request-result.jpg)
@@ -16,6 +24,16 @@ make run
 Open the [local console](http://127.0.0.1:8000), choose **Coverage → LC-001**, and select **Run analysis**. This mode uses offline fixtures.
 
 For a live demo, copy `.env.example` to `.env`, set `BRANE_API_KEY` to the assigned department credential, then run `make brane-check` and `make run-live`. Open the [live console](http://127.0.0.1:8001). The demo guide takes the case from the first finding to the signed decision and receipt. [Live demo guide](docs/demo-guide.md#walk-the-case)
+
+## Deploy the public demo on Vercel
+
+1. In [Vercel New Project](https://vercel.com/new), import the GitHub repository `nickdatak/OpenAIhackathon`. Give the Vercel GitHub app access to this repository if it is missing from the picker.
+2. Use `main` as the production branch, leave the root directory at `.` and choose **Other** for the framework preset. The root [Vercel configuration](vercel.json) builds the console and deploys its Python API together. The public demo requires no environment variables.
+3. Select **Deploy**, then **Visit**. Open the production domain in a private browser window and choose **Coverage → LC-001 → Run analysis**. If Vercel asks visitors to sign in, check the project’s **Deployment Protection** setting for Production. When publishing a new project, set the `redwood-demo` link near the top of this README to that production domain. Connecting the repository enables automatic deployments from `main`.
+
+For a CLI deployment, run `npx vercel@latest login` and `npx vercel@latest deploy --prod` from the repository root. Select the same project if you already imported it. [Vercel deployment CLI](https://vercel.com/docs/cli/deploy)
+
+The hosted demo runs the bank’s workflow with fixture responses and simulated approvals. It sends no model requests. A tab carries its signed case snapshot between requests. A build generates the server signing key. To keep existing tabs usable across redeploys, set `REDWOOD_DEMO_SIGNING_KEY` in Vercel’s server environment to a secret 64-character hexadecimal value. Keep team BRANE credentials in the local live rehearsal.
 
 ## How a case stays under bank control
 
