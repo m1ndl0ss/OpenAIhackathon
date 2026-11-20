@@ -1,12 +1,32 @@
 import csv
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
 from backend import brane_client, demo
 from backend.agent.packets import headroom_after
 from backend.store import transaction
+
+
+def test_submission_and_gateway_matrices_use_the_reviewed_rationale_and_sources():
+    root = Path(__file__).resolve().parents[1]
+
+    def cited_rules(path):
+        with (root / path).open(encoding="utf-8", newline="") as source:
+            return [
+                (
+                    row["Rule ID"],
+                    row["Why needed (or not needed) for task"],
+                    row["Legal or governance source (Article / Guideline)"],
+                )
+                for row in csv.DictReader(source)
+            ]
+
+    reviewed = cited_rules("evidence/clearance_policy_matrix.source.csv")
+    assert cited_rules("evidence/clearance_policy_matrix.csv") == reviewed
+    assert cited_rules("docs/evidence/submission-policy-matrix.csv") == reviewed
 
 
 def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):

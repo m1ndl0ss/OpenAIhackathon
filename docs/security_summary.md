@@ -69,7 +69,7 @@ Highlights on v2: T5a and E2 (indirect health) now route local; C3b refused by r
 | File | What |
 |---|---|
 | `evidence/MAIN_Five_Tests_Template.csv` | T1–T5 + E1–E5, latest v2 run only |
-| `evidence/clearance_policy_matrix.csv` | Policy matrix: 45 cells moved from expected to observed. Two target decisions corrected by evidence (CB-04 and CB-10, `BLOCK` → `LOCAL ONLY`); CB-05, CB-07 and CB-09 marked unverified because BRANE does not enforce them. Legal column byte-identical to Ilaria's original, kept alongside as `clearance_policy_matrix.source.csv` |
+| `evidence/clearance_policy_matrix.csv` | Eleven rules with Ilaria’s task rationale and legal sources. CB-04 routes classification locally and blocks use of protected attributes in a commercial assessment. CB-10 calls for local handling of civil IDs and records a detector misclassification. CB-07 links the independently observed outage runs. |
 | `evidence/REPORT.md` | Full baseline / v1 / v2 comparison, findings, desk questions |
 | `docs/brane_adapter_contract.md` | Contract + 5 acceptance tests for Tasos's adapter |
 | `docs/demo_evidence.md` | Screen-ready blocks for the pitch slot |

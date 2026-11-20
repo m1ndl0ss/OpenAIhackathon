@@ -4,15 +4,21 @@ Turn Ilaria's cited policy matrix from "Planned / Expected" into "Observed".
 
   python3 scripts/update_clearance_matrix.py
 
-  in:  evidence/clearance_policy_matrix.source.csv   Ilaria's file, never modified
+  in:  evidence/clearance_policy_matrix.source.csv   Ilaria's file, as she maintains it
   out: evidence/clearance_policy_matrix.csv          the deliverable
+
+The source file carries Ilaria's own revisions (she owns columns C and D and
+revises them directly); git holds the history. This script never edits her
+columns, it only rewrites Matvei's on top.
 
 Division of ownership (spec §9: "Ilaria owns the cited matrix. Matvei owns
 enforcement and evidence."):
 
-  * Ilaria's column 4, "Legal or governance source", is NOT touched by this
-    script. It is her cited work -- Wwft, DORA, Basel CRI10, CJEU C-184/20, EDPB
-    01/2025, the Dutch implementation acts -- and nothing here second-guesses it.
+  * Ilaria's columns C ("Why needed") and D ("Legal or governance source") are
+    NOT touched by this script. They are her cited work -- Wwft, DORA, Basel
+    CRI10, CJEU C-184/20, EDPB 01/2025, the Dutch implementation acts -- and
+    nothing here second-guesses them. Where a measurement qualifies something she
+    states, the qualification goes in Matvei's columns and points at hers.
   * Matvei's columns are rewritten from measured evidence: how the rule is
     actually enforced, the product gap actually observed, the actual X-Brane-*
     headers, and the test IDs that prove it.
@@ -117,9 +123,11 @@ UPDATES: Dict[str, Dict[str, str]] = {
         COL_TESTS: "E3 / T5b  (FIU_REPORT_STATUS: not implemented, unverified)",
     },
     "CB-04": {
-        COL_DECISION: "LOCAL ONLY (not BLOCK -- see enforcement cell)",
+        COL_DECISION: "LOCAL ONLY for the classification step; BLOCK for any use in the "
+                      "commercial assessment",
         COL_ENFORCED:
-            f"CONTRADICTED BY MEASUREMENT. Two corrections to the planned text. (1) The seven "
+            f"CORRECTED FROM THE PLANNED TEXT (the original is in clearance_policy_matrix."
+            f"source.csv; earlier revisions in git). Two corrections. (1) The seven "
             f"special categories are configured LOCAL, not refuse, on {POLICY}: refusing them "
             "outright would block the legitimate mandate-validity question the desk has to answer. "
             "Refusal is reserved for USING a protected attribute in the assessment "
@@ -151,15 +159,15 @@ UPDATES: Dict[str, Dict[str, str]] = {
             "NOT IN THIS WORKSTREAM. Case, desk and document scope is bank application code "
             "(Nikita's API and Tasos's tools). BRANE policies are per department and cannot see a "
             "case or a desk, so this row cannot be enforced by policy configuration. The shared "
-            "permission check is still to be built; nothing here claims it works.",
+            "permission check runs in the staff API. The integrated submission matrix cites its checks.",
         COL_GAP:
             "Confirmed by the endpoint shape: GET /policy exposes only routingMode, "
             "piiSensitivity, a flat category map and semantic rules. There is no case, desk, "
             "actor or document dimension anywhere in the policy object.",
         COL_EVIDENCE:
-            "UNVERIFIED. Requires API and audit evidence from Nikita's backend. Renamed A1 in "
-            "evidence/REPORT.md to avoid colliding with the CSV template's E1.",
-        COL_TESTS: "A1 (was E1) -- unverified, owned by Nikita",
+            "Application evidence for case and desk isolation is recorded under CB-05 in "
+            "docs/evidence/submission-policy-matrix.csv.",
+        COL_TESTS: "Bank A1 (case and desk isolation)",
     },
     "CB-06": {
         COL_ENFORCED:
@@ -181,28 +189,24 @@ UPDATES: Dict[str, Dict[str, str]] = {
             "OBSERVED: HTTP 422 | X-Brane-Routed-To: refused | X-Brane-Action: refuse | "
             "X-Brane-Refused-By: semantic:AUTONOMOUS_FINAL_DECISION->refuse | "
             "X-Brane-Semantic-Matches. Evidence: evidence/redwood-hardened-v2_*.csv rows E4, T5b. "
-            "The workflow half (A3/A4) still needs Nikita's state-transition evidence.",
-        COL_TESTS: "E4 / T5b / A3 / A4 (A3, A4 unverified, owned by Nikita) / Demo",
+            "docs/evidence/workflow-fixture.csv records the bank's hold, stale-revision and retry checks. "
+            "docs/evidence/submission-live.json records the human decisions and simulated receipt.",
+        COL_TESTS: "E4 / T5b / bank A3 / bank A4",
     },
     "CB-07": {
         COL_ENFORCED:
-            "SPECIFIED, NOT YET BUILT. docs/brane_adapter_contract.md defines the five normalised "
-            "outcomes (direct | pseudonymized | local | blocked | unavailable) and requires that a "
-            "missing X-Brane-Routed-To on an HTTP 200 be treated as unavailable rather than as a "
-            "permitted route. The reference client scripts/brane_client.py enforces the no-fallback "
-            "property structurally: it rejects any host other than brane.ai-z.io and any scheme "
-            "other than https by raising, so there is no code path to a provider. No provider key "
-            "exists in the repo. Acceptance tests D and E in the contract are the outage evidence.",
+            "The staff adapter verifies the policy before submitting a draft. The shared routing "
+            "check discards incomplete verdicts, including HTTP 200 without a routing header. "
+            "The deployed client uses the assigned HTTPS endpoint and disables redirects.",
         COL_GAP:
-            "Confirmed, and sharper than planned: there is no distinct signal for 'firewall "
-            "unreachable' versus 'blocked by policy' -- the adapter has to infer it from the "
-            "absence of a header, which is why the contract makes that inference a MUST.",
+            "A missing verdict leaves the client to infer unavailability. A verified refusal "
+            "needs the refusal headers. The network observer covers the client process.",
         COL_EVIDENCE:
-            "UNVERIFIED until the adapter exists. Required: outage interval and trace IDs, "
-            "outcome=unavailable, zero signatures, zero receipts, and an INDEPENDENT observation of "
-            "zero outbound egress to any other host (packet capture or egress-deny environment); "
-            "per spec §10 an application log alone cannot establish this.",
-        COL_TESTS: "A5 (was E5) -- unverified; adapter contract §6 tests D and E",
+            "docs/evidence/brane-check-failure.csv records 15 fault runs with zero answer text "
+            "and three healthy controls with verified answers. The socket observer recorded only "
+            "the assigned destinations. In docs/evidence/firewall-outage.json the bank attempted "
+            "one policy read and zero model submissions. The file stayed unsealed with zero receipts.",
+        COL_TESTS: "Official T5 / bank A5 / security client T5c",
     },
     "CB-08": {
         COL_ENFORCED:
@@ -244,12 +248,16 @@ UPDATES: Dict[str, Dict[str, str]] = {
         COL_TESTS: "T2 (shows the exposure) -- no BRANE rule, unverified",
     },
     "CB-10": {
-        COL_DECISION: "LOCAL ONLY (not BLOCK -- see enforcement cell)",
+        COL_DECISION: "LOCAL ONLY",
         COL_ENFORCED:
             f"CORRECTED. The five civil identifiers are configured LOCAL on {POLICY}, not refuse. "
             "Refusing them would stop a Compliance classification step on a restricted attachment, "
             "which the workflow needs; local keeps the raw value inside the perimeter and still "
-            "answers. Observed firing: category:DATE_OF_BIRTH->local in E3.",
+            "answers. Observed firing: category:DATE_OF_BIRTH->local in E3. ONE QUALIFICATION ON "
+            "COLUMN C: 'the value stays inside the bank' holds only where the detector applies the "
+            "right label. We measured a case where it did not -- a passport number came back "
+            "labelled ACCOUNT_NUMBER, whose action is placeholder, so it was pseudonymised and sent "
+            "to the cloud model instead of kept local. See the product gap note.",
         COL_GAP:
             "MEASURED DOWNGRADE: the passport number NX1234567 was labelled ACCOUNT_NUMBER, not "
             "PASSPORT, so it was pseudonymised and sent to the cloud model instead of being kept "
@@ -297,15 +305,15 @@ def main() -> int:
             changed += 1
 
     with OUT.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
 
     print(f"[source] {bc.rel(SOURCE)}  {len(rows)} rules (Ilaria's, unmodified)")
     print(f"[wrote]  {bc.rel(OUT)}  {changed} cells updated across {len(UPDATES)} rules")
-    print("[kept]   'Legal or governance source' untouched in every row -- Ilaria's cited work")
-    print("[note]   CB-04 and CB-10 target decisions corrected from BLOCK to LOCAL ONLY")
-    print("[note]   CB-05, CB-07, CB-09 carry UNVERIFIED: not enforced by BRANE or not yet built")
+    print("[kept]   Ilaria's task rationale and governance source in all rows")
+    print("[note]   CB-04 allows local classification and blocks commercial assessment using protected attributes.")
+    print("[note]   CB-10 calls for local handling of civil IDs. Its evidence records a detector misclassification.")
     return 0
 
 

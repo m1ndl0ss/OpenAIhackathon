@@ -13,6 +13,8 @@
 | [Fixture hold and retry checks](workflow-fixture.csv) | A compliance hold prevents approval. A stale revision fails. Concurrent requests and application restart preserve one receipt. |
 | [Fixture utility](agent-utility-fixture.json) | Two offline scenarios scored against the case answer key. |
 
-The security team captured its own [baseline](../../evidence/baseline_run.csv), [hardened gateway results](../../evidence/REPORT.md) and [original ten-row worksheet](../../evidence/MAIN_Five_Tests_Template.csv). The raw-firewall T3 and T3c failures remain visible there. The [original cited matrix](policy-matrix.csv) and [gateway-layer matrix](../../evidence/clearance_policy_matrix.csv) preserve the earlier workstream snapshots.
+The security team captured its own baseline, hardened gateway results and ten-row worksheet. The raw-firewall T3 and T3c failures remain visible there. [Baseline](../../evidence/baseline_run.csv) · [Gateway results](../../evidence/REPORT.md) · [Security worksheet](../../evidence/MAIN_Five_Tests_Template.csv)
+
+Ilaria revised the rationale and legal sources for CB-04 and CB-10. The submission and gateway matrices include her revisions. The original worksheet is available for comparison. [Current cited source](../../evidence/clearance_policy_matrix.source.csv) · [Gateway matrix](../../evidence/clearance_policy_matrix.csv) · [Original worksheet](policy-matrix.csv)
 
 **Reproduce locally.** Run `make setup`, `make test` and `make evidence`. The local commands exercise fixtures and the outage in a disposable environment. Set the team credential as described in the run guide and use `make live-evidence` for a new live case. Reports are written under `.clearance/evidence/`. Only the reviewed artifacts above are used in the submission. [Demo and business case](../../SUBMISSION.md)
