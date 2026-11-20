@@ -1,0 +1,59 @@
+{
+  "endpoint": "/policy",
+  "method": "GET",
+  "http_status": "200",
+  "authenticated": true,
+  "retrieved_utc": "2026-11-20T15:27:14Z",
+  "brane_headers": {},
+  "body": {
+    "team": "Team 09",
+    "departmentId": "8b0703c1-174a-436e-8dab-8fc8efdc1b14",
+    "routingMode": "cloud-preferred",
+    "piiSensitivity": "low",
+    "categories": {
+      "PERSON": "allow",
+      "EMAIL": "allow",
+      "PHONE": "allow",
+      "ADDRESS": "allow",
+      "IP_ADDRESS": "allow",
+      "ORG": "allow",
+      "TRADE_REGISTER": "allow",
+      "VAT_ID": "allow",
+      "DATE_OF_BIRTH": "allow",
+      "SSN": "allow",
+      "PASSPORT": "allow",
+      "TAX_NUMBER": "allow",
+      "INSURANCE_NUMBER": "allow",
+      "IBAN": "allow",
+      "CREDIT_CARD": "allow",
+      "ACCOUNT_NUMBER": "allow",
+      "PASSWORD": "allow",
+      "SECRET_KEY": "allow",
+      "HEALTH_DATA": "allow",
+      "ETHNIC_ORIGIN": "allow",
+      "POLITICAL_OPINION": "allow",
+      "RELIGIOUS_BELIEF": "allow",
+      "SEXUAL_ORIENTATION": "allow",
+      "TRADE_UNION": "allow",
+      "SENSITIVE_CONTEXT": "allow"
+    },
+    "semanticCategories": [],
+    "summary": {
+      "allow": 25,
+      "placeholder": 0,
+      "local": 0,
+      "refuse": 0,
+      "activeSemanticCategories": 0,
+      "isOpenBaseline": true
+    },
+    "updatedAt": null,
+    "availableActions": [
+      "allow",
+      "placeholder",
+      "local",
+      "refuse"
+    ],
+    "catalogEndpoint": "/api/v1/policy/catalog",
+    "testEndpoint": "/api/v1/policy/test"
+  }
+}

@@ -1,0 +1,640 @@
+{
+  "endpoint": "/policy/catalog",
+  "method": "GET",
+  "http_status": "200",
+  "authenticated": false,
+  "retrieved_utc": "2026-11-20T15:27:13Z",
+  "brane_headers": {},
+  "body": {
+    "groups": [
+      {
+        "id": "contact",
+        "title": "1 · Contact & Personal Identity",
+        "subtitle": "Starts OPEN (Send as typed) — decide whether external cloud models may see raw identities, placeholders, or local-only."
+      },
+      {
+        "id": "company",
+        "title": "2 · Company & Commercial Identifiers",
+        "subtitle": "Starts OPEN (Send as typed) — keep 'Send as typed' if external models must look up named companies, or pseudonymise/keep local."
+      },
+      {
+        "id": "identifiers",
+        "title": "3 · Government & Civil Identifiers",
+        "subtitle": "Starts OPEN (Send as typed) — decide whether government/civil IDs need Placeholder, Stays Local, or Refuse."
+      },
+      {
+        "id": "financial",
+        "title": "4 · Financial & Payment Identifiers",
+        "subtitle": "Starts OPEN (Send as typed) — decide whether payment & account numbers need Placeholder, Stays Local, or Refuse."
+      },
+      {
+        "id": "credentials",
+        "title": "5 · Credentials & Technical Secrets",
+        "subtitle": "Starts OPEN (Send as typed) — decide whether secrets & credentials must be Placeholder, Stays Local, or Refused (422)."
+      },
+      {
+        "id": "special",
+        "title": "6 · Special Categories · GDPR Art. 9",
+        "subtitle": "Starts OPEN (Send as typed) — evaluate under GDPR Art. 9 whether even placeholders leak context and must Stay Local / Refuse!"
+      }
+    ],
+    "actions": [
+      {
+        "id": "allow",
+        "rank": 0,
+        "label": "Send as Typed -> Cloud",
+        "short": "Send as typed",
+        "route": "cloud",
+        "description": "Value leaves as-is to the external cloud model (allowed only where BRANE floor = allow)."
+      },
+      {
+        "id": "placeholder",
+        "rank": 1,
+        "label": "Pseudonymise -> <TOKEN_1>",
+        "short": "Placeholder",
+        "route": "cloud",
+        "description": "Replaced with <CATEGORY_1> before cloud call and restored locally in the final answer."
+      },
+      {
+        "id": "local",
+        "rank": 2,
+        "label": "Stays Local -> Internal GPU",
+        "short": "Stays local (GPU)",
+        "route": "local",
+        "description": "Entire turn is processed on BRANE Mega's internal GPU model; nothing reaches external cloud."
+      },
+      {
+        "id": "refuse",
+        "rank": 3,
+        "label": "Refuse / Block -> HTTP 422",
+        "short": "Refuse (422)",
+        "route": "refused",
+        "description": "Hard policy stop (HTTP 422) before any model runs; requires human review or input sanitisation."
+      }
+    ],
+    "categories": [
+      {
+        "label": "PERSON",
+        "group": "contact",
+        "floor": "allow",
+        "title": "Person Name",
+        "detectors": [
+          "Presidio",
+          "GLiNER",
+          "OPF"
+        ],
+        "example": "Lisa Becker, Dr. Jonas Weber",
+        "gdprHint": "GDPR Art. 4(1) personal identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "EMAIL",
+        "group": "contact",
+        "floor": "allow",
+        "title": "Email Address",
+        "detectors": [
+          "Regex",
+          "Presidio",
+          "OPF"
+        ],
+        "example": "lisa.becker@example.org",
+        "gdprHint": "GDPR Art. 4(1) direct contact ID",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "PHONE",
+        "group": "contact",
+        "floor": "allow",
+        "title": "Phone Number",
+        "detectors": [
+          "Regex",
+          "Presidio",
+          "OPF"
+        ],
+        "example": "+49 170 5550199",
+        "gdprHint": "GDPR Art. 4(1) direct contact ID",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "ADDRESS",
+        "group": "contact",
+        "floor": "allow",
+        "title": "Street / Location Address",
+        "detectors": [
+          "OPF",
+          "GLiNER"
+        ],
+        "example": "Königstraße 26, 70173 Stuttgart",
+        "gdprHint": "GDPR Art. 4(1) location identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "IP_ADDRESS",
+        "group": "contact",
+        "floor": "allow",
+        "title": "IP Address",
+        "detectors": [
+          "Regex",
+          "Presidio"
+        ],
+        "example": "192.168.14.22",
+        "gdprHint": "GDPR Recital 30 online identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "ORG",
+        "group": "company",
+        "floor": "allow",
+        "title": "Company / Organisation Name",
+        "detectors": [
+          "GLiNER",
+          "Presidio"
+        ],
+        "example": "Acme Pharma GmbH",
+        "gdprHint": "Confidential client/supplier vs public lookup",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "TRADE_REGISTER",
+        "group": "company",
+        "floor": "allow",
+        "title": "Trade Register (HRB/HRA)",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "HRB 802562",
+        "gdprHint": "Commercial entity identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "VAT_ID",
+        "group": "company",
+        "floor": "allow",
+        "title": "VAT ID (USt-IdNr.)",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "DE460417321",
+        "gdprHint": "Tax / billing entity identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "DATE_OF_BIRTH",
+        "group": "identifiers",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Date of Birth",
+        "detectors": [
+          "Regex",
+          "Piiranha",
+          "GLiNER"
+        ],
+        "example": "14.03.1981",
+        "gdprHint": "Quasi-identifier / age profiling risk",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "SSN",
+        "group": "identifiers",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Social Security / National ID",
+        "detectors": [
+          "Piiranha",
+          "Regex"
+        ],
+        "example": "65 140381 W 012",
+        "gdprHint": "GDPR Art. 87 national ID number",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "PASSPORT",
+        "group": "identifiers",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Passport / ID Card Number",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "C01X00T47",
+        "gdprHint": "Government identity document",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "TAX_NUMBER",
+        "group": "identifiers",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Personal Tax ID (Steuer-ID)",
+        "detectors": [
+          "Piiranha",
+          "GLiNER",
+          "Regex"
+        ],
+        "example": "12 345 678 901",
+        "gdprHint": "Statutory tax secrecy (§ 30 AO / GDPR)",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "INSURANCE_NUMBER",
+        "group": "identifiers",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Health / Social Insurance ID",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "A123456789",
+        "gdprHint": "Social & health insurance identifier",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "IBAN",
+        "group": "financial",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "IBAN Bank Account",
+        "detectors": [
+          "Regex",
+          "Presidio"
+        ],
+        "example": "DE89 3704 0044 0532 0130 00",
+        "gdprHint": "Payment & payroll account data",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "CREDIT_CARD",
+        "group": "financial",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Credit / Payment Card",
+        "detectors": [
+          "Regex",
+          "Presidio"
+        ],
+        "example": "4532 0151 1283 0366",
+        "gdprHint": "PCI-DSS / payment instrument",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "ACCOUNT_NUMBER",
+        "group": "financial",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Account / Customer Reference ID",
+        "detectors": [
+          "Regex",
+          "OPF",
+          "Piiranha"
+        ],
+        "example": "847293-001",
+        "gdprHint": "Contract / account reference",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "PASSWORD",
+        "group": "credentials",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Password / Passphrase",
+        "detectors": [
+          "Regex",
+          "GLiNER"
+        ],
+        "example": "Passwort: S3cur3#2026",
+        "gdprHint": "GDPR Art. 32 security of processing",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "SECRET_KEY",
+        "group": "credentials",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "API Key / Secret Token",
+        "detectors": [
+          "Regex",
+          "OPF"
+        ],
+        "example": "sk-proj-9f8a7b...",
+        "gdprHint": "GDPR Art. 32 / NIS2 credential leak",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "HEALTH_DATA",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Health & Medical Data",
+        "detectors": [
+          "GLiNER",
+          "Regex"
+        ],
+        "example": "chronic migraine, oncology treatment",
+        "gdprHint": "GDPR Art. 9(1) special category",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "ETHNIC_ORIGIN",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Racial or Ethnic Origin",
+        "detectors": [
+          "GLiNER"
+        ],
+        "example": "ethnic minority background",
+        "gdprHint": "GDPR Art. 9(1) + AGG anti-discrimination",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "POLITICAL_OPINION",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Political Opinion",
+        "detectors": [
+          "GLiNER",
+          "Regex"
+        ],
+        "example": "party membership / affiliation",
+        "gdprHint": "GDPR Art. 9(1) special category",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "RELIGIOUS_BELIEF",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Religious / Philosophical Belief",
+        "detectors": [
+          "GLiNER"
+        ],
+        "example": "denomination / church tax note",
+        "gdprHint": "GDPR Art. 9(1) special category",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "SEXUAL_ORIENTATION",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Sexual Orientation",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "same-sex partner note",
+        "gdprHint": "GDPR Art. 9(1) special category",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "TRADE_UNION",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Trade Union Membership",
+        "detectors": [
+          "Regex"
+        ],
+        "example": "ver.di / IG Metall shop steward",
+        "gdprHint": "GDPR Art. 9(1) labour representation",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      },
+      {
+        "label": "SENSITIVE_CONTEXT",
+        "group": "special",
+        "floor": "allow",
+        "recommendedAction": "placeholder",
+        "title": "Other High-Risk Personal Context",
+        "detectors": [
+          "OPF",
+          "Regex"
+        ],
+        "example": "disciplinary / garnishment note",
+        "gdprHint": "Employee / vulnerable data subject risk",
+        "openBaselineDefault": "allow",
+        "allowedActions": [
+          "allow",
+          "placeholder",
+          "local",
+          "refuse"
+        ]
+      }
+    ],
+    "openBaselineCategories": {
+      "PERSON": "allow",
+      "EMAIL": "allow",
+      "PHONE": "allow",
+      "ADDRESS": "allow",
+      "IP_ADDRESS": "allow",
+      "ORG": "allow",
+      "TRADE_REGISTER": "allow",
+      "VAT_ID": "allow",
+      "DATE_OF_BIRTH": "allow",
+      "SSN": "allow",
+      "PASSPORT": "allow",
+      "TAX_NUMBER": "allow",
+      "INSURANCE_NUMBER": "allow",
+      "IBAN": "allow",
+      "CREDIT_CARD": "allow",
+      "ACCOUNT_NUMBER": "allow",
+      "PASSWORD": "allow",
+      "SECRET_KEY": "allow",
+      "HEALTH_DATA": "allow",
+      "ETHNIC_ORIGIN": "allow",
+      "POLITICAL_OPINION": "allow",
+      "RELIGIOUS_BELIEF": "allow",
+      "SEXUAL_ORIENTATION": "allow",
+      "TRADE_UNION": "allow",
+      "SENSITIVE_CONTEXT": "allow"
+    },
+    "semanticTemplates": [
+      {
+        "code": "INDIRECT_HEALTH_CONTEXT",
+        "name": "Indirect Health, Sick-Leave & Disability Context",
+        "description": "Any mention of medical absences, burnout, therapy, pregnancy, disability accommodations or clinical symptoms even when no patient ID or formal ICD code is present.",
+        "keywords": [
+          "oncology",
+          "chemotherapy",
+          "burnout",
+          "sick leave",
+          "parental leave",
+          "disability accommodation",
+          "chronic migraine"
+        ],
+        "legalBasis": "GDPR Art. 9(1) + Art. 88 / BDSG § 26",
+        "action": "local"
+      },
+      {
+        "code": "CONFIDENTIAL_PRICING_AND_DEALS",
+        "name": "Unpublished Pricing, Margins & Tender Bids",
+        "description": "Internal unit margins, supplier rebate tables, M&A valuation caps, legal settlement ceilings or unannounced tender bid prices.",
+        "keywords": [
+          "settlement ceiling",
+          "bid ceiling",
+          "gross margin",
+          "rebate table",
+          "acquisition price"
+        ],
+        "legalBasis": "EU Trade Secrets Directive (2016/943) Art. 2",
+        "action": "local"
+      },
+      {
+        "code": "AUTONOMOUS_HIGH_RISK_DECISION",
+        "name": "Final Autonomous Rejection, Scoring or Termination",
+        "description": "Requests asking the AI to issue a final binding rejection of an applicant, terminate an employee, deny credit/insurance, or rank natural persons without human review.",
+        "keywords": [
+          "send final rejection",
+          "automatically reject",
+          "terminate contract immediately",
+          "final credit denial"
+        ],
+        "legalBasis": "GDPR Art. 22 + EU AI Act Art. 14 & Annex III",
+        "action": "refuse"
+      }
+    ]
+  }
+}

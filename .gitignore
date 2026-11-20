@@ -3,9 +3,11 @@
 .env.*
 !.env.example
 .venv/
+venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
 *.sqlite*
 *.db
 *.db-*
@@ -13,3 +15,6 @@ node_modules/
 console/dist/
 *.tsbuildinfo
 .DS_Store
+# Raw firewall captures and reversible case aliases are private.
+evidence/raw/
+local/
