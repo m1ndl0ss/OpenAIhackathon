@@ -2,7 +2,9 @@
 
 `make setup` creates three editable workbooks under `.clearance/evidence/` using the organisers’ column headers. `baseline.csv` and `hardened.csv` each contain T1–T5 and E1–E5, initially marked **UNVERIFIED**. `policy-matrix.csv` is ready for Ilaria's cited rules. Setup preserves existing workbooks.
 
-The [E3/E4 fixture results](workflow-fixture.csv) are from a clean checkout of implementation commit `1d7e69a`. E3 recorded blocked approval and issuance while Compliance held a complete file. E4 recorded a stale-revision rejection and one persisted receipt after concurrent retries and restart. The BRANE columns are empty because these checks ran on the local bank workflow.
+Both fixture reports were generated with `make evidence` at integration commit `816853b`. E3 recorded blocked approval and issuance while Compliance held a complete file. E4 recorded a stale-revision rejection and one persisted receipt after concurrent retries and restart. The BRANE columns are empty because these checks ran on the local bank workflow. [E3/E4 results](workflow-fixture.csv)
+
+The agent identified the missing invoice and Coverage as its owner on revision 1. On revision 2 it found the invoice. Both runs produced USD 500,000 remaining capacity and passed citation checks for all three desks. Each used eight local tool reads and three fixture turns. Provider usage, live routing and staff time are unmeasured. [Agent utility results](agent-utility-fixture.json)
 
 | Owner | Inputs to the report |
 | --- | --- |
