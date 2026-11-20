@@ -184,10 +184,20 @@ def main() -> int:
               f"{len(live_false_positives)} of {len(FP_SENTENCES)} already route local/refused today.")
     print(f"True positives: {len(tp_required) - len(tp_misses)} of {len(tp_required)} target "
           f"prompts still fire on keywords alone.")
-    print("\nNOT PROVEN BY THIS PROBE: the description layer. Descriptions are evaluated by the")
-    print("internal GPU model against the LIVE policy, so a rule that is not applied cannot be")
-    print("exercised through POST /policy/test. Re-run this probe after the candidate is applied")
-    print("to measure description-driven false positives; until then only keywords are verified.")
+
+    candidate_is_live = (
+        live_policy is not None and bc.policy_hash(live_policy) == bc.policy_hash(policy)
+    )
+    if candidate_is_live:
+        print("\nDESCRIPTION LAYER: EXERCISED. The candidate policy is the policy in force")
+        print(f"({bc.policy_hash(policy)}), so the Layer 2 results above went through the")
+        print("internal GPU model's evaluation of every rule DESCRIPTION, not just the keywords.")
+        print("A clean Layer 2 here is therefore evidence about both layers.")
+    else:
+        print("\nNOT PROVEN BY THIS PROBE: the description layer. Descriptions are evaluated by the")
+        print("internal GPU model against the LIVE policy, so a rule that is not applied cannot be")
+        print("exercised through POST /policy/test. Re-run this probe after the candidate is applied")
+        print("to measure description-driven false positives; until then only keywords are verified.")
 
     return 1 if (kw_false_positives or live_false_positives or tp_misses) else 0
 

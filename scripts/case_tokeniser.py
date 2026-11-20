@@ -190,6 +190,43 @@ def surviving_aliases(text: str) -> List[str]:
     return sorted({alias for alias, _token in all_aliases() if alias in text})
 
 
+# [[...]] is the ONLY permitted token shape. Word-like tokens were measured to be
+# re-detected by BRANE's NER in some positions and not others, which splits one
+# identity across two surfaces and once deleted an adjacent verb. Do not add a token
+# in any other shape, and do not accept one in a model reply.
+TOKEN_SHAPE = re.compile(r"\[\[[A-Za-z0-9_\-]+\]\]")
+
+
+def validate_reply_tokens(reply: str) -> Tuple[bool, Dict[str, object]]:
+    """
+    Output-validator rule for the rehydration round trip.
+
+    Every [[token]] in a model reply must be one this case issued. A token that is
+    unknown, mangled, or invented means the reply cannot be safely rehydrated: at
+    best a placeholder is shown to a reviewer as if it were a fact, at worst the
+    wrong party's identity is substituted into a desk packet.
+
+    Returns (ok, report). ok=False means REJECT the output -- do not rehydrate, do
+    not seal a packet, request a bounded correction or escalate.
+    """
+    known = set(CASE_PARTIES)
+    found = TOKEN_SHAPE.findall(reply)
+    unknown = sorted({t for t in found if t not in known})
+
+    # Bracket-ish fragments that did not parse as a well-formed token at all:
+    # "[[SIGNATORY-1", "[[PERSON_REF_1]]" wrapped twice, truncated spans, and so on.
+    bracket_fragments = re.findall(r"\[\[[^\]]{0,40}(?:\]\]|$)", reply)
+    malformed = sorted({f for f in bracket_fragments if not TOKEN_SHAPE.fullmatch(f)})
+
+    report = {
+        "tokens_found": sorted(set(found)),
+        "unknown_tokens": unknown,
+        "malformed_token_spans": malformed,
+        "known_tokens_for_case": sorted(known),
+    }
+    return (not unknown and not malformed), report
+
+
 def self_test() -> int:
     """Checks the T3 failure mode specifically, offline."""
     sample = (

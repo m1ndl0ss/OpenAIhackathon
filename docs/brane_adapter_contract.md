@@ -164,8 +164,95 @@ Measured on `hardened-v1`, recorded in `evidence/REPORT.md`:
 - Pseudonymisation is per surface form. One identity can receive two tokens, and an
   unrecognised spelling receives none. Use `scripts/case_tokeniser.py` to collapse
   known case parties to one case-scoped token **before** calling the adapter
-  (defence in depth, check T3b). Bracketed token shapes such as `[[ACCT-A]]` survive
-  BRANE unchanged; word-like ones get re-detected as names in some positions.
+  (defence in depth, check T3b).
+
+## 9. Case tokens: `[[…]]` is the only permitted shape
+
+**MUST** use the bracketed form `[[NAME]]` for every app-side case token, as
+`scripts/case_tokeniser.py` does. This is a measured requirement, not a style
+preference. On the T3b prompt, 4 identical calls per shape:
+
+| Token shape | Occurrences surviving BRANE | Label BRANE applied |
+| --- | --- | --- |
+| `SIGNATORY_1_ACCOUNT` | 1 of 3 | `PERSON` |
+| `CASE_ACCOUNT_A` | 2 of 3 | `PERSON` |
+| `SIGNATORY_1` | 6 of 7 | `PERSON`, matching the span `"confirms SIGNATORY_1"` |
+| `[[ACCT-A]]`, `[[EMAIL-A]]`, `[[PHONE-A]]` | 3 of 3 | none |
+
+A word-like token is re-detected as a name in *some* positions only. Two things then
+go wrong: one identity ends up with two surfaces in the same payload, and in the
+`"confirms SIGNATORY_1"` case the detector **consumed the adjacent verb**, so the
+cloud model received "Correspondence from `[[EMAIL-A]]` `PERSON_REF_1` holds signing
+authority" — the word "confirms" deleted. Pseudonymisation silently changed what the
+desk wrote. Check **T3c** is the regression guard for this.
+
+**MUST NOT** invent a token shape in application code. If a new party type is needed,
+add it to `CASE_PARTIES` in `scripts/case_tokeniser.py` and re-run `--self-test`.
+
+When `[[SIGNATORY-1]]` *is* re-detected, BRANE replaces **all** occurrences with a
+single `PERSON_REF_1`, so identity consistency survives. That is acceptable; a partial
+substitution is not.
+
+### 9.1 Over-detection corrupts the prompt, and the adapter SHOULD pre-flight for it
+
+Token shape is not the whole problem. On `hardened-v2` at `piiSensitivity: high`, T3c
+measured BRANE labelling **ordinary trade-finance English as person names** and
+substituting it:
+
+| Input span | Label applied | What the cloud model received |
+| --- | --- | --- |
+| `expiry on` | `PERSON` | `before the instrument PERSON_REF_2 2027-01-31` |
+| `Beneficiary` | `PERSON` | `PERSON_REF_3 ORG_DEMO_02 disputes the treatment…` |
+| `confirms SIGNATORY_1` | `PERSON` | `Correspondence from [[EMAIL-A]] PERSON_REF_1 holds…` |
+
+Three words deleted from a five-sentence case note. The routing decision was correct
+every time; the *content* was not. A model asked to reason about an instrument whose
+"expiry on" has become a person reference can produce a confidently wrong packet, and
+no routing header will show it.
+
+**SHOULD** therefore pre-flight any prompt that will carry case text: call
+`POST /policy/test`, diff `outgoingCloudPayloadPreview` against the prompt ignoring
+token spans, and if non-token words were dropped or altered, treat the turn as
+`unavailable` rather than sending it — or escalate to a human with the diff. The
+harness check `T3c` is the reference implementation of that diff
+(`run_checks.v_t3c_meaning`).
+
+Two caveats the implementer must know: `/policy/test` is a dry run, so a clean
+pre-flight does not guarantee the graded call behaves identically, and the extra call
+costs a round trip inside the run budget. It is a canary, not a proof.
+
+## 10. Rehydration round trip: an output-validator rule
+
+The adapter tokenises on the way out; something must validate on the way back.
+
+**MUST** reject a model reply containing any `[[token]]` that this case did not issue.
+Use `case_tokeniser.validate_reply_tokens(reply)`, which returns
+`(ok, report)` and flags two failure classes:
+
+- **unknown token** — well-formed but not in the case's alias map
+  (`[[SIGNATORY-2]]` on a case with one signatory, `[[ACCT-B]]` where only
+  `[[ACCT-A]]` was issued). The model invented a party, or crossed cases.
+- **malformed span** — bracket fragments that do not parse as a token
+  (`[[SIGNATORY-1`, double-wrapped `[[[[ACCT-A]]]]`, truncated spans). The reply
+  cannot be rehydrated deterministically.
+
+On either, **MUST**:
+
+1. **Not rehydrate.** Rehydrating an unknown token either leaves a raw `[[…]]` string
+   in front of a reviewer as though it were a fact, or — worse, if a loose mapping is
+   used — substitutes the wrong party's identity into a signed desk packet.
+2. **Not seal a packet** from that output. Treat it like a schema-validation failure:
+   stop, or request one bounded correction under the same route (spec §5).
+3. Record the rejection with the `run_id` and the offending tokens, and surface a safe
+   reason to the desk. The rejected text does not go into the shared audit.
+
+**MUST** also confirm the complement: no raw alias may appear in a reply that is about
+to be stored or displayed to a desk without entitlement.
+`case_tokeniser.surviving_aliases(reply)` must be empty for any projection leaving the
+bank's entitled view.
+
+This is the one rule in this contract that is **not** about BRANE. BRANE protects the
+outbound path; nothing in the product validates the inbound one, so it is ours to do.
 - `POST /policy/test` is a dry run against the live policy. It is useful for
   pre-flighting a prompt, but its `simulatedHeaders` are **not** evidence of what the
   graded call did.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pre-fill MAIN_Policy_Matrix_Template.csv rows R1-R8 from policy/hardened-v1.json.
+Pre-fill MAIN_Policy_Matrix_Template.csv rows R1-R8 from policy/hardened-v2.json.
 
   python3 scripts/build_policy_matrix.py
 
@@ -12,7 +12,7 @@ Division of ownership, per the build plan:
     observed product gap, the evidence headers and the linked test IDs. All of
     it generated from the policy file and the recorded runs.
   * Ilaria: the "Legal or governance source" column. Every cell there carries
-    the legalBasis string from hardened-v1.json (or the BRANE catalog's own
+    the legalBasis string from hardened-v2.json (or the BRANE catalog's own
     gdprHint, attributed as such) and is marked TO VERIFY (Ilaria). No article
     number is asserted here that was not supplied by Matvei or by the product.
 
@@ -155,19 +155,24 @@ def build_rows(policy: dict) -> list:
             f"TRADE_UNION = 'GDPR Art. 9(1) special category', SENSITIVE_CONTEXT = 'Employee / "
             f"vulnerable data subject risk'. {TO_VERIFY}",
             "LOCAL ONLY",
-            "Configured correctly (all seven labels = local, verified by policy read-back) but "
-            "NOT ENFORCED IN PRACTICE. Status: Not Yet.",
-            "NOT YET. The configuration is right and the detector does not fire. 'is on reduced "
-            "hours following cardiac surgery and his cardiologist's certificate is in the file' "
-            "produced zero HEALTH_DATA and zero SENSITIVE_CONTEXT detections across three runs; "
-            "only PERSON was caught, so Art. 9 text reached the external model with just the name "
-            "tokenised (T5a FAIL). Indirect phrasing fails the same way (E2 FAIL). What is needed "
-            "is either a clinical-language detector or a mandatory semantic rule; a per-category "
-            "'route local if the span is merely suspected' setting would also close it.",
-            "X-Brane-Pii-Types: PERSON (only) | X-Brane-Routed-To: cloud | X-Brane-Redacted: true | "
-            "POST /policy/test detectedCategories = [PERSON] + outgoingCloudPayloadPreview showing "
-            "the clinical text in clear",
-            "T5a / E2",
+            "Configured as local for all seven labels AND now enforced, but only because we added "
+            "a semantic rule. On hardened-v1 the category configuration enforced nothing: T5a and "
+            "E2 both routed to the cloud model. hardened-v2 adds INDIRECT_HEALTH_CONTEXT -> local, "
+            "after which T5a and E2 both route local (3/3 runs). The built-in category detectors "
+            "still do not fire on this language; the semantic rule is what carries the control.",
+            "PARTIAL. The built-in Art. 9 categories are configured local and still never fire on "
+            "clinical or absence language: 'is on reduced hours following cardiac surgery and his "
+            "cardiologist's certificate is in the file' produced zero HEALTH_DATA and zero "
+            "SENSITIVE_CONTEXT detections, so on hardened-v1 Art. 9 text reached the cloud model "
+            "with only the name tokenised (T5a FAIL, E2 FAIL). A team-authored semantic rule closes "
+            "it, which means the control depends on each team writing one. What is still missing: a "
+            "clinical-language detector behind HEALTH_DATA, a per-category confidence floor, and a "
+            "way to require that a category MUST match before a turn may go to cloud.",
+            "OBSERVED on hardened-v1 (failure): X-Brane-Pii-Types: PERSON only | X-Brane-Routed-To: "
+            "cloud | POST /policy/test detectedCategories=[PERSON] with the clinical text in clear. "
+            "OBSERVED on hardened-v2 (fixed): X-Brane-Routed-To: local | X-Brane-Local-Cause: "
+            "semantic_category_local | X-Brane-Semantic-Matches: INDIRECT_HEALTH_CONTEXT",
+            "T5a / E2 / C3a / C3b / C3c",
         ],
         [
             "R6",
@@ -250,7 +255,7 @@ def build_rows(policy: dict) -> list:
 
 
 def main() -> int:
-    policy_path = bc.REPO_ROOT / "policy" / "hardened-v1.json"
+    policy_path = bc.REPO_ROOT / "policy" / "hardened-v2.json"
     doc = json.loads(policy_path.read_text(encoding="utf-8"))
     out = bc.REPO_ROOT / "evidence" / "MAIN_Policy_Matrix_Template.csv"
     out.parent.mkdir(parents=True, exist_ok=True)
