@@ -4,7 +4,7 @@
 
 The local console supports a USD 2 million import letter of credit in fixture mode. Start the app with `make setup` and `make run`. In the local console choose **Coverage** and open `LC-001`. The walkthrough takes you from the missing invoice to a single simulated receipt. [Run and sign in](../README.md#run-from-a-fresh-clone) · [Role-by-role walkthrough](../README.md#walk-the-case)
 
-Trade Finance, Credit Risk and Compliance sign the current file. A separate mandated officer decides, and Operations records simulated issuance. The team still needs to connect and verify the live BRANE agent for the challenge. [Build specification](corporate-banking-hackathon-spec.md) · [Architecture diagram](corporate-banking-architecture.png)
+Trade Finance, Credit Risk and Compliance sign the current file. A separate mandated officer decides, and Operations records simulated issuance. The integrated live rehearsal records both revisions and their BRANE verdicts. [Live evidence](evidence/submission-live.json) · [Build specification](corporate-banking-hackathon-spec.md) · [Architecture diagram](corporate-banking-architecture.png)
 
 ### Matvei Kandalintsev — BRANE setup and security
 
@@ -36,9 +36,9 @@ Trade Finance, Credit Risk and Compliance sign the current file. A separate mand
 
 ## 2. Support multiple banking workflows
 
-**Planned scope.** Give staff one assigned queue across the existing issuance workflow and all 26 workflows in the bank research catalogue. The catalogue covers six corporate banking workflows, five in markets and securities, ten in risk and control, and five in group functions. It includes activities such as credit-pack review, FX handover, treasury liquidity review and internal audit. Each entry defines a specific job a person needs to finish. For example, issuing a letter of credit and reviewing documents subsequently presented under it are two different jobs. [Full workflow catalogue](../research/bank-data-classification/README.md)
+**Implemented in the demo.** Staff have an assigned queue across the original issuance workflow and the 26 department workflows. Six sit in corporate banking, five in markets and securities, ten in risk and control and five in group functions. Each has two seeded files, a specialist analyst, a separate final approver and three drafting tasks. Some also require a partner signature. Issuing a letter of credit and reviewing a subsequent shipment discrepancy are distinct jobs in the console. [Desks, cases and decision owners](department-workflows.md) · [Data classification research](../research/bank-data-classification/README.md)
 
-### Build the first three additional workflows
+### Three workflows to demonstrate first
 
 | Workflow | What staff should be able to do | Human decision and visible result |
 | --- | --- | --- |
@@ -55,4 +55,6 @@ Trade Finance, Credit Risk and Compliance sign the current file. A separate mand
 | **Tasos** | Add synthetic inputs, read-only tools, deterministic checks and source-linked packets for each workflow. Use the selected definition to build the allowed model input. Give local-only cases an internal handover path. |
 | **Ilaria** | Maintain a coverage table with one row per catalogue entry, its human owner, expected outcome, fixture, implementation status and evidence link. Define the required desk sign-offs and final decision for each workflow, including whether completion creates an internal note, referral or simulated receipt. |
 
-**When a workflow counts as supported.** An assigned person can open a seeded case, inspect the evidence their desk is entitled to see, complete its human approvals and recover the recorded outcome after a refresh. An unassigned user is denied. Missing evidence, a required desk hold or a stale signature blocks completion. For each of the 26 profiles, run its five research scenarios and record the observed result and evidence. Track fixture verification and live BRANE verification separately. Keep the existing letter-of-credit walkthrough and E3/E4 passing as each workflow is added. [Research test definitions](../research/bank-data-classification/classification-method.md) · [Current workflow evidence](evidence/README.md)
+**Verified in the demo.** Both cases in every department pass the fixture workflow checks. The first example at each desk also reached a signed outcome in a live rehearsal. Staff can read their permitted sources, place or release a hold, sign the current revision and recover the recorded outcome. An unassigned person cannot open the file. [Department fixtures and tests](../tests/test_department_workflows.py) · [Live results for all 26 desks](evidence/department-rehearsal-live.json)
+
+**Research follow-up.** The five scenarios in each research profile also describe routes for raw documents, special cases and standalone templates. The demo accepts registered synthetic examples. Field-by-field integration with those additional source systems and a complete set of raw gateway measurements remain further work. [Research test definitions](../research/bank-data-classification/classification-method.md)

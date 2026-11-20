@@ -1,0 +1,968 @@
+{
+  "observed_at": "2026-11-20T18:20:58.709810+00:00",
+  "mode": "live",
+  "example": 1,
+  "cases": [
+    {
+      "workflow": "relationship-management",
+      "case_id": "RM-001",
+      "bank_only": false,
+      "run_id": "RUN-695d2accdb1545fe897278f51b1d2c4c",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/relationship-management/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198771-PvjMUnmfCZlQZgzlf5la",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/relationship-management/v1/policy",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198776-khfXdP6rLZbwDfkHa29L",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/relationship-management/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198779-OmReSJT28Lb8JWV5vTG8",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-7d2f4f1ebe7442f1a76043a873f1ddcc",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "lending-underwriting",
+      "case_id": "UW-001",
+      "bank_only": false,
+      "run_id": "RUN-7558803ff1684114b370c04695066de4",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/lending-underwriting/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198771-Dof3tyS7nlGLpjZHqUil",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/lending-underwriting/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198775-qJs4NxVXpZsOmqSe7XhH",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/lending-underwriting/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198780-yjMd09Un1bHl9MxVLmub",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-484a5c23c2474c51b6d37a84f5eee0eb",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "specialized-finance-syndication",
+      "case_id": "SYN-001",
+      "bank_only": false,
+      "run_id": "RUN-877b9b8b8c6e479db51c001865b767f8",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/specialized-finance-syndication/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198771-49h5WBzl6G2hpKCnU0bi",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/specialized-finance-syndication/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198774-Wner08fQb5wOKjcCvCEf",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/specialized-finance-syndication/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198779-4eKnl5WvRgEbe9AhPMhn",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-19a70f84a9344584bfb8a8e7ef84ab7a",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "loan-servicing-restructuring",
+      "case_id": "LS-001",
+      "bank_only": false,
+      "run_id": "RUN-6eb86b5cc989444e99337e3a21b33457",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/loan-servicing-restructuring/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198781-0OtcChhpLSxbPk1wkPGW",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/loan-servicing-restructuring/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198785-b8fxq2n8f5oATcSbro96",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/loan-servicing-restructuring/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198789-QfIab0SnrlahliXXgOzM",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-df911b3e30584dd4bf434b7d07c65d4c",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "payments-cash-correspondent",
+      "case_id": "PAY-001",
+      "bank_only": false,
+      "run_id": "RUN-5db3d7d2d9704330ac8f965c6ebdc079",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/payments-cash-correspondent/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198784-8gYnkXm04qes6Y8hi9qb",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/payments-cash-correspondent/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198787-CaT8MgpwJHolNj78Gqfo",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/payments-cash-correspondent/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198791-uRDzNQsSb9Lamt6yZC2J",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-9ba6a7d7e2d1442e80f2511d97891002",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "trade-working-capital-finance",
+      "case_id": "DOC-001",
+      "bank_only": false,
+      "run_id": "RUN-da93256cb5f146a19c32d3abe27a2554",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/trade-working-capital-finance/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198784-jRqkwivfWb6OPMFmo7UR",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/trade-working-capital-finance/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198787-ckVKRwTlmMC4njXiu6bP",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/trade-working-capital-finance/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198791-DSq8W8gWvyUV63jL7fiT",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-7e217fd69fce4555923c657a09dc1a2e",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "fx-rates-derivatives",
+      "case_id": "FX-001",
+      "bank_only": false,
+      "run_id": "RUN-7fa5a2846d1749ee8c29e6105939f1ff",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/fx-rates-derivatives/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198791-wtTYdZsQrZbBpG4YbYFG",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/fx-rates-derivatives/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198794-5kR1v8aEN7kiazbfsUAE",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/fx-rates-derivatives/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198800-dyGt00O8y5kj49JTNKDw",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-3a56d28f9cda453d8ac9e8b4078b9271",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "settlement-collateral",
+      "case_id": "COL-001",
+      "bank_only": false,
+      "run_id": "RUN-bf3172eeed8d40fcba12da9fd87fd792",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/settlement-collateral/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198793-qgiRhBCiI563psle3uqW",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/settlement-collateral/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198797-iy23HTuyspFTh2KN9D8l",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/settlement-collateral/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198800-0vBtXhHISux0qSsg4NIm",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-405997e133284824899a1468921a0a1b",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "custody-trust-agency",
+      "case_id": "CUS-001",
+      "bank_only": false,
+      "run_id": "RUN-b4cbf118bdc64d5cb067cbca928ff8c8",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/custody-trust-agency/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198795-BuB25jkOIchME8GHqdsO",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/custody-trust-agency/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198799-rJtdduhry7qExNImonBG",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/custody-trust-agency/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198803-kn8qjmsYh63UoEpxx644",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-b878789daf204c229bcdaed40fc799fb",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "capital-markets-ma",
+      "case_id": "MA-001",
+      "bank_only": true,
+      "run_id": "RUN-64a6d7e57435444792f43a04bb6e3011",
+      "status": "sealed",
+      "policy": "bank-local-v1",
+      "reason": null,
+      "model_calls": 0,
+      "observations": [
+        {
+          "task": "department/capital-markets-ma/v1/evidence",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/capital-markets-ma/v1/policy",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/capital-markets-ma/v1/handover",
+          "route": "bank_local"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-a67f291e743f48a5903b1fbfa46ab54f",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "markets-research",
+      "case_id": "RES-001",
+      "bank_only": false,
+      "run_id": "RUN-c117af1e9730434d98b698b45ec69906",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/markets-research/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198803-NcqE7kqRD4Hipp4HIj7S",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/markets-research/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198807-JlyBnSAZ29XHN6uleLzQ",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/markets-research/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198812-LSTgYyBnbwo2uTsC44ZX",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-a69af89c2ced483b9a5b72483d6d086d",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "credit-counterparty-risk",
+      "case_id": "CCR-001",
+      "bank_only": false,
+      "run_id": "RUN-c6efd3f9ed254aea98e84d5ad63e4692",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/credit-counterparty-risk/v1/evidence",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198805-EVsx8MfIIG3KGCcEuzhD",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/credit-counterparty-risk/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198807-d2EVaETDt1he9HXC07Tz",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/credit-counterparty-risk/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198811-4tkcK2lQC0CH77bMY0CM",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-074c5b836ba540a0b696ce3167c3238b",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "market-risk",
+      "case_id": "MR-001",
+      "bank_only": false,
+      "run_id": "RUN-6a660725e1e541488e53c30328e43ee8",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/market-risk/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198807-w8fXnlZ3rzG0BrXdsw1p",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/market-risk/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198811-u1H4QWSCxu5ArbPCsvRK",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/market-risk/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198815-okC8hNIc71Lh5vZkIVfa",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-5949797867064c1eaa8c41eeef7fdf38",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "model-risk",
+      "case_id": "MOD-001",
+      "bank_only": false,
+      "run_id": "RUN-e7441a1a3721451f8355e7fcaf91a463",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/model-risk/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198813-rLffkUU5sGz68usBCYBs",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/model-risk/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198818-QtOeCPXgkliG1OlHUxlS",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/model-risk/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198822-a8lZxyXs9MRMGBhgFopK",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-7e88237cdeea45f4b30cf8bd6f6113d6",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "operational-risk",
+      "case_id": "ORM-001",
+      "bank_only": false,
+      "run_id": "RUN-bd856b9824d942898af76343e2dd9a87",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/operational-risk/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198816-2kKC7KeXgEE6BC99NGh4",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/operational-risk/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198821-y0w8FpVASUjJrLPnW56Y",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/operational-risk/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198826-vaSjDmXLeprhgtqTGhFP",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-2703d7258ee44fab903440e12cc7a1db",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "bank-treasury",
+      "case_id": "TRE-001",
+      "bank_only": false,
+      "run_id": "RUN-8fde1d8b6f074f60824f25954fef3ea0",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/bank-treasury/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198818-6zVGezydNExwrv9bimHT",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/bank-treasury/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198823-AO6LhM2L2rvlGsxKv4w6",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/bank-treasury/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198828-QYMDOaE2cj9QAaXI2fVO",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-9487d854d34d4615bb238a35116ec2be",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "kyc",
+      "case_id": "KYC-001",
+      "bank_only": false,
+      "run_id": "RUN-e4748d34929f48c0a5fbe8c458e7396e",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/kyc/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198827-C2YorYHqW05xmJfIxVTN",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/kyc/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198831-Zwyn9OEkOSgChHR3jcB7",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/kyc/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198835-E5pET37YPs9CzjJDsaBx",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-56b56b3e52d04b6b853b91bce00ae418",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "aml-sanctions-fraud",
+      "case_id": "AML-001",
+      "bank_only": true,
+      "run_id": "RUN-aa4ca706204d42b2a8516ebc655189b8",
+      "status": "sealed",
+      "policy": "bank-local-v1",
+      "reason": null,
+      "model_calls": 0,
+      "observations": [
+        {
+          "task": "department/aml-sanctions-fraud/v1/evidence",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/aml-sanctions-fraud/v1/policy",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/aml-sanctions-fraud/v1/handover",
+          "route": "bank_local"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-9fa6ffdbbb3444ea8c51bec014ae4fd8",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "legal",
+      "case_id": "LEG-001",
+      "bank_only": false,
+      "run_id": "RUN-d71a93636ca942649dd8abccbf5c7aa7",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/legal/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198829-uag4m5zapQqGbblVEFG4",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/legal/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198832-7dJhM0rZDfS791vsaial",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/legal/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198835-Yv3WGHKV9sC2Jgx3fLt9",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-22ab3e05406e4218bfc32823e7fde0a0",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "regulatory-compliance",
+      "case_id": "SUR-001",
+      "bank_only": true,
+      "run_id": "RUN-72bfd393266749a684dcfd49827cc2f7",
+      "status": "sealed",
+      "policy": "bank-local-v1",
+      "reason": null,
+      "model_calls": 0,
+      "observations": [
+        {
+          "task": "department/regulatory-compliance/v1/evidence",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/regulatory-compliance/v1/policy",
+          "route": "bank_local"
+        },
+        {
+          "task": "department/regulatory-compliance/v1/handover",
+          "route": "bank_local"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-2acd948ece604de0bba900a550295db4",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "internal-audit",
+      "case_id": "AUD-001",
+      "bank_only": false,
+      "run_id": "RUN-f18cd89000c544c5b0f9d5196eea47b1",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/internal-audit/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198831-QfaaOhL40xOdUwubkDyV",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/internal-audit/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198833-8PzZOmX3IztzVn0Ua3lN",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/internal-audit/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198836-sRZ3GQvXrKgaVsIOa9KI",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-0a8fe92b9e0d4a36b4a4074d02e48f97",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "finance-tax-regulatory-reporting",
+      "case_id": "FIN-001",
+      "bank_only": false,
+      "run_id": "RUN-2b4308d9339b442c8fc7cf7aacb1b672",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/finance-tax-regulatory-reporting/v1/evidence",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198837-MWogfzpRB9RD0s1y4JMK",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/finance-tax-regulatory-reporting/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198839-zuV5vfRDOw3AaUqwc6iv",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/finance-tax-regulatory-reporting/v1/handover",
+          "route": "local",
+          "model": "vllm:deepseek-v4.1-flash",
+          "provider_request_id": "gen-1795198843-oDrKr5Gurxf1yearJGFr",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-defcaa451ff843b39a7e8e1d448f2507",
+      "signed_reviews": 2
+    },
+    {
+      "workflow": "it-cyber-data-governance",
+      "case_id": "ICT-001",
+      "bank_only": false,
+      "run_id": "RUN-3fbdbc47a31b42b8b886345ebcb25e90",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/it-cyber-data-governance/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198838-UYMSEcxpnkxbRkLVvMtz",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/it-cyber-data-governance/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198843-yft3cvszG57g328cT3uV",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/it-cyber-data-governance/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198847-jmlENh0gjNewvryEEGKq",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-5d1cbaa1b017409eb997df6d906a5177",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "hr",
+      "case_id": "HR-001",
+      "bank_only": false,
+      "run_id": "RUN-bfb49b5fd64549a68d51cfe362f97afc",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/hr/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198839-PhlI3YqNz4oPLzt2Ibel",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/hr/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198842-snH2pJkE1b78crdoUL6s",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/hr/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198846-Om8yCo4eZfaXbWf3YcYq",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-60929dfb839545438403615eb9679dbe",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "procurement",
+      "case_id": "BUY-001",
+      "bank_only": false,
+      "run_id": "RUN-59f863fb6dd74c17a888d99ce47e5522",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/procurement/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198845-GCKHZMoa1ITfoG8iJf8L",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/procurement/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198848-kROAMxvE4XKYHWgVAjU2",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/procurement/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198852-JnrRwQTvLoSvBzQleZGl",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-f6724ce86ba64dbf8b17e5569a3801f6",
+      "signed_reviews": 1
+    },
+    {
+      "workflow": "executive-office",
+      "case_id": "EXE-001",
+      "bank_only": false,
+      "run_id": "RUN-5679ca115ce046aa86b47a14cfe0cde8",
+      "status": "sealed",
+      "policy": "hardened-v2",
+      "reason": null,
+      "model_calls": 3,
+      "observations": [
+        {
+          "task": "department/executive-office/v1/evidence",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198849-dXFfJy63DEtl0u5VhEno",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/executive-office/v1/policy",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198852-EqtZWldhx3DX3eoOGoCv",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        },
+        {
+          "task": "department/executive-office/v1/handover",
+          "route": "direct",
+          "model": "openrouter:openai/gpt-6-luna",
+          "provider_request_id": "gen-1795198856-gQnCzdOkynXBVovMmdE9",
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf"
+        }
+      ],
+      "checked_packets": true,
+      "checked_route": true,
+      "outcome": "completed",
+      "receipt": "OUT-722ee4590f3c44ebbf0f3cde3f5ad5d9",
+      "signed_reviews": 1
+    }
+  ]
+}

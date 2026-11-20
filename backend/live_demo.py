@@ -18,7 +18,7 @@ from .main import create_app, enable_demo_desks
 @contextmanager
 def rehearsal_app():
     with TemporaryDirectory(prefix="clearance-live-") as directory:
-        app = create_app(Path(directory) / "rehearsal.sqlite3", make_principals(), mode="live")
+        app = create_app(Path(directory) / "rehearsal.sqlite3", {**make_principals(), **make_principals(specialists=True)}, mode="live")
         enable_demo_desks(app)
         yield app
 

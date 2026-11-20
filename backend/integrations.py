@@ -1,6 +1,6 @@
 """Interfaces shared by Security, the case agent and the human workflow."""
 
-from . import brane_client
+from . import brane_client, departments
 from .agent.runtime import AnalysisResult, fixture_turn, run_agent
 
 
@@ -21,7 +21,10 @@ def analysis_ready(mode):
 def prepare_packets(snapshot, mode, *, run_id, authorize, report=None):
     from .workflow import source_catalog
 
-    if mode == "fixture":
+    p = departments.profile(snapshot)
+    if p and p["local_only"]:
+        version, send = "bank-local-v1", None
+    elif mode == "fixture":
         version, send = snapshot["brane_policy_version"], fixture_turn
     elif mode == "live":
         try:

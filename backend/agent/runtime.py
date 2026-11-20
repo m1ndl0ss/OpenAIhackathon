@@ -1,9 +1,10 @@
-"""A bounded run for the letter-of-credit review agent."""
+"""Run the shared review agent with the case's registered drafting tasks."""
 
 import json
 from dataclasses import dataclass, field
 from time import monotonic
 
+from .. import departments
 from .packets import APPROVED_WORDINGS, candidates, validate_draft
 from .tools import DESK_TOPICS, CaseTools
 
@@ -70,6 +71,9 @@ class RunBudget:
 
 
 def contexts(snapshot, catalog, read):
+    p = departments.profile(snapshot)
+    if p:
+        return departments.candidates(snapshot, p, catalog, read)
     tools = CaseTools(snapshot, catalog, read)
     case = tools.case_facts()
     capacity = tools.facility_snapshot("credit_risk")
@@ -84,14 +88,21 @@ def contexts(snapshot, catalog, read):
     }
 
 
-def draft_messages(desk, next_step):
+def draft_messages(desk, next_step, profile=None):
     """The bank owns every word in a model request, including the system instruction."""
-    content = {"desk": desk, "next_step": next_step, "wordings": APPROVED_WORDINGS[desk][next_step]}
+    if profile:
+        content = {"workflow": profile["workflow"], "task": desk, "next_step": next_step,
+                   "wordings": departments.wordings(profile, desk, next_step)}
+    else:
+        content = {"desk": desk, "next_step": next_step, "wordings": APPROVED_WORDINGS[desk][next_step]}
     return [{"role": "system", "content": SYSTEM},
             {"role": "user", "content": json.dumps(content, ensure_ascii=False)}]
 
 
 def permitted_turn(task, messages):
+    if task in departments.TASKS:
+        p, lane = departments.TASKS[task]
+        return not p["local_only"] and any(messages == draft_messages(lane, step, p) for step in ("verify", "review"))
     desk = task.removeprefix("draft_")
     return task == "draft_" + desk and any(
         messages == draft_messages(desk, step) for step in APPROVED_WORDINGS.get(desk, {})
@@ -130,17 +141,25 @@ def run_agent(snapshot, catalog, *, run_id, mode, policy_version, send, authoriz
         authorize()
 
     try:
+        p = departments.profile(snapshot)
         inputs = contexts(snapshot, catalog, read)
         packets = {}
         for desk, options in inputs.items():
             if report:
                 report(desk, "started")
+            if p and p["local_only"]:
+                authorize()
+                packets[desk] = validate_draft(options[0], options)
+                observations.append({"task": departments.task_id(p, desk), "route": "bank_local"})
+                if report:
+                    report(desk, "prepared")
+                continue
             # Bind figures and citations from bank records after the wording has been selected.
             wordings = [option["summary"] for option in options]
             request = {
                 "case_ref": snapshot["case_id"], "revision": snapshot["revision"],
-                "run_id": run_id, "task": f"draft_{desk}", "policy_version": policy_version,
-                "messages": draft_messages(desk, options[0]["suggested_next_step"]),
+                "run_id": run_id, "task": departments.task_id(p, desk) if p else f"draft_{desk}", "policy_version": policy_version,
+                "messages": draft_messages(desk, options[0]["suggested_next_step"], p),
                 "tool_schema": (),
             }
             while True:

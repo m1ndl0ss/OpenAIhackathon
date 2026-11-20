@@ -1,6 +1,6 @@
 # Redwood | Corporate banking through BRANE
 
-A relationship manager receives a USD 2 million import letter-of-credit request. Redwood prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
+A relationship manager receives a USD 2 million import letter-of-credit request. Redwood prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. Redwood also has 26 specialist workflows spanning the rest of the bank. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
 
 ## Open the demo
 
@@ -23,9 +23,15 @@ Open the local rehearsal, choose **Coverage**, select **LC-001** and click **Run
 | Mandated officer and Operations | Show three signatures on the same revision. The officer records the decision. Operations records the simulated receipt. A retry returns the same receipt. |
 | Security evidence | Show one clean OpenAI route, a protected case, the raw-firewall failures, and the outage trace. In the outage the bank attempted its policy read, submitted zero model requests and sealed nothing. |
 
-The backup is a captioned sequence of actual browser captures from a separate live run on 20 November 2026. Its second revision is `RUN-5f7355181dc94cdb88473c1ddd5fe978`. The machine-readable rehearsal below has its own run IDs. [Play the 37-second backup](docs/evidence/live-walkthrough.gif)
+The letter-of-credit backup is a captioned sequence of actual browser captures from a separate live run on 20 November 2026, recorded with the previous desk picker. Its second revision is `RUN-5f7355181dc94cdb88473c1ddd5fe978`. The machine-readable rehearsal below has its own run IDs. [Play the 37-second backup](docs/evidence/live-walkthrough.gif)
 
-## What ran
+## Show another department
+
+Choose **Corporate banking → Payments & Cash**, open **PAY-001** and run analysis. The organizer prepares an evidence packet, a policy check and an internal handover. The analyst and Operations each sign. A different Payments approver records the return match or refers the file. **Risk & control → AML & Financial Crime** shows the same organizer working entirely inside the application. The case overview displays the observed routes and model-call count. [See the payment dashboard](docs/evidence/specialist-workflow.jpg) · [All desks and cases](docs/department-workflows.md)
+
+A separate live rehearsal took the first example at each of the 26 specialist desks through drafting, staff signatures and the final internal outcome. BRANE handled 69 calls for 23 workflows. It reported 57 cloud routes and 12 local-model routes. M&A, financial crime and surveillance completed nine internal tasks with zero model calls. Both examples at every desk also have automated fixture coverage. [Specialist run results](docs/evidence/department-rehearsal-live.json) · [Tests for both examples](tests/test_department_workflows.py)
+
+## What ran in the letter-of-credit case
 
 The bank owns the facility arithmetic, evidence lookup, access checks and approval rules. For each desk, the model chooses between two approved wordings. The model request contains the desk, next-step code and those wordings. The adapter accepts only the bank's fixed drafting messages and verifies the active firewall policy before each call. The bank validates the reply and attaches the locally computed facts and source references. A response outside the approved choices leaves the file unsealed. [Architecture diagram](docs/corporate-banking-architecture.png) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py)
 
@@ -56,7 +62,7 @@ The submission matrix contains eleven rules with their sources, technical contro
 | T1 · Permitted request | The live Credit Risk draft reached OpenAI with a clean cloud verdict on both revisions. The resulting packets matched the answer key. |
 | T2 · Protected data | The live bank omitted the tested private fields before BRANE. The standalone suite also observed placeholder routing and inspected a separate policy preview. |
 | T3 · Repeated details | The integrated bank passed the repeated-contact and name-form check. The standalone firewall **failed** one raw name variant. Its separate, locally tokenised T3b passed. |
-| T4 · Untrusted instructions | The security team's recorded inputs stayed local. The integrated app accepts only seven bank-owned message combinations and excludes desk messages and invoice notes from model input. |
+| T4 · Untrusted instructions | The security team's recorded inputs stayed local. The letter-of-credit workflow accepts seven bank-owned message combinations. Each specialist workflow checks its own registered tasks and wordings. Human notes and source documents stay out of the model input. |
 | T5 · Firewall unavailable | The network-denied bank attempted one policy GET, zero model POSTs and zero other destinations. The case stayed unsealed. The standalone worksheet's T5 concerns an unavailable screening result and tests a separate condition. |
 
 The security team's standalone suite went from **1/12 baseline** to **18/20 hardened**. The suites differ in size. The latest hardened suite repeated all 20 checks three times. Raw name coverage and preservation of ordinary trade wording are the two recorded failures. Both matter if a future workflow starts forwarding document text. The submitted app only accepts prewritten drafting inputs and exact permitted replies. [Final ten-row protocol](docs/evidence/submission-tests.csv) · [Original gateway results](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md)
@@ -65,7 +71,7 @@ The security team's standalone suite went from **1/12 baseline** to **18/20 hard
 
 The bank's immediate problem is rework between desks when a document changes. In this case the organizer prepared six cited desk packets over two revisions, identified the missing invoice and its owner, and stopped staff from acting on an old signature. The two rounds together took **29.55 seconds** and used **1,029 tokens**. This measures preparation and validation. Staff reading, judgment and sign-off still take time. [Utility scorecard](eval/utility-scorecard.csv)
 
-For a planning example, assume 500 cases per year, EUR 60 per staff-hour and three staff minutes saved per case. That yields 25 staff-hours, or EUR 1,500 of capacity per year. At an assumed EUR 0.10 per case in variable costs, EUR 1,450 remains before fixed costs. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity and compare error corrections and total operating cost. Additional workflows in the team plan are future scope. [Measured inputs](docs/evidence/submission-live.json) · [Expansion plan](docs/team-build-plan.md#2-support-multiple-banking-workflows)
+For a planning example, assume 500 cases per year, EUR 60 per staff-hour and three staff minutes saved per case. That yields 25 staff-hours, or EUR 1,500 of capacity per year. At an assumed EUR 0.10 per case in variable costs, EUR 1,450 remains before fixed costs. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity and compare error corrections and total operating cost. The 26 specialist workflows have their own functional rehearsal. The timing and financial assumptions here cover the letter-of-credit case. [Measured inputs](docs/evidence/submission-live.json) · [Specialist coverage](docs/department-workflows.md)
 
 ## Reproduce the evidence
 

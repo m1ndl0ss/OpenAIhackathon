@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { bank, label, textError, type Staff } from './api'
-import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, ShippingContainerIcon } from '@phosphor-icons/react'
+import { bank, label, textError, type Department, type Staff } from './api'
+import { ArrowRightIcon, ArrowUpRightIcon, BankIcon, KeyholeIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
 import { Brand, DeskIcon } from './Brand'
-import harbor from './assets/harbor.webp'
+import campus from './assets/redwood-campus.webp'
 import './sign-in.css'
 
 type Desk = Pick<Staff, 'id' | 'name' | 'role'>
@@ -16,24 +16,33 @@ const duties: Record<string, string> = {
   operations: 'Record simulated issuance.',
 }
 
-function CaseBrief() {
-  return <aside className="case-brief" aria-label="Walkthrough case">
+const groups = [
+  ['Letter of credit', 'Letter of credit'], ['Corporate banking', 'Corporate banking'],
+  ['Markets and securities', 'Markets'], ['Risk and control', 'Risk & control'], ['Group functions', 'Group functions'],
+]
+
+function Campus({ departments }: { departments: number }) {
+  return <aside className="case-brief" aria-label="Redwood corporate banking campus">
     <div className="brief-art">
-      <img src={harbor} alt="" width="1000" height="430" />
-      <span className="case-tag"><ShippingContainerIcon size={16} /> LC-001</span>
+      <img src={campus} alt="Isometric bank with a columned entrance, orange trim and three office buildings." width="1000" height="430" />
+      <span className="case-tag"><BankIcon size={16} /> REDWOOD</span>
     </div>
     <div className="brief-info">
-      <span className="entry-kicker">Walkthrough case</span>
-      <h2>Import letter of credit</h2>
+      <span className="entry-kicker">Corporate banking</span><h2>Redwood offices</h2>
       <dl className="brief-meta">
-        <div><dt>Requested amount</dt><dd>USD 2,000,000</dd></div>
-        <div><dt>File type</dt><dd>Synthetic case</dd></div>
+        <div><dt>Workflows</dt><dd>{departments + 1}</dd></div>
+        <div><dt>Seeded cases</dt><dd>{departments * 2 + 2}</dd></div>
       </dl>
     </div>
   </aside>
 }
-export default function SignIn({ start }: { start: (staff: Staff, token: string) => void }) {
+export type PreferredDesk = { workflowId: string; seat: 'analyst' | 'approver'; partner?: string }
+export default function SignIn({ start, preferred }: { start: (staff: Staff, token: string) => void; preferred?: PreferredDesk }) {
   const [desks, setDesks] = useState<Desk[] | null>(null)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [group, setGroup] = useState('Letter of credit')
+  const [query, setQuery] = useState('')
+  const [seat, setSeat] = useState<'analyst' | 'approver'>(preferred?.seat || 'analyst')
   const [live, setLive] = useState(false)
   const [retry, setRetry] = useState(0)
   const [error, setError] = useState('')
@@ -43,18 +52,28 @@ export default function SignIn({ start }: { start: (staff: Staff, token: string)
   useEffect(() => {
     let current = true
     setError('')
-    bank<{ desks: Desk[], mode?: string }>(null, '/entry')
+    bank<{ desks: Desk[], departments?: Department[], mode?: string }>(null, '/entry')
       .then(result => {
         if (current) {
           setLive(result.mode === 'live')
           setDesks(result.desks)
+          const profiles = result.departments || []
+          setDepartments(profiles)
+          const nextDesk = profiles.find(p => p.id === preferred?.workflowId)
+          if (preferred?.partner) {
+            setGroup('Letter of credit')
+            setQuery(label(preferred.partner))
+          } else if (nextDesk) {
+            setGroup(nextDesk.group)
+            setQuery(nextDesk.desk)
+          }
         }
       })
       .catch(reason => { if (current) setError(textError(reason)) })
     return () => { current = false }
-  }, [retry])
+  }, [retry, preferred])
 
-  async function enter(desk?: Desk) {
+  async function enter(desk?: Pick<Desk, 'id'>) {
     if (lock.current) return
     lock.current = true
     setPending(desk?.id ?? 'staff')
@@ -76,25 +95,49 @@ export default function SignIn({ start }: { start: (staff: Staff, token: string)
   }
 
   const demo = Boolean(desks?.length)
+  const term = query.trim().toLowerCase()
+  const directory = departments.filter(d => term
+    ? [d.desk, d.workflow, d.code, d.group].some(text => text.toLowerCase().includes(term)) : d.group === group)
+  const core = (desks || []).filter(d => term
+    ? [label(d.role), d.name, 'Letter of credit'].some(text => text.toLowerCase().includes(term)) : group === 'Letter of credit')
   return <main className="entry-page">
     <header className="entry-header"><div className="entry-mast"><Brand /><span className="mast-unit">Corporate banking</span></div>
       {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : 'Local fixture') : 'Staff access'}</span>}
     </header>
     {demo ? <section className="entry-body">
-      <div className="entry-intro"><div className="entry-kicker section-label">Trade finance</div>
+      <div className="entry-intro"><div className="entry-kicker section-label">Staff directory</div>
         <h1>Choose your desk</h1>
-        <p>Start with Coverage to open the case. Choose another desk to take over its review.</p>
+        <p>Open the letter-of-credit walkthrough or choose a specialist desk to work its assigned cases.</p>
       </div>
+      {departments.length > 0 && <div className="directory-bar">
+        <nav className="directory-groups" aria-label="Desk groups">{groups.map(([key, title]) =>
+          <button type="button" key={key} aria-pressed={!term && group === key} onClick={() => {setGroup(key); setQuery('')}}>{title}</button>
+        )}</nav>
+        <label className="directory-search"><MagnifyingGlassIcon size={16} />
+          <input type="search" aria-label="Find a desk or workflow" placeholder="Find a desk or workflow" value={query} onChange={e => setQuery(e.target.value)} />
+        </label>
+      </div>}
       <div className="entry-layout">
-        <CaseBrief />
-        <div className="desk-grid" aria-label="Demo desks">{desks!.map(desk =>
-          <button key={desk.id} type="button" className={'desk-choice desk-' + desk.role} disabled={Boolean(pending)} onClick={() => enter(desk)}>
-            <span className="desk-top" aria-hidden="true"><span className="desk-icon"><DeskIcon role={desk.role} /></span><ArrowUpRightIcon className="desk-arrow" size={19} /></span>
-            <strong>{label(desk.role)}</strong>
-            <span className="desk-name">{desk.name}</span>
-            <span className="desk-duty">{pending === desk.id ? 'Opening desk…' : duties[desk.role]}</span>
-          </button>
-        )}</div>
+        <Campus departments={departments.length} />
+        <div className="directory-results">
+          {directory.length > 0 && <div className="seat-controls"><span>Specialist access</span>
+            <div role="group" aria-label="Specialist seat">{(['analyst', 'approver'] as const).map(v =>
+              <button type="button" key={v} aria-pressed={v === seat} onClick={() => setSeat(v)}>{v === 'analyst' ? 'Analyst' : 'Approver'}</button>)}</div>
+          </div>}
+          <div className="desk-grid" aria-label="Demo desks">
+            {core.map(desk => <button key={desk.id} type="button" className={'desk-choice desk-' + desk.role} disabled={Boolean(pending)} onClick={() => enter(desk)}>
+              <span className="desk-top" aria-hidden="true"><span className="desk-icon"><DeskIcon role={desk.role} /></span><ArrowUpRightIcon className="desk-arrow" size={19} /></span>
+              <strong>{label(desk.role)}</strong><span className="desk-name">{desk.name}</span>
+              <span className="desk-duty">{pending === desk.id ? 'Opening desk…' : duties[desk.role]}</span>
+            </button>)}
+            {directory.map(dept => <button key={dept.id} type="button" className="desk-choice" disabled={Boolean(pending)} onClick={() => enter(dept[seat])}>
+              <span className="desk-top" aria-hidden="true"><DeskIcon role={'dept_' + dept.code.toLowerCase()} /><ArrowUpRightIcon className="desk-arrow" size={19} /></span>
+              <strong>{dept.desk}</strong><span className="desk-name">{dept[seat].name} · {seat}</span>
+              <span className="desk-duty">{pending === dept[seat].id ? 'Opening desk…' : dept.workflow}</span>
+            </button>)}
+          </div>
+          {!core.length && !directory.length && <p className="card muted" role="status">No desks match this search.</p>}
+        </div>
       </div>
       {error && <p role="alert" className="error">{error}</p>}
     </section> : <div className="login-center"><section className="login-card">

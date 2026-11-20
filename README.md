@@ -1,10 +1,10 @@
 # Redwood
 
-An internal corporate banking demo for one USD 2 million import letter of credit. Three bank desks review a versioned file. A separate officer makes the final decision and Operations records one simulated issuance.
+Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases**. The original USD 2 million letter of credit brings six people together across the bank. Another 26 specialist desks handle work such as returned payments, covenant exceptions, FX handovers and audit findings. The organizer prepares drafts. Assigned staff review the evidence and a separate human records the final decision.
 
 **Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
 
-![Redwood’s one-click desk picker for the import letter of credit](docs/evidence/redwood-desk-picker.jpg)
+![Redwood’s bank and offices beside the corporate banking desk directory](docs/evidence/redwood-desk-picker.jpg)
 
 ## Run from a fresh clone
 
@@ -17,7 +17,16 @@ make run
 
 Open [the local staff console](http://127.0.0.1:8000) and choose **Coverage**. The agent dashboard shows that desk’s assigned requests, the organizer’s routing map and recent case activity. **Preview route** animates a sample handoff. **Run analysis** prepares the three fixture packets and **Replay run** animates the recorded handoffs. **Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. Both the offline console and the isolated live rehearsal support one-click desk entry. A persistent staff deployment uses individual tokens.
 
-Setup installs the dependencies, builds the React console, creates six private synthetic logins, seeds SQLite and prepares evidence worksheets. Running setup again keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation. The console uses Neue Haas Grotesk Display when installed and bundles Inter, IBM Plex Mono and its icons for offline use. [Bundled font and icon licenses](console/public/design-licenses.txt)
+Setup installs the dependencies, builds the React console, creates the six original demo identities and two identities per specialist desk, seeds SQLite and prepares evidence worksheets. An existing checkout can run `make seed` and `make build`, then restart its server to pick up the new directory. Setup keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation. The console uses Neue Haas Grotesk Display when installed and bundles Inter, IBM Plex Mono and its icons for offline use. [Bundled font and icon licenses](console/public/design-licenses.txt)
+
+## Try a specialist desk
+
+1. Choose **Corporate banking → Payments & Cash**. The analyst’s dashboard opens with two cases. Select **PAY-001** and click **Run analysis**. The routing map follows evidence review, policy review and the handover draft.
+2. Click **Open case**. Expand the evidence packet to inspect the return-match record. Enter a reason and click **Sign desk review**. Use **Switch desk → Operations** to sign the assigned Operations review on the same case. The picker suggests the next required reviewer.
+3. Click **Switch desk** again. The picker selects the Payments approver. Open that desk, enter a reason and click **Confirm the return match** or **Refer for further review**. The outcome and its reference appear in the file.
+4. Try **PAY-002** as the analyst for an incomplete record. **Verify supporting record** creates revision 2. Run the organizer again to prepare that revision for the human reviewers. **New case template → Open example case** opens another independent copy of either scenario.
+
+Use the four department groups or search for a desk. Each specialist has its own examples, prompts, evidence and final action. M&A, AML & Financial Crime and Regulatory Surveillance keep all three drafting tasks inside the bank. The other 23 specialist desks use BRANE in live mode. All outcomes are simulated internal records. [Browse the 26 desks and their examples](docs/department-workflows.md) · [See the organizer running a payment case](docs/evidence/specialist-workflow.jpg)
 
 ## Run the live BRANE rehearsal
 
@@ -62,9 +71,10 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 | `make brane-check` | Read the assigned department and verify its active policy against the committed hardened rules. |
 | `make run-live` | Launch the one-click live rehearsal on port 8001 with an isolated database. |
 | `make live-evidence` | Exercise both revisions and all six human roles through the API and BRANE. Export measured results to `.clearance/evidence/submission-live.json`. |
+| `.venv/bin/python -m tools.department_rehearsal` | Rehearse the first example and record a human outcome at each specialist desk. Add `--mode live` to use the assigned BRANE service on permitted cases. |
 | `make dev-console` | Run the Vite development server on port 5173. Run the API on port 8000 alongside it. |
 | `make build` | Type-check and bundle the console for the single-origin server. |
 
-The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Shell variables take precedence over the BRANE settings in the local file. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md) · [Planned workflows](docs/team-build-plan.md#2-support-multiple-banking-workflows)
+The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Shell variables take precedence over the BRANE settings in the local file. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md) · [Specialist workflow directory](docs/department-workflows.md)
 
 The bank calculates capacity, looks up evidence and retrieves the current synthetic policy. The drafting prompt contains the desk, the next-step code and two approved wordings. The bank validates the returned wording and attaches the local figures and citations. The live rehearsal records the observed model, usage, policy digest, request IDs, decisions and simulated receipt. [BRANE setup](policy/README.md) · [Case answer key](legal/case-answer-key.md)

@@ -9,11 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from . import departments
 from .agent.tools import POLICY_REFS
 from .demo import demo_case
 
 DESKS = ("trade_finance", "credit_risk", "compliance")
 ROLES = ("coverage", *DESKS, "final_officer", "operations")
+ALL_ROLES = (*ROLES, *(person["role"] for person in departments.staff_directory()))
+
+
 def now():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -61,6 +65,8 @@ def snapshot(case_id, customer, complete=False, fixture_id="LC-DEMO-001"):
         facility["limit_minor"] = None
     return {
         "case_id": case_id,
+        "workflow_id": departments.TRADE,
+        "definition_version": 1,
         "customer_ref": customer,
         "supplier_ref": base["supplier_ref"] if stage else "SUP-" + suffix,
         "revision": 1,
@@ -99,7 +105,7 @@ def grouped_assignments(principals):
             or not all(
                 isinstance(p.get(k), str) and p[k].strip() for k in ("id", "name", "role", "customer_ref")
             )
-            or p["role"] not in ROLES
+            or p["role"] not in ALL_ROLES
             or p["id"] in ids
         ):
             raise ValueError("Invalid or duplicate demo identity")
@@ -108,7 +114,7 @@ def grouped_assignments(principals):
             raise ValueError("Duplicate desk assignment")
         ids.add(p["id"])
         group[p["role"]] = p["id"]
-    if not groups or any(set(g) != set(ROLES) for g in groups.values()):
+    if not groups or any(not set(ROLES).issubset(g) for g in groups.values()):
         raise ValueError("Each demo customer needs six distinct assigned people")
     return groups
 
@@ -222,4 +228,8 @@ def initialize(path, principals):
             for case_id, complete in seeds:
                 if not db.execute("SELECT id FROM cases WHERE id=?", (case_id,)).fetchone():
                     s = snapshot(case_id, customer, complete)
-                    insert_case(db, s, group, {"id": group["coverage"], "role": "coverage"})
+                    insert_case(db, s, {role: group[role] for role in ROLES}, {"id": group["coverage"], "role": "coverage"})
+            for s, members in departments.seeds(customer, group):
+                if not db.execute("SELECT 1 FROM cases WHERE id=?", (s["case_id"],)).fetchone():
+                    owner = departments.analyst(departments.profile(s))
+                    insert_case(db, s, members, {"id": members[owner], "role": owner})

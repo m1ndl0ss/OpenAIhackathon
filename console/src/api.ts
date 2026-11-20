@@ -1,4 +1,5 @@
 export interface Staff {
+  role_label?: string | null
   desk_picker: boolean
   id: string
   name: string
@@ -14,8 +15,13 @@ export interface Summary {
   revision: number
   status: string
   next_action: string
-  amount_minor: number
-  currency: string
+  workflow_id: string
+  workflow_title: string
+  department: string
+  definition_version: number
+  case_title: string
+  amount_minor: number | null
+  currency: string | null
 }
 
 export interface Review {
@@ -62,6 +68,8 @@ export interface AnalysisRun {
   status: string
   analysis?: {
     policy_version: string
+    model_calls: number
+    tool_reads: number
     observations: {
       task: string
       route: string
@@ -72,20 +80,12 @@ export interface AnalysisRun {
     }[]
   } | null
 }
-export interface CaseFile extends Summary {
+export interface FileBase extends Summary {
   packet_hash: string | null
-  facility_ref: string
-  expiry: string
   as_of: string
-  invoice_ref: string | null
-  invoice_document_id: string
-  within_mandate: boolean
-  mandate_currency: string
   mode: string | null
   configured_mode: 'live' | 'fixture'
   analysis_available: boolean
-  mandate_minor: number | null
-  headroom_after_minor: number | null
   permitted_actions: string[]
   reviews: Review[]
   holds: Hold[]
@@ -95,6 +95,46 @@ export interface CaseFile extends Summary {
   receipt: { receipt_id: string; revision: number; actor_id: string } | null
   decision: { decision: string; revision: number; actor_id: string } | null
   last_run: AnalysisRun | null
+}
+export interface CaseFile extends FileBase {
+  department_case?: undefined
+  currency: string
+  amount_minor: number
+  facility_ref: string
+  expiry: string
+  invoice_ref: string | null
+  invoice_document_id: string
+  within_mandate: boolean
+  mandate_currency: string
+  mandate_minor: number | null
+  headroom_after_minor: number | null
+}
+export interface DepartmentFile extends FileBase {
+  department_case: {
+    examples: string[]
+    analyst: string
+    approver: string
+    reviewers: string[]
+    role_labels: Record<string, string>
+    local_only: boolean
+    evidence_verified: boolean
+    source: string
+    outcome: string
+  }
+}
+export type StaffFile = CaseFile | DepartmentFile
+export function deskName(file: StaffFile, role: string) {
+  return file.department_case?.role_labels[role] || label(role)
+}
+export interface Department {
+  id: string
+  group: string
+  desk: string
+  workflow: string
+  code: string
+  outcome: string
+  analyst: { id: string; name: string }
+  approver: { id: string; name: string }
 }
 export interface AuditEvent {
   sequence: number
@@ -147,6 +187,7 @@ export function textError(error: unknown): string {
 export const desks = ['trade_finance', 'credit_risk', 'compliance']
 export const roles = ['coverage', ...desks, 'final_officer', 'operations']
 const labels: Record<string, string> = {
+  evidence: 'Evidence review', policy: 'Policy review', handover: 'Handover draft', completed: 'Completed',
   coverage: 'Coverage', trade_finance: 'Trade Finance', credit_risk: 'Credit Risk', compliance: 'Compliance',
   final_officer: 'Mandated officer', operations: 'Operations', issued_simulated: 'Issued · simulated',
   preparing: 'Preparing file', in_review: 'In review', on_hold: 'On hold', ready_for_decision: 'Ready for decision',

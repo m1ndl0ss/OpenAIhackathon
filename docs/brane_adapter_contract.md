@@ -1,6 +1,6 @@
 # BRANE adapter contract
 
-The submitted agent uses a closed set of seven drafting messages. Its adapter excludes raw case text and checks the deployed policy before each model request. The standalone experiments below also evaluate free-text inputs. [Integrated run](evidence/submission-live.json) · [Submission guide](../SUBMISSION.md)
+The letter-of-credit workflow permits seven fixed message combinations. Each BRANE-enabled department adds a versioned set for evidence review, policy review and handover. The adapter checks that a message matches its registered workflow, task and step. Model inputs contain bank-authored wording. Case evidence and human notes stay in the bank. M&A, AML & Financial Crime and Regulatory Surveillance use an internal drafting path with zero model calls. The standalone experiments below also evaluate free-text inputs. [Department definitions](../data/workflows/departments-v1.json) · [Letter-of-credit run](evidence/submission-live.json) · [Submission guide](../SUBMISSION.md)
 
 **Owner of this contract:** Matvei Kandalintsev (BRANE setup and security).
 **Implementer:** Anastasios — `backend/brane_client.py`.

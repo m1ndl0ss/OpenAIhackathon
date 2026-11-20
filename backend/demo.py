@@ -11,6 +11,8 @@ import tempfile
 from contextlib import closing
 from pathlib import Path
 
+from . import departments
+
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "data/trade/demo.json"
 KIT = ROOT / "docs/MAIN_Participant_Starter_Kit"
@@ -21,11 +23,11 @@ def demo_case():
     return json.loads(FIXTURE.read_text())["case"]
 
 
-def make_principals():
+def make_principals(*, specialists=False):
     fixture = json.loads(FIXTURE.read_text())
     return {
         secrets.token_urlsafe(32): {**staff, "customer_ref": fixture["case"]["customer_ref"]}
-        for staff in fixture["staff"]
+        for staff in (departments.staff_directory() if specialists else fixture["staff"])
     }
 
 
@@ -53,20 +55,33 @@ def settings():
     if (roles != set(ROLES) or len(principals) != len(ROLES) or len(ids) != len(ROLES)
             or None in ids or any(len(token) < 32 for token in principals)):
         raise RuntimeError("Local login configuration is incomplete.")
+    additional = directory / "department-sessions.json"
+    if additional.exists():
+        specialists = json.loads(additional.read_text(), object_pairs_hook=unique_keys)
+        expected = {p["role"] for p in departments.staff_directory()}
+        if (not isinstance(specialists, dict) or not all(isinstance(p, dict) for p in specialists.values())
+                or {p.get("role") for p in specialists.values()} != expected or len(specialists) != len(expected)
+                or any(not isinstance(t, str) or len(t) < 32 or t in principals for t in specialists)):
+            raise RuntimeError("Department login configuration is incomplete.")
+        principals.update(specialists)
     return Path(os.getenv("CLEARANCE_DB_PATH", directory / "demo.sqlite3")).expanduser().resolve(), principals
 
 
 def create_sessions(directory):
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    destination = directory / "sessions.json"
+    write_sessions(directory / "sessions.json", specialists=False)
+    write_sessions(directory / "department-sessions.json", specialists=True)
+
+
+def write_sessions(destination, *, specialists):
     if destination.exists():
         return
     # Publish the completed file atomically. Windows must close the draft before
     # creating its final name or removing the draft link.
-    draft = tempfile.NamedTemporaryFile(mode="w", dir=directory, delete=False)
+    draft = tempfile.NamedTemporaryFile(mode="w", dir=destination.parent, delete=False)
     try:
         with draft:
-            json.dump(make_principals(), draft, indent=2)
+            json.dump(make_principals(specialists=specialists), draft, indent=2)
             draft.flush()
             os.fsync(draft.fileno())
         try:
@@ -122,7 +137,7 @@ def main():
         if name == "doctor":
             cmd.add_argument("--brane", action="store_true", help="Check the team's live policy endpoint")
     commands.add_parser("logins")
-    commands.add_parser("login").add_argument("role", choices=ROLES)
+    commands.add_parser("login").add_argument("role", choices=(*ROLES, *(person["role"] for person in departments.staff_directory())))
     args = parser.parse_args()
     directory = local_dir()
     if args.command == "setup":

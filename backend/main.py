@@ -12,9 +12,9 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import integrations
+from . import department_case, departments, integrations
 from .demo import FIXTURE, ROOT, settings
-from .store import DESKS, ROLES, canonical, digest, event, grouped_assignments, identifier, initialize
+from .store import ALL_ROLES, DESKS, ROLES, canonical, digest, event, grouped_assignments, identifier, initialize
 from .store import insert_case, now, snapshot, transaction
 from .workflow import (
     COMPLIANCE_REPLY,
@@ -91,6 +91,17 @@ class Review(Signing):
     evidence_ref: Optional[str] = Field(default=None, max_length=80)
 
 
+class DepartmentAction(Revision):
+    action: Literal["verify", "sign", "hold", "complete", "refer"]
+    packet_hash: Optional[str] = Field(default=None, pattern="^[0-9a-f]{64}$")
+    expected_event_id: Optional[str] = Field(default=None, max_length=80)
+    reason: Optional[str] = Field(default=None, max_length=2000)
+
+
+class DepartmentIntake(Body):
+    example: int = Field(ge=1, le=2)
+
+
 class Question(Revision):
     to_desk: Desk
     question: str = Field(min_length=10, max_length=2000)
@@ -137,7 +148,7 @@ def finish_run(path, case_id, run_id, actor):
         run = dict(db.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone())
 
     def report_task(desk, stage):
-        if desk not in DESKS or stage not in ("started", "prepared"):
+        if desk not in (departments.LANES if departments.profile(s) else DESKS) or stage not in ("started", "prepared"):
             raise ValueError("Unknown packet task")
         with transaction(path, write=True) as db:
             event(db, s, {"id": "case-agent", "role": "analysis"}, f"task.{desk}.{stage}", run_id)
@@ -203,7 +214,14 @@ def mutate(request, actor, key, operation, case_id, body, handler, roles=ROLES, 
         with transaction(path, write=True) as db:
             r, s = record(db, case_id, actor) if case_id else (None, None)
             require_role(actor, roles)
-            if isinstance(body, Signing) and r["packet_hash"] and r["mode"] != request.app.state.mode:
+            if case_id:
+                p = departments.profile(s)
+                if (p and operation not in ("run", "department_action")) or (not p and operation == "department_action"):
+                    unavailable()
+                if operation == "run":
+                    require_role(actor, (departments.analyst(p), departments.approver(p)) if p else ("coverage", "final_officer"))
+            signed_action = isinstance(body, Signing) or (isinstance(body, DepartmentAction) and body.action != "verify")
+            if signed_action and r["packet_hash"] and r["mode"] != request.app.state.mode:
                 conflict("mode_mismatch", "This packet belongs to a different analysis mode.")
             if isinstance(body, Run) and body.mode != request.app.state.mode:
                 conflict("mode_mismatch", "Use the analysis mode configured for this deployment.")
@@ -294,27 +312,35 @@ def create_app(db_path=None, principals=None, *, mode=None):
             return {"desks": []}
         return {"mode": request.app.state.mode, "desks": [
             {key: actor[key] for key in ("id", "name", "role")}
-            for _, actor in request.app.state.demo_sessions.values()
+            for _, actor in request.app.state.demo_sessions.values() if actor["role"] in ROLES
+        ], "departments": [
+            {**{k: p[k] for k in ("id", "group", "desk", "workflow", "code", "outcome")},
+             "analyst": {"id": "staff-" + departments.analyst(p), "name": p["analyst"]},
+             "approver": {"id": "staff-" + departments.approver(p), "name": p["approver"]}}
+            for p in departments.CATALOG if all("staff-" + role in request.app.state.demo_sessions
+                                                for role in (departments.analyst(p), departments.approver(p)))
         ]}
+
+    def staff_view(request, actor, demo):
+        mode = request.app.state.mode
+        return {**actor, "role_label": departments.ROLE_LABELS.get(actor["role"]),
+                "configured_mode": mode, "analysis_available": integrations.analysis_ready(mode), "desk_picker": demo}
 
     @app.post(PREFIX + "/demo-session")
     def demo_session(request: Request, body: DemoDesk):
         if not local_demo(request) or body.desk_id not in request.app.state.demo_sessions:
             unavailable()
         token, actor = request.app.state.demo_sessions[body.desk_id]
-        mode = request.app.state.mode
-        return {"token": token, "staff": {**actor, "configured_mode": mode,
-                                         "analysis_available": integrations.analysis_ready(mode), "desk_picker": True}}
+        return {"token": token, "staff": staff_view(request, actor, True)}
 
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
-        mode = request.app.state.mode
-        return {**actor, "configured_mode": mode, "analysis_available": integrations.analysis_ready(mode),
-                "desk_picker": local_demo(request)}
+        return staff_view(request, actor, local_demo(request))
 
     @app.get(CASES)
     def cases(request: Request, actor=Depends(authenticated)):
-        fields = ("case_id", "customer_ref", "amount_minor", "currency", "revision", "status", "next_action")
+        fields = ("case_id", "customer_ref", "amount_minor", "currency", "revision", "status", "next_action",
+                  "workflow_id", "definition_version", "department", "workflow_title", "case_title")
         result = []
         with transaction(request.app.state.path) as db:
             for row in db.execute(
@@ -322,9 +348,34 @@ def create_app(db_path=None, principals=None, *, mode=None):
             ):
                 if integrations.is_assigned(actor, json.loads(row["assignments"])):
                     r, s = record(db, row["id"], actor)
-                    view = detail(db, r, s, actor, request.app.state.mode)
+                    p = departments.profile(s)
+                    view = department_case.summary(db, r, s, p) if p else detail(db, r, s, actor, request.app.state.mode)
                     result.append({k: view[k] for k in fields})
-        return result
+        # Keep the original walkthrough first for its six staff. Specialists start in their own queue.
+        return sorted(result, key=lambda case: (case["workflow_id"] != departments.TRADE, case["case_id"]))
+
+    @app.post(PREFIX + "/workflows/{workflow_id}/cases")
+    def open_department_case(request: Request, workflow_id: str, body: DepartmentIntake,
+                             actor=Depends(authenticated), key=Depends(retry_key)):
+        p = departments.CURRENT.get(workflow_id)
+        if not p:
+            unavailable()
+        def persist(db, _r, _s):
+            group = request.app.state.assignments[actor["customer_ref"]]
+            members = [*departments.reviewers(p), departments.approver(p)]
+            if not all(role in group for role in members):
+                unavailable()
+            s = departments.new_snapshot(p, identifier(p["code"]), actor["customer_ref"], body.example)
+            insert_case(db, s, {role: group[role] for role in members}, actor)
+            r, s = record(db, s["case_id"], actor)
+            return 201, detail(db, r, s, actor, request.app.state.mode)
+        return mutate(request, actor, key, "intake/" + workflow_id, None, body, persist, (departments.analyst(p),))
+
+    @app.post(CASE + "/workflow-action")
+    def department_action(request: Request, case_id: str, body: DepartmentAction,
+                          actor=Depends(authenticated), key=Depends(retry_key)):
+        return mutate(request, actor, key, "department_action", case_id, body,
+                      lambda db, r, s: department_case.apply(db, r, s, actor, body, request.app.state.mode), ALL_ROLES)
 
     @app.post(CASES)
     def open_case(request: Request, body: Intake, actor=Depends(authenticated), key=Depends(retry_key)):
@@ -340,7 +391,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
                 raise Problem(
                     422, "intake_mismatch", "The intake must match its registered synthetic fixture."
                 )
-            insert_case(db, s, request.app.state.assignments[actor["customer_ref"]], actor)
+            insert_case(db, s, {role: request.app.state.assignments[actor["customer_ref"]][role] for role in ROLES}, actor)
             r, s = record(db, s["case_id"], actor)
             return 201, detail(db, r, s, actor, request.app.state.mode)
 
@@ -388,17 +439,20 @@ def create_app(db_path=None, principals=None, *, mode=None):
             tasks.add_task(finish_run, request.app.state.path, case_id, run_id, actor)
             return 202, {"run_id": run_id, "mode": body.mode, "revision": s["revision"], "status": "pending"}
 
-        return mutate(request, actor, key, "run", case_id, body, persist, ("coverage", "final_officer"))
+        return mutate(request, actor, key, "run", case_id, body, persist, ALL_ROLES)
 
     @app.get(CASE + "/runs/{run_id}")
     def run_info(request: Request, case_id: str, run_id: str, actor=Depends(authenticated)):
         with transaction(request.app.state.path) as db:
-            record(db, case_id, actor)
+            _, s = record(db, case_id, actor)
             result = db.execute(
                 "SELECT * FROM runs WHERE case_id=? AND run_id=?", (case_id, run_id)
             ).fetchone()
             if not result:
                 unavailable()
+            if departments.profile(s):
+                report = db.execute("SELECT details FROM run_analysis WHERE run_id=?", (run_id,)).fetchone()
+                return {**dict(result), "analysis": json.loads(report["details"]) if report else None}
             return {**dict(result), "analysis": visible_run_analysis(db, run_id, actor["role"])}
 
     @app.post(CASE + "/requests")
@@ -522,7 +576,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
 
 def enable_demo_desks(app):
     fixture = json.loads(FIXTURE.read_text())
-    for staff in fixture["staff"]:
+    for staff in [*fixture["staff"], *departments.staff_directory()]:
         expected = {**staff, "customer_ref": fixture["case"]["customer_ref"]}
         if expected in app.state.principals.values():
             app.state.demo_sessions[staff["id"]] = (secrets.token_urlsafe(32), expected)

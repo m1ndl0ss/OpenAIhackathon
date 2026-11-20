@@ -219,3 +219,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--ink); }
   .account button svg, .view-tabs svg { display: none; }
   .view-tabs { gap: 12px; }
 }
+.queue-filter { display:grid; gap:4px; margin:10px 0; color:var(--muted); font-size:.74rem; }
+.queue-filter select { min-width:0; max-width:100%; font-size:.76rem; padding:7px 5px; }
+.sidebar-cases nav[aria-label="Assigned cases"] { max-height:49vh; overflow-y:auto; }
+.pill.completed { background:#e2eee5; color:var(--positive); }

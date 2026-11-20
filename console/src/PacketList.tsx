@@ -19,7 +19,7 @@ export default function PacketList({ packets, sources, currency, mode }: {
 }) {
   return <section className="card">
     <div className="card-head"><h2>Review packets</h2>
-      {mode && <span className="quiet">{mode === 'live' ? 'Live · BRANE' : 'Fixture · synthetic'}</span>}
+      {mode && <span className="quiet">{mode === 'bank_local' ? 'Bank only' : mode === 'live' ? 'Live · BRANE' : 'Fixture · synthetic'}</span>}
     </div>
     {!packets.length && <p className="muted">No sealed draft is available to your desk for this revision.</p>}
     {packets.map(packet => <details className="packet" key={packet.desk}>

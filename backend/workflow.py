@@ -2,7 +2,7 @@
 
 import json
 
-from . import integrations
+from . import departments, integrations
 from .agent.packets import facility_source, headroom_after as headroom, invoice_is_current, validate_draft
 from .agent.runtime import contexts
 from .agent.tools import POLICY_TEXT
@@ -98,6 +98,9 @@ def within_mandate(s):
 
 
 def source_catalog(s):
+    p = departments.profile(s)
+    if p:
+        return departments.sources(s, p)
     docs = {}
 
     def add(ref, label, detail, roles):
@@ -172,6 +175,10 @@ def visible_run_analysis(db, run_id, role):
 
 
 def detail(db, r, s, actor, configured_mode="fixture"):
+    p = departments.profile(s)
+    if p:
+        from . import department_case
+        return department_case.detail(db, r, s, actor, configured_mode, p)
     case_id, role = s["case_id"], actor["role"]
     reviews = active_reviews(db, s)
     holds = active_holds(db, s)
@@ -246,7 +253,9 @@ def detail(db, r, s, actor, configured_mode="fixture"):
     if decision_view and role != "final_officer":
         decision_view.pop("reason")
     return {
-        "case_id": case_id,
+        "case_id": case_id, "workflow_id": departments.TRADE, "definition_version": 1,
+        "workflow_title": "Import letter of credit", "department": "Trade Finance",
+        "case_title": "Import letter of credit",
         "customer_ref": s["customer_ref"],
         "revision": s["revision"],
         "status": status,
@@ -305,7 +314,7 @@ def seal(db, s, packets, run):
     manifest = {
         "case": {**s, "brane_policy_version": run.get("policy_version", s["brane_policy_version"])},
         "documents": {ref: digest(doc) for ref, (doc, _) in sorted(catalog.items())},
-        "desks": {desk: digest(packets[desk]) for desk in DESKS},
+        "desks": {desk: digest(packet) for desk, packet in packets.items()},
         "mode": run["mode"],
     }
     if valid_invoice(s):

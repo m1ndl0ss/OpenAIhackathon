@@ -19,7 +19,7 @@ def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):
 
     run("setup")
     path, first = demo.settings()
-    assert len(first) == len({person["id"] for person in first.values()}) == 6
+    assert len(first) == len({person["id"] for person in first.values()}) == 6 + 2 * 26
     if os.name == "posix":
         assert (tmp_path / "sessions.json").stat().st_mode & 0o077 == 0
     for policy in ("baseline", "hardened"):
@@ -37,7 +37,9 @@ def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):
     run("reset")
     with transaction(path) as db:
         assert not db.execute("SELECT name FROM sqlite_master WHERE name='local_reset_marker'").fetchone()
-        assert [r[0] for r in db.execute("SELECT id FROM cases ORDER BY id")] == ["LC-001", "LC-002"]
+        case_ids = {r[0] for r in db.execute("SELECT id FROM cases")}
+        assert {"LC-001", "LC-002"} <= case_ids
+        assert len(case_ids) == 2 + 2 * 26
     assert demo.settings()[1] == first
     assert matrix.read_text() == "Synthetic reviewed work in progress\n"
     other = tmp_path / "other.sqlite3"

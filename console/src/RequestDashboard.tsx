@@ -29,17 +29,23 @@ import {
   label,
   money,
   type AuditEvent,
-  type CaseFile,
+  type StaffFile,
+  deskName,
   type Staff,
   type Summary,
   type Submit,
 } from './api'
 import './tracker.css'
 
-const tasks = [
+const tradeTasks = [
   { desk: 'trade_finance', title: 'Trade Finance', icon: FilesIcon },
   { desk: 'credit_risk', title: 'Credit Risk', icon: ChartBarIcon },
   { desk: 'compliance', title: 'Compliance', icon: ShieldCheckIcon },
+]
+const specialistTasks = [
+  { desk: 'evidence', title: 'Evidence review', icon: FilesIcon },
+  { desk: 'policy', title: 'Policy review', icon: ShieldCheckIcon },
+  { desk: 'handover', title: 'Handover draft', icon: ClipboardTextIcon },
 ]
 const runLabels: Record<string, string> = {
   pending: 'Processing',
@@ -114,7 +120,8 @@ function eventName(action: string) {
   return names[action] ?? label(action)
 }
 
-function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
+function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
+  const tasks = file.department_case ? specialistTasks : tradeTasks
   const run = file.last_run
   const recorded = audit.filter(
     (e) => e.revision === file.revision && e.detail === run?.run_id && e.action.startsWith('task.'),
@@ -177,7 +184,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
         e.revision === file.revision &&
         e.detail === run.mode + ' · ' + run.run_id,
     )?.desk
-  const source = label(sender ?? origin?.desk ?? 'unknown')
+  const source = deskName(file, sender ?? origin?.desk ?? 'unknown')
   const hubState = frame === null && run?.status === 'sealed' ? 'Completed' : display
   const taskStatus = (i: number) => {
     if (frame === null || active === undefined) return states[i]
@@ -195,7 +202,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
           <div>
             <h2>Request routing</h2>
             <p>
-              {file.case_id} <span>·</span> Import letter of credit
+              {file.case_id} <span>·</span> {file.workflow_title}
             </p>
           </div>
         </div>
@@ -260,7 +267,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
 }
 
 type Props = {
-  file: CaseFile
+  file: StaffFile
   staff: Staff
   queue: Summary[]
   audit: AuditEvent[]
@@ -294,7 +301,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
         <div>
           <div className="tracker-edition">
             <BroadcastIcon size={14} />
-            {file.configured_mode === 'fixture' ? 'Fixture mode' : 'Live mode'}
+            {file.department_case?.local_only ? 'Bank-only workflow' : file.configured_mode === 'fixture' ? 'Fixture mode' : 'Live mode'}
           </div>
           <h1>Agent operations</h1>
         </div>
@@ -322,7 +329,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
           </span>
           <div>
             <small>Next handoff</small>
-            <p>{file.last_run?.status === 'pending' ? 'The organizer is preparing packets for the three review desks.' : file.next_action}</p>
+            <p>{file.last_run?.status === 'pending' ? 'The organizer is preparing the three review packets.' : file.next_action}</p>
             {canRun && !file.analysis_available && <p>The configured analysis service is unavailable.</p>}
           </div>
           {canRun && (
@@ -367,7 +374,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                 <span>
                   <strong>{c.case_id}</strong>
                   <small>
-                    {money(c.amount_minor, c.currency)} · Rev. {c.revision}
+                    {c.currency && c.amount_minor != null ? money(c.amount_minor, c.currency) : c.case_title} · Rev. {c.revision}
                   </small>
                 </span>
                 <span className={'pill ' + c.status}>{label(c.status)}</span>
@@ -376,7 +383,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
             ))}
             {incoming && (
               <p className="tracker-foot">
-                <BriefcaseIcon size={13} /> {file.case_id} originated at {label(incoming.desk)}.
+                <BriefcaseIcon size={13} /> {file.case_id} originated at {deskName(file, incoming.desk)}.
               </p>
             )}
           </section>
@@ -388,14 +395,14 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
               </div>
               <small>Revision {file.revision}</small>
             </div>
-            {desks.map((d) => {
+            {(file.department_case?.reviewers || desks).map((d) => {
               const finding = file.reviews.find((r) => r.desk === d)
               const disposition = file.holds.some((h) => h.desk === d)
                 ? 'hold'
                 : (finding?.disposition ?? 'pending')
               return (
                 <div className="desk-disposition" key={d}>
-                  {label(d)}
+                  {deskName(file, d)}
                   <span className={'pill ' + disposition}>
                     {disposition === 'clear' && <CheckIcon size={12} />} {label(disposition)}
                   </span>
@@ -434,7 +441,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                 <div>
                   <strong>{eventName(e.action)}</strong>
                   <small>
-                    {e.desk === 'analysis' ? 'Organizer' : label(e.desk)} · Rev. {e.revision}
+                    {e.desk === 'analysis' ? 'Organizer' : deskName(file, e.desk)} · Rev. {e.revision}
                   </small>
                 </div>
                 <time dateTime={e.timestamp}>
@@ -451,7 +458,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
             </button>
           )}
           <p className="tracker-foot">
-            <RadioButtonIcon size={12} /> Visible to {label(staff.role)}
+            <RadioButtonIcon size={12} /> Visible to {deskName(file, staff.role)}
           </p>
         </section>
       </div>

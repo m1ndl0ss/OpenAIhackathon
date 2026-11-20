@@ -1,0 +1,626 @@
+[
+  {
+    "id": "relationship-management",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "RM",
+    "desk": "Relationship Management",
+    "workflow": "Meeting follow-up",
+    "analyst": "Alex Marin",
+    "approver": "Dana Bell",
+    "partner": "coverage",
+    "local_only": false,
+    "examples": [
+      "Checklist after an expansion meeting",
+      "Follow-up call after a plant visit"
+    ],
+    "source": "Meeting action record",
+    "check": "Share the document checklist and propose a follow-up call.",
+    "control": "Confirm the relationship manager has checked the recipient and date.",
+    "outcome": "Record follow-up for staff delivery",
+    "observations": [
+      "The meeting record identifies two agreed follow-up actions.",
+      "The plant-visit note assigns a capacity questionnaire and a follow-up call to the relationship manager."
+    ]
+  },
+  {
+    "id": "lending-underwriting",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "UW",
+    "desk": "Lending & Underwriting",
+    "workflow": "Credit-pack completeness",
+    "analyst": "Eva Moss",
+    "approver": "Owen Lake",
+    "partner": "credit_risk",
+    "local_only": false,
+    "examples": [
+      "Working-capital pack missing a forecast",
+      "Seasonal facility pack awaiting a bank reference"
+    ],
+    "source": "Underwriting checklist",
+    "check": "Check the bank reference and cash-flow forecast against the credit checklist.",
+    "control": "Keep an incomplete pack with the analyst until the evidence request is reviewed.",
+    "outcome": "Record underwriting evidence request",
+    "observations": [
+      "The intake lists the bank reference and forecast as outstanding.",
+      "The seasonal request includes its forecast. The checklist still requires a reference from the relationship bank."
+    ]
+  },
+  {
+    "id": "specialized-finance-syndication",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "SYN",
+    "desk": "Syndicated Finance",
+    "workflow": "Term-sheet comparison",
+    "analyst": "Theo Park",
+    "approver": "Rina Hall",
+    "partner": "trade_finance",
+    "local_only": false,
+    "examples": [
+      "Two lenders disagree on the repayment schedule",
+      "Borrower draft changes reporting frequency"
+    ],
+    "source": "Term-sheet comparison",
+    "check": "Compare the amortisation schedule and reporting frequency in the two drafts.",
+    "control": "Check that counsel has reviewed the version pair before circulating the differences.",
+    "outcome": "Record term-sheet differences",
+    "observations": [
+      "The comparison records a changed amortisation schedule and reporting interval.",
+      "The borrower draft changes reporting from quarterly to monthly. The comparison marks that clause for the deal team."
+    ]
+  },
+  {
+    "id": "loan-servicing-restructuring",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "LS",
+    "desk": "Loan Servicing",
+    "workflow": "Covenant exception review",
+    "analyst": "Mia Hart",
+    "approver": "Nico Lane",
+    "partner": "credit_risk",
+    "local_only": false,
+    "examples": [
+      "Interest cover below the review threshold",
+      "Quarterly covenant certificate awaiting verification"
+    ],
+    "source": "Covenant certificate",
+    "check": "Check the interest-coverage calculation against the applicable covenant.",
+    "control": "Escalate the exception for servicing review and preserve the waiver decision for the authorised officer.",
+    "outcome": "Record covenant exception referral",
+    "observations": [
+      "The synthetic certificate reports 2.10 times interest cover against a 2.50 threshold.",
+      "The signed quarterly certificate reports interest cover of 2.35 times against the file’s 2.50 threshold."
+    ]
+  },
+  {
+    "id": "payments-cash-correspondent",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "PAY",
+    "desk": "Payments & Cash",
+    "workflow": "Payment exception triage",
+    "analyst": "Sam Reed",
+    "approver": "Ari Fox",
+    "partner": "operations",
+    "local_only": false,
+    "examples": [
+      "A payment returned after the account closed",
+      "Return message awaiting a match to the original transfer"
+    ],
+    "source": "Payment-return match record",
+    "check": "Check the return reason and its match to the original payment.",
+    "control": "Require a human match before the exception is handed to Operations.",
+    "outcome": "Confirm the return match",
+    "observations": [
+      "The return is matched to the original transfer and carries an account-closed reason.",
+      "The returned transfer and original payment carry the same internal reference. The bank’s return code records a closed beneficiary account."
+    ]
+  },
+  {
+    "id": "trade-working-capital-finance",
+    "version": 1,
+    "group": "Corporate banking",
+    "code": "DOC",
+    "desk": "Trade & Working Capital",
+    "workflow": "Documentary discrepancy review",
+    "analyst": "Lina Dale",
+    "approver": "Finn Gray",
+    "partner": "trade_finance",
+    "local_only": false,
+    "examples": [
+      "Bill of lading shows a late shipment",
+      "A second presentation awaits shipment-date verification"
+    ],
+    "source": "Document presentation checklist",
+    "check": "Compare the shipped-on-board date with the last permitted shipment date.",
+    "control": "Have Trade Finance confirm the discrepancy before a notice is prepared.",
+    "outcome": "Record documentary discrepancy",
+    "observations": [
+      "The bill of lading is dated two days after the latest shipment date.",
+      "The transport record in the second presentation shows shipment one day after the latest permitted date."
+    ]
+  },
+  {
+    "id": "fx-rates-derivatives",
+    "version": 1,
+    "group": "Markets and securities",
+    "code": "FX",
+    "desk": "FX & Derivatives",
+    "workflow": "Pre-trade handover",
+    "analyst": "Kai Ross",
+    "approver": "Ines Alba",
+    "partner": "credit_risk",
+    "local_only": false,
+    "examples": [
+      "Forward value date awaiting confirmation",
+      "Hedge handover awaiting its approval record"
+    ],
+    "source": "Value-date checklist",
+    "check": "Identify value-date and approval checks for the proposed FX handover.",
+    "control": "Keep pricing and trade execution with the authorised dealing desk.",
+    "outcome": "Record pre-trade handover",
+    "observations": [
+      "The value date requires confirmation and the dealing approval is pending.",
+      "The hedge file records the value date. The internal approval field awaits an authorised dealer’s signature."
+    ]
+  },
+  {
+    "id": "settlement-collateral",
+    "version": 1,
+    "group": "Markets and securities",
+    "code": "COL",
+    "desk": "Settlement & Collateral",
+    "workflow": "Margin dispute triage",
+    "analyst": "Nina Sage",
+    "approver": "Eli North",
+    "partner": "operations",
+    "local_only": false,
+    "examples": [
+      "Collateral in transit on a partial margin dispute",
+      "Counterparty valuation awaiting reconciliation"
+    ],
+    "source": "Margin reconciliation statement",
+    "check": "Reconcile the valuation and verify collateral in transit.",
+    "control": "Keep the disputed part open for a human settlement decision.",
+    "outcome": "Record margin-dispute handover",
+    "observations": [
+      "The statement separates the agreed balance from the disputed valuation.",
+      "The counterparty statement and internal valuation differ on one netting set. The remaining lines reconcile."
+    ]
+  },
+  {
+    "id": "custody-trust-agency",
+    "version": 1,
+    "group": "Markets and securities",
+    "code": "CUS",
+    "desk": "Custody & Agency",
+    "workflow": "Corporate-action notice review",
+    "analyst": "Robin Vale",
+    "approver": "Luca Moss",
+    "partner": "operations",
+    "local_only": false,
+    "examples": [
+      "Mandatory cash dividend notice",
+      "Dividend notice with an unverified record date"
+    ],
+    "source": "Corporate-action notice",
+    "check": "Verify the event type and participation terms on the dividend notice.",
+    "control": "Ask custody staff to confirm record dates before preparing investor communications.",
+    "outcome": "Record corporate-action checklist",
+    "observations": [
+      "The notice identifies a mandatory cash dividend and a local record date.",
+      "The second notice confirms the record date and refers the dividend election timetable to the custody reviewer."
+    ]
+  },
+  {
+    "id": "capital-markets-ma",
+    "version": 1,
+    "group": "Markets and securities",
+    "code": "MA",
+    "desk": "Capital Markets & M&A",
+    "workflow": "Deal-document review",
+    "analyst": "Ivo Finch",
+    "approver": "Vera Chen",
+    "partner": null,
+    "local_only": true,
+    "examples": [
+      "Signature page missing from an execution copy",
+      "Revised deal document awaiting counsel comparison"
+    ],
+    "source": "Restricted execution checklist",
+    "check": "Check the signed pages against the secure execution checklist.",
+    "control": "Keep the deal room and its execution checklist within the assigned team.",
+    "outcome": "Record internal counsel handover",
+    "observations": [
+      "The restricted file contains an execution copy with an outstanding signature page.",
+      "Counsel’s comparison identifies a change to the signature schedule in the revised execution copy."
+    ]
+  },
+  {
+    "id": "markets-research",
+    "version": 1,
+    "group": "Markets and securities",
+    "code": "RES",
+    "desk": "Markets Research",
+    "workflow": "Publication review",
+    "analyst": "Elin Ames",
+    "approver": "Jo Tan",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Forecast needs a label before publication",
+      "Release draft missing a disclosure check"
+    ],
+    "source": "Editorial review checklist",
+    "check": "Identify forecast labelling and disclosures requiring editorial review.",
+    "control": "Keep release authority with the editor until the publication checks are complete.",
+    "outcome": "Record editorial review",
+    "observations": [
+      "The forecast label and disclosure review are outstanding in the editorial copy.",
+      "The release checklist records editorial sign-off and an outstanding conflict-disclosure review."
+    ]
+  },
+  {
+    "id": "credit-counterparty-risk",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "CCR",
+    "desk": "Counterparty Risk",
+    "workflow": "Exposure review",
+    "analyst": "Leo Stone",
+    "approver": "Tess Moon",
+    "partner": "credit_risk",
+    "local_only": false,
+    "examples": [
+      "Exposure approaching an internal limit",
+      "Monitoring pack awaiting collateral confirmation"
+    ],
+    "source": "Exposure monitoring report",
+    "check": "Check the exposure direction against the approved internal threshold.",
+    "control": "Escalate the exposure finding to the credit officer for review.",
+    "outcome": "Record counterparty review",
+    "observations": [
+      "The internal monitoring record shows exposure approaching the review limit.",
+      "The monitoring pack records the collateral update separately from the exposure figure. The risk desk must reconcile them."
+    ]
+  },
+  {
+    "id": "market-risk",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "MR",
+    "desk": "Market Risk",
+    "workflow": "Limit-breach explanation",
+    "analyst": "Ada King",
+    "approver": "Max Field",
+    "partner": "credit_risk",
+    "local_only": false,
+    "examples": [
+      "Curve move pushes sensitivity above limit",
+      "Second limit event awaiting a driver check"
+    ],
+    "source": "Sensitivity control report",
+    "check": "Reconcile the sensitivity breach with its recorded market driver.",
+    "control": "Have a risk officer verify the breach explanation before escalation.",
+    "outcome": "Record limit-breach explanation",
+    "observations": [
+      "The report links the sensitivity excursion to a curve move.",
+      "The second limit event coincides with a shift in the short end of the curve. Independent review is pending."
+    ]
+  },
+  {
+    "id": "model-risk",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "MOD",
+    "desk": "Model Risk",
+    "workflow": "Validation finding summary",
+    "analyst": "Noa Page",
+    "approver": "Liv Lake",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Calibration gap in a validation report",
+      "Challenger results awaiting a documentation check"
+    ],
+    "source": "Validation finding register",
+    "check": "Check the calibration finding and the supporting documentation gap.",
+    "control": "Keep model acceptance and remediation ownership with the validation committee.",
+    "outcome": "Record validation finding",
+    "observations": [
+      "The register contains an open calibration check and an incomplete methodology note.",
+      "The challenger test results are attached. The finding register still requires a methodology cross-reference."
+    ]
+  },
+  {
+    "id": "operational-risk",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "ORM",
+    "desk": "Operational Risk",
+    "workflow": "Incident classification",
+    "analyst": "Ben Rowe",
+    "approver": "Iris Hale",
+    "partner": "operations",
+    "local_only": false,
+    "examples": [
+      "Reconciliation delay recorded as a near miss",
+      "A control repair awaiting incident classification"
+    ],
+    "source": "Incident control record",
+    "check": "Check the near-miss classification against the reconciliation control record.",
+    "control": "Have the responsible control owner verify the impact classification.",
+    "outcome": "Record incident classification",
+    "observations": [
+      "The incident record describes a reconciliation near miss and a verification task.",
+      "The control owner documented a repair to the reconciliation check. The incident category awaits review."
+    ]
+  },
+  {
+    "id": "bank-treasury",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "TRE",
+    "desk": "Treasury",
+    "workflow": "Liquidity variance review",
+    "analyst": "Uma Ray",
+    "approver": "Milo Van",
+    "partner": "final_officer",
+    "local_only": false,
+    "examples": [
+      "Wholesale outflow above the funding plan",
+      "Funding variance awaiting a driver sign-off"
+    ],
+    "source": "Liquidity variance report",
+    "check": "Compare the direction of the liquidity movement with the funding plan.",
+    "control": "Have Treasury verify the variance driver before briefing the committee.",
+    "outcome": "Record liquidity variance note",
+    "observations": [
+      "The report attributes the variance to wholesale deposit outflow above plan.",
+      "The variance note traces the funding change to a delayed wholesale rollover. Treasury must sign off the attribution."
+    ]
+  },
+  {
+    "id": "kyc",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "KYC",
+    "desk": "KYC & Onboarding",
+    "workflow": "Missing-document follow-up",
+    "analyst": "Pia Noor",
+    "approver": "Bo Chen",
+    "partner": "compliance",
+    "local_only": false,
+    "examples": [
+      "Beneficial-owner address evidence outstanding",
+      "A renewal file awaiting checklist verification"
+    ],
+    "source": "Onboarding evidence checklist",
+    "check": "Identify which beneficial-owner address evidence is missing.",
+    "control": "Have the onboarding analyst check the request recipient and secure delivery channel.",
+    "outcome": "Record evidence request for delivery",
+    "observations": [
+      "The verified checklist marks current beneficial-owner address evidence as outstanding.",
+      "The renewal checklist identifies an address declaration still due from a beneficial owner and assigns the follow-up to onboarding."
+    ]
+  },
+  {
+    "id": "aml-sanctions-fraud",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "AML",
+    "desk": "AML & Financial Crime",
+    "workflow": "Restricted investigation handover",
+    "analyst": "Ana West",
+    "approver": "Sol Finn",
+    "partner": null,
+    "local_only": true,
+    "examples": [
+      "Monitoring alert awaiting investigator handover",
+      "Screening review awaiting a source check"
+    ],
+    "source": "Restricted investigation index",
+    "check": "Check the internal evidence index and the investigation status.",
+    "control": "Keep the case, its metadata and all handover material inside the assigned investigation team.",
+    "outcome": "Accept restricted investigation handover",
+    "observations": [
+      "The restricted index records the open review and authorised evidence pointers.",
+      "The restricted case index links a screening update to the investigator’s internal review queue."
+    ]
+  },
+  {
+    "id": "legal",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "LEG",
+    "desk": "Legal",
+    "workflow": "Contract review",
+    "analyst": "Lea Hunt",
+    "approver": "Kit Day",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Notice periods differ between two clauses",
+      "Contract amendment awaiting clause verification"
+    ],
+    "source": "Clause comparison record",
+    "check": "Check the notice-period mismatch between the two contract clauses.",
+    "control": "Have counsel verify the exact wording in the internal contract record.",
+    "outcome": "Record clause review",
+    "observations": [
+      "The local comparison identifies different notice periods in the agreement and amendment.",
+      "The revised amendment changes the notice period from twenty to thirty business days. Counsel must review the clause."
+    ]
+  },
+  {
+    "id": "regulatory-compliance",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "SUR",
+    "desk": "Regulatory Surveillance",
+    "workflow": "Restricted surveillance review",
+    "analyst": "Teo Kim",
+    "approver": "Faye Snow",
+    "partner": null,
+    "local_only": true,
+    "examples": [
+      "Order sequence awaiting surveillance review",
+      "Restricted order chronology awaiting verification"
+    ],
+    "source": "Restricted surveillance index",
+    "check": "Check the internal order chronology against the surveillance evidence index.",
+    "control": "Keep surveillance facts and reporting decisions with assigned compliance staff.",
+    "outcome": "Record internal surveillance handover",
+    "observations": [
+      "The controlled index identifies the order sequence awaiting review.",
+      "The restricted index links an order amendment and cancellation to the chronology for the authorised reviewer."
+    ]
+  },
+  {
+    "id": "internal-audit",
+    "version": 1,
+    "group": "Risk and control",
+    "code": "AUD",
+    "desk": "Internal Audit",
+    "workflow": "Evidence-to-finding review",
+    "analyst": "Maya Reed",
+    "approver": "Rex Lane",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Access review missing its attestation",
+      "Follow-up sample awaiting an evidence check"
+    ],
+    "source": "Audit evidence index",
+    "check": "Match the access-review exception to the evidence supporting the finding.",
+    "control": "Keep the finding provisional until an independent audit reviewer signs.",
+    "outcome": "Record audit finding for review",
+    "observations": [
+      "The audit index lists an access review with a missing attestation.",
+      "The follow-up sample includes the access log. The index identifies one outstanding manager attestation."
+    ]
+  },
+  {
+    "id": "finance-tax-regulatory-reporting",
+    "version": 1,
+    "group": "Group functions",
+    "code": "FIN",
+    "desk": "Finance & Reporting",
+    "workflow": "Reporting exception review",
+    "analyst": "June Ash",
+    "approver": "Ian Gale",
+    "partner": "operations",
+    "local_only": false,
+    "examples": [
+      "Unmatched instrument in a prudential return",
+      "Reporting adjustment waiting for reference validation"
+    ],
+    "source": "Reporting exception register",
+    "check": "Check the unmatched instrument reference against the reporting exception.",
+    "control": "Have Finance verify the correction before a separate reporting submission.",
+    "outcome": "Record reporting exception handover",
+    "observations": [
+      "The register identifies an instrument reference without a matching reporting record.",
+      "The adjustment register ties one amended instrument reference to a reporting row that requires controller review."
+    ]
+  },
+  {
+    "id": "it-cyber-data-governance",
+    "version": 1,
+    "group": "Group functions",
+    "code": "ICT",
+    "desk": "IT & Data Governance",
+    "workflow": "Service incident handover",
+    "analyst": "Hal Kent",
+    "approver": "Ava May",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Scheduled reporting job delayed",
+      "Contained processing delay awaiting owner verification"
+    ],
+    "source": "Service recovery checklist",
+    "check": "Check the scheduled-job delay and the internal recovery status.",
+    "control": "Keep operational details internal and have the service owner validate recovery.",
+    "outcome": "Record service handover",
+    "observations": [
+      "The synthetic service record shows a delayed scheduled job, containment and an assigned owner.",
+      "Service monitoring records a delayed batch that completed after restart. The recovery owner must verify closure."
+    ]
+  },
+  {
+    "id": "hr",
+    "version": 1,
+    "group": "Group functions",
+    "code": "HR",
+    "desk": "People & HR",
+    "workflow": "Employee case routing",
+    "analyst": "Eden Shaw",
+    "approver": "Remy Cole",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Payroll statement requested",
+      "Statement enquiry awaiting secure-channel verification"
+    ],
+    "source": "HR routing checklist",
+    "check": "Check the routing category for the payroll statement request.",
+    "control": "Have HR verify the private delivery channel before acknowledging the request.",
+    "outcome": "Record HR routing decision",
+    "observations": [
+      "The HR checklist routes a payroll statement enquiry to the internal payroll team.",
+      "The routing checklist records that the employee selected the secure payroll channel for the statement enquiry."
+    ]
+  },
+  {
+    "id": "procurement",
+    "version": 1,
+    "group": "Group functions",
+    "code": "BUY",
+    "desk": "Procurement",
+    "workflow": "Bid clarification review",
+    "analyst": "Bea Moss",
+    "approver": "Alec Hart",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Support hours missing from a supplier bid",
+      "Renewal bid awaiting coverage verification"
+    ],
+    "source": "Bid requirements comparison",
+    "check": "Compare the support-hour commitment with the tender requirement.",
+    "control": "Ask procurement to review the clarification without ranking or awarding suppliers.",
+    "outcome": "Record bid clarification",
+    "observations": [
+      "The comparison identifies a support-hours requirement that needs supplier clarification.",
+      "The renewal bid covers weekday support. The requirements sheet also calls for weekend cover."
+    ]
+  },
+  {
+    "id": "executive-office",
+    "version": 1,
+    "group": "Group functions",
+    "code": "EXE",
+    "desk": "Executive Office",
+    "workflow": "Board action tracking",
+    "analyst": "Nora East",
+    "approver": "Jules Shaw",
+    "partner": null,
+    "local_only": false,
+    "examples": [
+      "Routine status update awaiting a board action owner",
+      "Committee action waiting for a due-date check"
+    ],
+    "source": "Board action register",
+    "check": "Check the category of the routine board action.",
+    "control": "Have the secretary confirm the internal owner and due date before sending a reminder.",
+    "outcome": "Record board action reminder",
+    "observations": [
+      "The register identifies a routine status update for secretary review.",
+      "The committee register names an action owner. The proposed due date awaits the secretary’s confirmation."
+    ]
+  }
+]

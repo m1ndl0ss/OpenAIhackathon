@@ -1,14 +1,15 @@
-import SignIn from './SignIn'
+import SignIn, { type PreferredDesk } from './SignIn'
 import { Brand, DeskIcon } from './Brand'
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import PacketList from './PacketList'
+import DepartmentWorkspace from './DepartmentWorkspace'
 import RequestDashboard from './RequestDashboard'
 import {
   ArrowsClockwiseIcon, ArrowsLeftRightIcon, ChatCircleTextIcon, CirclesFourIcon,
   ClockCounterClockwiseIcon, FilePlusIcon, FolderOpenIcon, ListBulletsIcon, SignOutIcon,
 } from '@phosphor-icons/react'
-import { bank, BankError, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type Submit, type Summary } from './api'
+import { bank, BankError, deskName, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type StaffFile, type Submit, type Summary } from './api'
 
 const sessionKey = 'clearance.staff-token'
 const selectedKey = 'clearance.selected-case'
@@ -34,6 +35,17 @@ function Notice({ danger, children }: { danger?: boolean; children: ReactNode })
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { if (danger) ref.current?.focus() }, [danger, children])
   return <div tabIndex={-1} ref={ref} role={danger ? 'alert' : 'status'} className={'notice ' + (danger ? 'danger' : '')}>{children}</div>
+}
+
+function History({ audit, file }: { audit: AuditEvent[]; file: StaffFile }) {
+  return <section className="card"><h2>Case history</h2>
+      {!audit.length && <p className="muted">No visible activity.</p>}
+      <ol className="timeline">{audit.map(event => <li key={event.event_id}><div><strong>{label(event.action)}</strong><span>{fmtDate(event.timestamp, true)}</span></div>
+        <p>{event.actor_id} · {deskName(file, event.desk)} · Rev. {event.revision}</p>
+        {typeof event.detail === 'string' && event.detail && <p>{event.detail}</p>}
+        {event.detail && typeof event.detail === 'object' ? <dl>{Object.entries(event.detail).filter(([,v]) => ['string','number','boolean'].includes(typeof v)).map(([k,v]) => <div key={k}><dt>{label(k)}</dt><dd>{String(v)}</dd></div>)}</dl> : null}
+      </li>)}</ol>
+    </section>
 }
 
 function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; audit: AuditEvent[]; staff: Staff; submit: Submit; busy: boolean }) {
@@ -97,27 +109,22 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
       </aside>
     </div>}
     {tab === 'Desk messages' && <Inbox key={file.requests.map(r => r.request_id + r.status).join('|')} {...controls} />}
-    {tab === 'Audit trail' && <section className="card"><h2>Case history</h2>
-      {!audit.length && <p className="muted">No visible activity.</p>}
-      <ol className="timeline">{audit.map(event => <li key={event.event_id}><div><strong>{label(event.action)}</strong><span>{fmtDate(event.timestamp, true)}</span></div>
-        <p>{event.actor_id} · {label(event.desk)} · Rev. {event.revision}</p>
-        {typeof event.detail === 'string' && event.detail && <p>{event.detail}</p>}
-        {event.detail && typeof event.detail === 'object' ? <dl>{Object.entries(event.detail).filter(([,v]) => ['string','number','boolean'].includes(typeof v)).map(([k,v]) => <div key={k}><dt>{label(k)}</dt><dd>{String(v)}</dd></div>)}</dl> : null}
-      </li>)}</ol>
-    </section>}
+    {tab === 'Audit trail' && <History audit={audit} file={file} />}
   </>
 }
 
 type WorkspaceView = 'dashboard' | 'case'
 
 function Workspace({ token, staff, end, initialView }: {
-  token: string; staff: Staff; end: (nextView?: WorkspaceView) => void; initialView: WorkspaceView
+  token: string; staff: Staff; end: (nextView?: WorkspaceView, preferred?: PreferredDesk) => void; initialView: WorkspaceView
 }) {
   const [view, setView] = useState<WorkspaceView>(initialView)
   const [syncError, setSyncError] = useState('')
   const [queue, setQueue] = useState<Summary[]>([])
   const [selected, setSelected] = useState('')
-  const [file, setFile] = useState<CaseFile | null>(null)
+  const [workflowFilter, setWorkflowFilter] = useState('')
+  const [example, setExample] = useState('2')
+  const [file, setFile] = useState<StaffFile | null>(null)
   const [audit, setAudit] = useState<AuditEvent[]>([])
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -134,7 +141,7 @@ function Workspace({ token, staff, end, initialView }: {
       const cases = await bank<Summary[]>(token, '/cases')
       const target = cases.find(item => item.case_id === id)?.case_id || cases[0]?.case_id || ''
       const path = '/cases/' + encodeURIComponent(target)
-      const [detail, history] = target ? await Promise.all([bank<CaseFile>(token, path), bank<AuditEvent[]>(token, path + '/audit')]) : [null, []]
+      const [detail, history] = target ? await Promise.all([bank<StaffFile>(token, path), bank<AuditEvent[]>(token, path + '/audit')]) : [null, []]
       if (request !== sequence.current) return
       setSyncError(''); setQueue(cases); setSelected(target); tabValue(selectedKey, target); setFile(detail); setAudit(history)
     } catch (err) {
@@ -183,36 +190,61 @@ function Workspace({ token, staff, end, initialView }: {
       setError(textError(err)); return false
     } finally { lock.current = false; setBusy(false) }
   }
-  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><span className="account-icon"><DeskIcon role={staff.role} size={21} /></span><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={() => end(staff.desk_picker ? view : 'dashboard')}>{staff.desk_picker ? <ArrowsLeftRightIcon size={16} /> : <SignOutIcon size={16} />}{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
+  const workflows = new Map(queue.map(item => [item.workflow_id, item.workflow_title]))
+  const filteredQueue = workflowFilter ? queue.filter(item => item.workflow_id === workflowFilter) : queue
+  async function intake() {
+    if (lock.current || !file) return
+    const dept = file.department_case && staff.role === file.department_case.analyst
+    if (!dept && staff.role !== 'coverage') return
+    const body = dept ? {example:Number(example)} : {fixture_id: 'LC-DEMO-001', customer_ref: staff.customer_ref,
+      facility_ref: 'FAC-USD-01', amount_minor: 200000000, currency: 'USD', instrument: 'import_documentary_credit', expiry: '2027-01-31'}
+    const path = dept ? '/workflows/' + encodeURIComponent(file.workflow_id) + '/cases' : '/cases'
+    const identity = path + JSON.stringify(body)
+    const key = retryKeys.current.get(identity) || crypto.randomUUID()
+    retryKeys.current.set(identity,key)
+    lock.current = true; setBusy(true); setError(''); setNotice('')
+    try {
+      const created = await bank<Summary>(token,path,body,key)
+      retryKeys.current.delete(identity); setWorkflowFilter('')
+      await load(created.case_id); setNotice('Synthetic intake opened.')
+    } catch (err) {
+      if (err instanceof BankError && err.status === 401) { end(); return }
+      if (err instanceof BankError && err.status > 0 && err.status < 500) retryKeys.current.delete(identity)
+      setError(textError(err))
+    } finally { lock.current = false; setBusy(false) }
+  }
+  let handoff: PreferredDesk | undefined
+  if (file?.department_case) {
+    const meta = file.department_case
+    const next = meta.evidence_verified && file.packet_hash
+      ? file.holds[0]?.desk || meta.reviewers.find(role => !file.reviews.some(r => r.desk === role && r.disposition === 'clear'))
+      : meta.analyst
+    handoff = { workflowId: file.workflow_id, seat: file.status === 'ready_for_decision' ? 'approver' : 'analyst',
+      partner: next && next !== meta.analyst ? next : undefined }
+  }
+  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><span className="account-icon"><DeskIcon role={staff.role} size={21} /></span><div><strong>{staff.name}</strong><small>{staff.role_label || label(staff.role)}</small></div><button disabled={busy} onClick={() => end(staff.desk_picker ? view : 'dashboard', handoff)}>{staff.desk_picker ? <ArrowsLeftRightIcon size={16} /> : <SignOutIcon size={16} />}{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
     <div className="shell"><aside className="sidebar">
       <nav className="workspace-nav" aria-label="Workspace">
         <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><CirclesFourIcon size={19} weight="duotone" />Agent dashboard</button>
         <button aria-current={view === 'case' ? 'page' : undefined} onClick={() => setView('case')}><FolderOpenIcon size={19} weight="duotone" />Case workspace</button>
       </nav>
       <div className="sidebar-cases"><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
-      <nav aria-label="Assigned cases">{queue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
-        <strong>{item.case_id}</strong><span>{item.customer_ref}</span><small>{label(item.status)} · Rev. {item.revision}</small>
+      {workflows.size > 1 && <label className="queue-filter">Workflow<select value={workflowFilter} onChange={e => {
+        const id=e.target.value; setWorkflowFilter(id)
+        const next=queue.find(item => item.workflow_id === id)
+        if (id && next && file?.workflow_id !== id) {setNotice(''); void load(next.case_id)}
+      }}><option value="">All assigned workflows</option>{[...workflows].map(([id,title])=><option key={id} value={id}>{title}</option>)}</select></label>}
+      <nav aria-label="Assigned cases">{filteredQueue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
+        <strong>{item.case_id}</strong><span>{item.case_title || item.customer_ref}</span><small>{label(item.status)} · Rev. {item.revision}</small>
       </button>)}</nav>
-      {staff.role === 'coverage' && <button className="intake" disabled={busy || loading} onClick={async () => {
-        if (lock.current) return
-        lock.current = true; setBusy(true); setError(''); setNotice('')
-        const intake = { fixture_id: 'LC-DEMO-001', customer_ref: staff.customer_ref, facility_ref: 'FAC-USD-01', amount_minor: 200000000, currency: 'USD', instrument: 'import_documentary_credit', expiry: '2027-01-31' }
-        const key = retryKeys.current.get('intake') || crypto.randomUUID()
-        retryKeys.current.set('intake', key)
-        try {
-          const created = await bank<Summary>(token, '/cases', intake, key)
-          retryKeys.current.delete('intake')
-          await load(created.case_id); setNotice('Synthetic intake opened.')
-        } catch (err) {
-          if (err instanceof BankError && err.status === 401) { end(); return }
-          if (err instanceof BankError && err.status > 0 && err.status < 500) retryKeys.current.delete('intake')
-          setError(textError(err))
-        } finally { lock.current = false; setBusy(false) }
-      }}><FilePlusIcon size={16} />Open synthetic intake</button>}</div>
+      {file?.department_case && staff.role === file.department_case.analyst && <label className="queue-filter">New case template<select value={example} onChange={e=>setExample(e.target.value)}>{file.department_case.examples.map((title,i)=><option key={title} value={i+1}>{title}</option>)}</select></label>}
+      {(staff.role === 'coverage' || (file?.department_case && staff.role === file.department_case.analyst)) &&
+        <button className="intake" disabled={busy || loading} onClick={intake}><FilePlusIcon size={16} />{file?.department_case && staff.role === file.department_case.analyst ? 'Open example case' : 'Open letter-of-credit intake'}</button>}
+      </div>
     </aside><main className="case-main">
-      <div className="toolbar"><span>Trade finance <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><ArrowsClockwiseIcon size={15} />Refresh</button></div>
+      <div className="toolbar"><span>{file?.department || 'Corporate banking'} <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><ArrowsClockwiseIcon size={15} />Refresh</button></div>
       {error && <Notice danger>{error}</Notice>}{syncError && <Notice>{syncError}</Notice>}{notice && <Notice>{notice}</Notice>}
-      {file ? view === 'dashboard' ? <RequestDashboard key={file.case_id} file={file} audit={audit} queue={queue} staff={staff} busy={busy || loading || !!syncError} submit={submit} open={() => setView('case')} select={id => { setNotice(''); void load(id) }} /> : <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
+      {file ? view === 'dashboard' ? <RequestDashboard key={file.case_id} file={file} audit={audit} queue={filteredQueue} staff={staff} busy={busy || loading || !!syncError} submit={submit} open={() => setView('case')} select={id => { setNotice(''); void load(id) }} /> : file.department_case ? <DepartmentWorkspace key={file.case_id} file={file} staff={staff} busy={busy || loading} submit={submit} history={<History audit={audit} file={file} />} /> : <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
     </main></div></div>
 }
 
@@ -222,7 +254,9 @@ export default function App() {
   const [restoreError, setRestoreError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [initialView, setInitialView] = useState<WorkspaceView>('dashboard')
-  const end = useCallback((nextView: WorkspaceView = 'dashboard') => {
+  const [preferred, setPreferred] = useState<PreferredDesk>()
+  const end = useCallback((nextView: WorkspaceView = 'dashboard', preferredDesk?: PreferredDesk) => {
+    setPreferred(preferredDesk)
     setInitialView(nextView)
     tabValue(sessionKey, null)
     setSaved(null); setRestoreError(''); setSession(null)
@@ -243,7 +277,7 @@ export default function App() {
   if (saved) return <main className="login-page"><div className="login-bar"><Brand /></div><div className="login-center"><section className="login-card action-form">
     <h1>Staff session</h1>{restoreError ? <><Notice danger>{restoreError}</Notice><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={() => end()}>Sign out</button></> : <p role="status">Verifying your staff credential…</p>}
   </section></div></main>
-  return session ? <Workspace {...session} initialView={initialView} end={end} /> : <SignIn start={(staff, token) => {
+  return session ? <Workspace {...session} initialView={initialView} end={end} /> : <SignIn preferred={preferred} start={(staff, token) => {
     tabValue(sessionKey, token); setSession({ staff, token })
   }} />
 }
