@@ -31,6 +31,12 @@ USER_AGENT = "Redwood-Security-Harness/1.0 (MAIN-Summit-2026)"
 # The one endpoint we are allowed to talk to. Anything else is a bug, not a fallback.
 ALLOWED_HOST = "brane.ai-z.io"
 
+# Production is https-only. scripts/check_failure_test.py temporarily moves this (and
+# ALLOWED_HOST) so it can point the pinned client at a dead address or a local stub and
+# observe what happens. The pin stays ON throughout; only its target changes. Nothing
+# reads these from the environment, so no deployment can relax them by accident.
+ALLOWED_SCHEME = "https"
+
 
 class BraneConfigError(RuntimeError):
     """Configuration problem. Message never contains the key."""
@@ -56,8 +62,9 @@ def base_url() -> str:
     if not url:
         raise BraneConfigError("BRANE_BASE_URL is not set. Copy .env.example to .env.")
     parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https":
-        raise BraneConfigError(f"BRANE_BASE_URL must be https, got scheme '{parsed.scheme}'.")
+    if parsed.scheme != ALLOWED_SCHEME:
+        raise BraneConfigError(
+            f"BRANE_BASE_URL must be {ALLOWED_SCHEME}, got scheme '{parsed.scheme}'.")
     if parsed.hostname != ALLOWED_HOST:
         raise BraneConfigError(
             f"BRANE_BASE_URL host must be {ALLOWED_HOST}, got '{parsed.hostname}'. "
@@ -153,6 +160,102 @@ def request(
 def brane_headers(headers: Dict[str, str]) -> Dict[str, str]:
     """Every X-Brane-* header, lowercased keys, in sorted order."""
     return {k: v for k, v in sorted(headers.items()) if k.startswith("x-brane-")}
+
+
+# --------------------------------------------------------------------------------------
+# Reference implementation of docs/brane_adapter_contract.md §3.
+#
+# request() above is transport only: it hands back whatever came off the wire. That is
+# deliberate, because the evidence harness needs the raw observation. It is NOT safe to
+# hand to an agent, and check_failure_test.py proves why: a 200 carrying a completion but
+# no X-Brane-Routed-To is indistinguishable from a governed answer at the transport layer.
+# Classification has to happen above it, so here it is, once, for everyone to reuse.
+# --------------------------------------------------------------------------------------
+OUTCOMES = ("direct", "pseudonymized", "local", "blocked", "unavailable")
+
+
+def classify_outcome(status: str, headers: Dict[str, str]) -> str:
+    """
+    Map an observation onto exactly one of the five normalised outcomes.
+
+    An HTTP 200 with no X-Brane-Routed-To is `unavailable`, never `direct`: a response
+    we cannot attribute to a policy decision is not a permitted route.
+    """
+    h = brane_headers(headers)
+    routed = h.get("x-brane-routed-to")
+
+    if status == "422" or routed == "refused":
+        return "blocked"
+    if status != "200":
+        return "unavailable"
+    if routed is None:
+        return "unavailable"
+    if routed == "local":
+        return "local"
+    if routed == "cloud":
+        return "pseudonymized" if h.get("x-brane-redacted") == "true" else "direct"
+    return "unavailable"
+
+
+def call_governed(prompt: str, timeout: float = 60.0, system: Optional[str] = None) -> Dict[str, Any]:
+    """
+    One governed model turn. Returns:
+
+        {"outcome": one of OUTCOMES,
+         "answer":  the model text, or None whenever the outcome is not a usable answer,
+         "status":  HTTP status as a string, or "ERROR",
+         "headers": every X-Brane-* header observed,
+         "reason":  short safe reason for a non-answer outcome}
+
+    `answer` is None for `blocked` and `unavailable`. That is the whole point: an
+    unverified completion must not reach a caller who might reason over it.
+    """
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    status, headers, body, raw = request(
+        "POST", "/chat/completions", {"model": "auto", "messages": messages}, timeout=timeout
+    )
+    outcome = classify_outcome(status, headers)
+    answer = None
+    if isinstance(body, dict) and body.get("choices"):
+        answer = (body["choices"][0].get("message") or {}).get("content")
+
+    if outcome in ("blocked", "unavailable"):
+        reason = {
+            "blocked": f"refused by policy ({brane_headers(headers).get('x-brane-refused-by', 'rule not reported')})",
+            "unavailable": f"no policy decision observed (status={status})",
+        }[outcome]
+        return {"outcome": outcome, "answer": None, "status": status,
+                "headers": brane_headers(headers), "reason": scrub(reason),
+                "discarded_answer_chars": len(answer or "")}
+    return {"outcome": outcome, "answer": answer, "status": status,
+            "headers": brane_headers(headers), "reason": ""}
+
+
+def call_raw(prompt: str, timeout: float = 60.0, system: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Transport-only call in the same shape as call_governed, with NO classification and
+    no answer suppression. Exists so check_failure_test.py can measure the difference
+    between a transport and an adapter rather than assert it.
+    """
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    status, headers, body, raw = request(
+        "POST", "/chat/completions", {"model": "auto", "messages": messages}, timeout=timeout
+    )
+    answer = None
+    if isinstance(body, dict) and body.get("choices"):
+        answer = (body["choices"][0].get("message") or {}).get("content")
+    elif status == "ERROR":
+        answer = None
+    return {"outcome": None, "answer": answer, "status": status,
+            "headers": brane_headers(headers), "reason": ""}
 
 
 def write_json(path: Path, payload: Any) -> None:

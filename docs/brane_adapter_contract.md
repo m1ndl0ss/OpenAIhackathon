@@ -139,6 +139,54 @@ Tests D and E together are the gate check **A5** (firewall unavailable). Both **
 show that a BRANE outage stops model work rather than degrading to a direct provider
 call.
 
+### 6.1 How to run the A5 test against your adapter
+
+`scripts/check_failure_test.py` already implements A5 — six fault scenarios, three runs
+each, with an independent egress observer — and it is **adapter-agnostic**. Point it at
+your adapter instead of re-deriving it:
+
+```bash
+# the reference client (passes 18/18)
+python3 scripts/check_failure_test.py --runs 3
+
+# your adapter: module path : callable name, importable from the repo root
+python3 scripts/check_failure_test.py --client backend.brane_client:call --runs 3
+```
+
+Your callable needs one signature and one return shape:
+
+```python
+def call(prompt: str, timeout: float = 60.0, system: str | None = None) -> dict:
+    return {
+        "outcome": "direct" | "pseudonymized" | "local" | "blocked" | "unavailable",
+        "answer":  str | None,   # MUST be None for `blocked` and `unavailable`
+        "status":  str,          # HTTP status, or "ERROR"
+        "headers": dict,         # the X-Brane-* headers observed
+        "reason":  str,          # safe reason when there is no answer
+    }
+```
+
+The harness injects the faults itself — it moves the client's endpoint pin to a dead
+host, a refused port, a non-routable address and a local stub — so your adapter needs no
+test mode and no injection hooks. It needs only to read its endpoint from
+`BRANE_BASE_URL` at call time rather than caching it at import. If your adapter keeps
+its own host pin (it should), expose it as a module attribute the way
+`brane_client.ALLOWED_HOST` and `ALLOWED_SCHEME` are, so the harness can retarget the
+pin without ever switching it off.
+
+Three things will fail you, all of them observed on the raw transport (0/18):
+
+1. **Returning an answer when the outcome is not a real decision.** Scenario `e` serves
+   HTTP 200 with a normal completion and no `X-Brane-Routed-To`. Discard the text.
+2. **Not classifying at all.** Returning raw transport fields leaves the caller to guess,
+   which is how an unverified completion becomes a desk packet.
+3. **Any egress to a host other than the configured endpoint.** The observer is a
+   `sys.addaudithook` on `socket.connect` and `socket.getaddrinfo`; your own logging is
+   not consulted and cannot help you here.
+
+A scenario that never reaches the network is failed automatically, so an adapter that
+refuses the test endpoint outright does not get a free pass either.
+
 ## 7. What the adapter must never do
 
 1. Fabricate a successful packet to fill a gap. An infrastructure error cannot seal a

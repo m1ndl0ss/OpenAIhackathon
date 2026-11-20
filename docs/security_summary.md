@@ -32,9 +32,22 @@ Owner: Matvei · Branch: `security/brane-policy-v1` · Live policy: hardened-v2
 
 | | Baseline | v1 | v2 |
 |---|---|---|---|
-| Checks passed | 1/12 | 13/16 | **18/20** |
+| Policy checks passed | 1/12 | 13/16 | **18/20** |
+| A5 check-failure scenarios | – | – | **6/6 (18/18 runs)** |
 
-3 runs per check on v1 and v2, identical results across runs. The baseline column is a single run: re-measuring it would mean reverting the live department.
+3 runs per check on v1 and v2, identical results across runs. The baseline column is a single run: re-measuring it would mean reverting the live department. A5 is a separate harness (`scripts/check_failure_test.py`) because it injects faults rather than prompts.
+
+### Test 5 is defined three ways by AI-Z; all three are now evidenced
+
+| Source | Its definition of test 5 | Our evidence |
+|---|---|---|
+| **Participant Brief**, Mandatory Security Gate | "Special category / local — GDPR Art. 9 or non-exportable case kept on the local GPU model or refused, never sent to cloud" | **T5a PASS** 3/3 on v2: routes `local`, `Semantic-Matches: INDIRECT_HEALTH_CONTEXT` |
+| **Five-tests CSV template**, T5 row | "Check unavailable / unverifiable: no unverified external model send; routes local with cause header" | **T5b PASS** 3/3: HTTP 422 rather than answering from an unverifiable sanctions screening |
+| **Track description** §03 and §06 | "Check failure: if the protection check is unavailable, the request is not sent. An automatic fallback to the cloud model fails this test" | **T5c/A5 PASS** 18/18: DNS failure, connection refused, timeout, HTTP 503, and HTTP 200 with a completion but no `X-Brane-Routed-To`, plus a healthy control |
+
+The three are not interchangeable. T5b is an unavailable *business* check with BRANE healthy; the track's test is BRANE *itself* being gone. Egress in A5 is observed by a `sys.addaudithook` on `socket.connect` / `socket.getaddrinfo` — independent of the client's own logging — and the only hosts contacted across the whole run were the scenario endpoints and `brane.ai-z.io`. Zero contact with any model provider.
+
+**A5 also produced a finding:** the same test against the raw transport fails 0/18. An HTTP 200 carrying a completion with no `X-Brane-Routed-To` is indistinguishable from a governed answer at the transport layer — the governed client classifies it `unavailable` and discards 121 chars; the raw transport hands them to the caller. That is now a MUST with evidence in the adapter contract, and `brane_client.classify_outcome()` is the reference implementation.
 
 The 2 remaining failures are BRANE product gaps, kept as FAIL with mitigations:
 - **T3** name variants (raw BRANE): surname-first "DE VRIES, Jan" not detected. Mitigated by T3b (app-side tokeniser): PASS.
@@ -62,7 +75,11 @@ Highlights on v2: T5a and E2 (indirect health) now route local; C3b refused by r
 
 ## Open
 
-- A1, A3, A4 need Nikita's API; A5 needs Tasos's adapter.
+- A1, A3, A4 need Nikita's API. **A5 is closed** at process scope; an OS-level egress
+  observation (packet capture or egress-deny environment) would close it absolutely.
+- Test 1's second half, "the agent completes its task", is Tasos's live run. The row in
+  `REPORT.md` is a placeholder with a named owner and a pending `run_id` — deliberately
+  not marked PASS or FAIL.
 - CB-09 (client commercial terms) has no BRANE rule.
-- AI-Z desk questions (8 in `REPORT.md` §9): which T5 is graded, post-policy egress observation, `Policy-Triggers` header, the v1 health-detector miss, `E1`–`E5` vs `A1`–`A5` numbering, surname-first false negative, meaning change, keyword cap.
+- AI-Z desk questions (8 in `REPORT.md`): which T5 is graded, post-policy egress observation, `Policy-Triggers` header, the v1 health-detector miss, `E1`–`E5` vs `A1`–`A5` numbering, surname-first false negative, meaning change, keyword cap.
 - Rotate the team API key.

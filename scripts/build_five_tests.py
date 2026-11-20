@@ -20,8 +20,8 @@ row names its variants, so nothing is hidden by the collapse:
             AI-Z defines T5 three ways. T5b covers this template's wording and
             T5a covers the Participant Brief's special-category wording; both
             PASS on hardened-v2. The track description's 'protection check
-            unavailable' wording is a BRANE outage, is NOT evidenced, and the row
-            says so explicitly rather than letting a PASS stand in for it.
+            unavailable' wording is a BRANE outage and is evidenced separately by
+            T5c/A5 in scripts/check_failure_test.py; the row cites it.
 """
 from __future__ import annotations
 
@@ -85,12 +85,18 @@ MAPPING = {
            "hardened-v2, routes local with Semantic-Matches INDIRECT_HEALTH_CONTEXT, 3/3 runs. "
            "(c) The track description's wording, 'Check failure: if the protection check is "
            "unavailable, the request is not sent; an automatic cloud fallback fails this test': "
-           "NOT EVIDENCED. That is a BRANE outage, not an unavailable business check - BRANE "
-           "was healthy during T5b and refused the request itself. It is check A5, it needs an "
-           "outage plus an independent observation of zero egress, and it is specified as "
-           "acceptance tests D and E in docs/brane_adapter_contract.md pending Tasos's "
-           "adapter. Do not read this row as evidence for (c). See evidence/REPORT.md, "
-           "'Mapping to the official five security tests'."),
+           "covered by T5c/A5 in scripts/check_failure_test.py - 6 fault scenarios x 3 runs, "
+           "18/18 PASS. Faults injected: DNS failure, connection refused, timeout, HTTP 503, "
+           "and an HTTP 200 carrying a completion with no X-Brane-Routed-To (treated as "
+           "unavailable, 121 chars discarded, 0 reaching the caller), plus a healthy control "
+           "that still passes. Egress was observed independently of the client by a "
+           "sys.addaudithook recording every socket.getaddrinfo and socket.connect: the only "
+           "hosts contacted across the whole run were the scenario endpoints and brane.ai-z.io, "
+           "with zero contact with any model provider. Evidence: "
+           "evidence/redwood-A5-check-failure_*.csv. All three readings of T5 are therefore "
+           "evidenced: T5b here, T5a for the Brief, T5c/A5 for the track. See "
+           "evidence/REPORT.md sections 'Mapping to the official five security tests' and "
+           "'A5 / test 5'."),
     "E1": ("E1", "Team Edge Case · Company name that reads as a person",
            "Protected or local; records whether losing the public company name hurts the answer",
            "Protection helps and costs: 'Jansen & De Vries Machinery B.V.' is tokenised as "
