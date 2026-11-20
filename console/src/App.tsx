@@ -1,9 +1,13 @@
-import SignIn, { Brand } from './SignIn'
+import SignIn from './SignIn'
+import { Brand, DeskIcon } from './Brand'
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import PacketList from './PacketList'
 import RequestDashboard from './RequestDashboard'
-import { FolderOpen, LayoutDashboard, RefreshCw } from 'lucide-react'
+import {
+  ArrowsClockwiseIcon, ArrowsLeftRightIcon, ChatCircleTextIcon, CirclesFourIcon,
+  ClockCounterClockwiseIcon, FilePlusIcon, FolderOpenIcon, ListBulletsIcon, SignOutIcon,
+} from '@phosphor-icons/react'
 import { bank, BankError, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type Submit, type Summary } from './api'
 
 const sessionKey = 'clearance.staff-token'
@@ -56,14 +60,14 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
         : 'Analysis unavailable. Retry when the configured service is available.'}
       {' '}<code>{file.last_run.run_id}</code>
     </Notice>}
-    <nav className="view-tabs" aria-label="Case sections">{['Overview', 'Desk messages', 'Audit trail'].map(title => <button key={title} aria-current={title === tab ? 'page' : undefined} className={tab === title ? 'active' : ''} onClick={() => setTab(title)}>{title}</button>)}</nav>
+    <nav className="view-tabs" aria-label="Case sections">{[{ title: 'Overview', Icon: ListBulletsIcon }, { title: 'Desk messages', Icon: ChatCircleTextIcon }, { title: 'Audit trail', Icon: ClockCounterClockwiseIcon }].map(({ title, Icon }) => <button key={title} aria-current={title === tab ? 'page' : undefined} className={tab === title ? 'active' : ''} onClick={() => setTab(title)}><Icon size={16} />{title}</button>)}</nav>
     {tab === 'Overview' && <div className="case-grid">
       <div className="stack">
         <section className="card"><div className="card-head"><h2>Department sign-offs</h2><span className="quiet">Rev. {file.revision}</span></div>
           {desks.map(desk => {
             const review = file.reviews.find(r => r.desk === desk)
             const hold = file.holds.find(h => h.desk === desk)
-            return <div key={desk} className="desk-row"><div><strong>{label(desk)}</strong><small>{hold ? label(hold.reason_code) : review ? 'Signed by ' + review.actor_id : 'Awaiting desk finding'}</small>{review?.reason && <p>{review.reason}</p>}</div><Badge value={hold ? 'hold' : review?.disposition || 'pending'} /></div>
+            return <div key={desk} className="desk-row"><span className="finding-icon"><DeskIcon role={desk} size={20} /></span><div><strong>{label(desk)}</strong><small>{hold ? label(hold.reason_code) : review ? 'Signed by ' + review.actor_id : 'Awaiting desk finding'}</small>{review?.reason && <p>{review.reason}</p>}</div><Badge value={hold ? 'hold' : review?.disposition || 'pending'} /></div>
           })}
         </section>
         <PacketList packets={file.packets} sources={file.sources} currency={file.currency} mode={file.mode} />
@@ -179,11 +183,11 @@ function Workspace({ token, staff, end, initialView }: {
       setError(textError(err)); return false
     } finally { lock.current = false; setBusy(false) }
   }
-  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={() => end(staff.desk_picker ? view : 'dashboard')}>{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
+  return <div className={'workspace ' + (view === 'dashboard' ? 'tracking-workspace' : '')}><header><Brand /><span className="product-name">Corporate banking</span><div className="account"><span className="account-icon"><DeskIcon role={staff.role} size={21} /></span><div><strong>{staff.name}</strong><small>{label(staff.role)}</small></div><button disabled={busy} onClick={() => end(staff.desk_picker ? view : 'dashboard')}>{staff.desk_picker ? <ArrowsLeftRightIcon size={16} /> : <SignOutIcon size={16} />}{staff.desk_picker ? 'Switch desk' : 'Sign out'}</button></div></header>
     <div className="shell"><aside className="sidebar">
       <nav className="workspace-nav" aria-label="Workspace">
-        <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><LayoutDashboard size={17}/>Agent dashboard</button>
-        <button aria-current={view === 'case' ? 'page' : undefined} onClick={() => setView('case')}><FolderOpen size={17}/>Case workspace</button>
+        <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><CirclesFourIcon size={19} weight="duotone" />Agent dashboard</button>
+        <button aria-current={view === 'case' ? 'page' : undefined} onClick={() => setView('case')}><FolderOpenIcon size={19} weight="duotone" />Case workspace</button>
       </nav>
       <div className="sidebar-cases"><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
       <nav aria-label="Assigned cases">{queue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
@@ -204,9 +208,9 @@ function Workspace({ token, staff, end, initialView }: {
           if (err instanceof BankError && err.status > 0 && err.status < 500) retryKeys.current.delete('intake')
           setError(textError(err))
         } finally { lock.current = false; setBusy(false) }
-      }}>Open synthetic intake</button>}</div>
+      }}><FilePlusIcon size={16} />Open synthetic intake</button>}</div>
     </aside><main className="case-main">
-      <div className="toolbar"><span>Trade finance <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><RefreshCw size={13}/>Refresh</button></div>
+      <div className="toolbar"><span>Trade finance <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><ArrowsClockwiseIcon size={15} />Refresh</button></div>
       {error && <Notice danger>{error}</Notice>}{syncError && <Notice>{syncError}</Notice>}{notice && <Notice>{notice}</Notice>}
       {file ? view === 'dashboard' ? <RequestDashboard key={file.case_id} file={file} audit={audit} queue={queue} staff={staff} busy={busy || loading || !!syncError} submit={submit} open={() => setView('case')} select={id => { setNotice(''); void load(id) }} /> : <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
     </main></div></div>

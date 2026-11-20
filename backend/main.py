@@ -257,7 +257,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
             configure(app, *settings())
         yield
 
-    app = FastAPI(title="Clearance · staff case API", lifespan=lifespan)
+    app = FastAPI(title="Redwood · staff case API", lifespan=lifespan)
     if db_path is not None:
         configure(app, db_path, principals)
 

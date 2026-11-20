@@ -1,29 +1,29 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  Activity,
-  ArrowDownLeft,
-  ArrowRight,
-  ArrowUpRight,
-  Bot,
-  BriefcaseBusiness,
-  ChartNoAxesColumnIncreasing,
-  Check,
-  CircleDot,
-  ClipboardList,
-  Clock3,
-  FileCheck2,
-  GitBranch,
-  Inbox,
-  Layers3,
-  Network,
-  OctagonPause,
-  Play,
-  Radio,
-  RotateCcw,
-  ShieldCheck,
-  Square,
-  Waypoints,
-} from 'lucide-react'
+  PulseIcon,
+  ArrowDownLeftIcon,
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  CpuIcon,
+  BriefcaseIcon,
+  ChartBarIcon,
+  CheckIcon,
+  RadioButtonIcon,
+  ClipboardTextIcon,
+  ClockIcon,
+  FilesIcon,
+  GitBranchIcon,
+  TrayIcon,
+  StackIcon,
+  CircuitryIcon,
+  PauseCircleIcon,
+  PlayIcon,
+  BroadcastIcon,
+  ArrowCounterClockwiseIcon,
+  ShieldCheckIcon,
+  StopIcon,
+  FlowArrowIcon,
+} from '@phosphor-icons/react'
 import {
   desks,
   label,
@@ -37,11 +37,10 @@ import {
 import './tracker.css'
 
 const tasks = [
-  { desk: 'trade_finance', title: 'Trade Finance', icon: FileCheck2, tint: '#9fb8ff' },
-  { desk: 'credit_risk', title: 'Credit Risk', icon: ChartNoAxesColumnIncreasing, tint: '#b8a0ef' },
-  { desk: 'compliance', title: 'Compliance', icon: ShieldCheck, tint: '#84cfaf' },
+  { desk: 'trade_finance', title: 'Trade Finance', icon: FilesIcon },
+  { desk: 'credit_risk', title: 'Credit Risk', icon: ChartBarIcon },
+  { desk: 'compliance', title: 'Compliance', icon: ShieldCheckIcon },
 ]
-const originColor = '#91bfdc'
 const runLabels: Record<string, string> = {
   pending: 'Processing',
   sealed: 'Packet sealed',
@@ -52,9 +51,9 @@ const runLabels: Record<string, string> = {
 }
 const tracks = [
   ['M 132 151 H 432', 'M 200 82 H 670'],
-  ['M 432 151 C 580 151 540 54 706 54 H 816', 'M670 82 C670 150 166 124 166 219'],
-  ['M 432 151 H 816', 'M670 82 C670 160 500 145 500 219'],
-  ['M 432 151 C 580 151 540 248 706 248 H 816', 'M670 82 C670 148 833 143 833 219'],
+  ['M432 151 H536 L633 54 H816', 'M670 82 V133 L626 151 H212 L166 170 V219'],
+  ['M 432 151 H 816', 'M670 82 V145 L500 181 V219'],
+  ['M432 151 H536 L633 248 H816', 'M670 82 V133 L716 151 H790 L833 170 V219'],
 ]
 
 function LinkLayer({ narrow, active }: { narrow: boolean; active: number | undefined }) {
@@ -67,32 +66,22 @@ function LinkLayer({ narrow, active }: { narrow: boolean; active: number | undef
     >
       {tracks.map((paths, i) => {
         const path = paths[narrow ? 1 : 0]
-        const color = i === 0 ? originColor : tasks[i - 1].tint
+        const color = active === i ? '#ff7041' : '#84887a'
         return (
           <g key={i}>
             <path
               d={path}
               fill="none"
               stroke={color}
-              strokeOpacity={active === i ? '.88' : '.5'}
+              strokeOpacity={active === i ? 1 : .8}
               strokeWidth={active === i ? 2 : 1.4}
               vectorEffect="non-scaling-stroke"
             />
             {active === i && (
               <g className="flying-packet" key={path}>
                 <animateMotion dur="1.6s" path={path} repeatCount="indefinite" />
-                <ellipse rx="23" ry="13" fill={color} opacity=".19" />
-                <rect
-                  x="-11"
-                  y="-7"
-                  width="22"
-                  height="14"
-                  rx="3"
-                  stroke={color}
-                  fill="#20232a"
-                  strokeWidth="2.2"
-                />
-                <path d="M-9 -5 L0 1 L9 -5" fill="none" stroke={color} strokeWidth="2" />
+                <rect x="-9" y="-10" width="18" height="20" rx="2" fill="#ff7041" />
+                <path d="M-5 -3 H5 M-5 2 H3 M-5 6 H0" fill="none" stroke="#252720" strokeWidth="1.8" />
               </g>
             )}
           </g>
@@ -201,7 +190,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
       <div className="panel-title">
         <div className="track-heading">
           <span className="title-icon">
-            <Waypoints />
+            <FlowArrowIcon />
           </span>
           <div>
             <h2>Request routing</h2>
@@ -212,7 +201,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
         </div>
         {playback && (
           <button className="play-route" onClick={() => setFrame(frame === null ? 0 : null)}>
-            {frame === null ? <Play size={14} /> : <Square size={12} />}
+            {frame === null ? <PlayIcon size={14} /> : <StopIcon size={12} />}
             {frame !== null ? 'Stop' : preview ? 'Preview route' : 'Replay run'}
           </button>
         )}
@@ -223,7 +212,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
           <LinkLayer key={'narrow-' + active} narrow active={reduced ? undefined : active} />
           <div className="origin-node">
             <div className="origin-icon">
-              <Inbox />
+              <TrayIcon weight="duotone" />
             </div>
             <strong>{source}</strong>
             <small>Request source</small>
@@ -231,7 +220,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
           <div className={'hub-node' + (active !== undefined ? ' energized' : '')}>
             <div className="orbit">
               <div className="hub-core">
-                <Network />
+                <CircuitryIcon weight="bold" />
               </div>
             </div>
             <strong>Organizer</strong>
@@ -241,10 +230,9 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
             <div
               key={task.desk}
               className={'work-node node-' + i + (active === i + 1 ? ' energized' : '')}
-              style={{ '--tint': task.tint } as CSSProperties}
             >
               <span className="worker-icon">
-                <task.icon />
+                <task.icon weight="duotone" />
               </span>
               <div>
                 <strong>{task.title}</strong>
@@ -256,7 +244,7 @@ function RouteMap({ file, audit }: { file: CaseFile; audit: AuditEvent[] }) {
       </div>
       <div className="map-footer">
         <span>
-          <CircleDot size={14} />
+          <RadioButtonIcon size={14} />
           {display}
         </span>
         <span>
@@ -284,18 +272,16 @@ type Props = {
 
 export default function RequestDashboard({ file, staff, queue, audit, busy, open, select, submit }: Props) {
   const stats = [
-    { name: 'Assigned requests', value: queue.length, icon: Layers3, color: 'sky' },
+    { name: 'Assigned requests', value: queue.length, icon: StackIcon },
     {
       name: 'In review',
       value: queue.filter((c) => c.status === 'in_review').length,
-      icon: ClipboardList,
-      color: 'violet',
+      icon: ClipboardTextIcon,
     },
     {
       name: 'On hold',
       value: queue.filter((c) => c.status === 'on_hold').length,
-      icon: OctagonPause,
-      color: 'gold',
+      icon: PauseCircleIcon,
     },
   ]
   const canRun = file.permitted_actions.includes('run') && file.last_run?.status !== 'pending'
@@ -307,60 +293,62 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
       <div className="tracker-title">
         <div>
           <div className="tracker-edition">
-            <Radio size={14} />
+            <BroadcastIcon size={14} />
             {file.configured_mode === 'fixture' ? 'Fixture mode' : 'Live mode'}
           </div>
           <h1>Agent operations</h1>
         </div>
         <button className="case-link" onClick={open}>
-          Open case <ArrowUpRight size={15} />
+          Open case <ArrowUpRightIcon size={15} />
         </button>
       </div>
-      <div className="tracker-stats">
-        {stats.map((s) => (
-          <div className={'trk-stat ' + s.color} key={s.name}>
-            <span className="metric-icon">
-              <s.icon />
-            </span>
-            <div>
-              <small>{s.name}</small>
-              <strong>{s.value}</strong>
+      <div className="tracker-summary">
+        <div className="tracker-stats">
+          {stats.map((s) => (
+            <div className="trk-stat" key={s.name}>
+              <span className="metric-icon">
+                <s.icon weight="duotone" />
+              </span>
+              <div>
+                <small>{s.name}</small>
+                <strong>{s.value}</strong>
+              </div>
             </div>
+          ))}
+        </div>
+        <div className="handoff-strip">
+          <span className="handoff-icon">
+            <GitBranchIcon size={19} />
+          </span>
+          <div>
+            <small>Next handoff</small>
+            <p>{file.last_run?.status === 'pending' ? 'The organizer is preparing packets for the three review desks.' : file.next_action}</p>
+            {canRun && !file.analysis_available && <p>The configured analysis service is unavailable.</p>}
           </div>
-        ))}
+          {canRun && (
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() =>
+                submit(
+                  '/runs',
+                  { revision: file.revision, mode: file.configured_mode },
+                  'Analysis run submitted.',
+                )
+              }
+            >
+              <PlayIcon size={14} /> Run analysis
+            </button>
+          )}
+        </div>
       </div>
       <RouteMap key={file.case_id + file.revision} file={file} audit={audit} />
-      <div className="handoff-strip">
-        <span className="handoff-icon">
-          <GitBranch size={19} />
-        </span>
-        <div>
-          <small>Next handoff</small>
-          <p>{file.next_action}</p>
-          {canRun && !file.analysis_available && <p>The configured analysis service is unavailable.</p>}
-        </div>
-        {canRun && (
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={() =>
-              submit(
-                '/runs',
-                { revision: file.revision, mode: file.configured_mode },
-                'Analysis run submitted.',
-              )
-            }
-          >
-            <Play size={14} /> Run analysis
-          </button>
-        )}
-      </div>
       <div className="tracker-lower">
         <div className="tracker-stack">
           <section className="track-panel">
             <div className="panel-title">
               <div className="track-heading">
-                <Inbox size={18} />
+                <TrayIcon size={18} />
                 <h2>Request queue</h2>
               </div>
               <small>{queue.length} assigned</small>
@@ -374,7 +362,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                 onClick={() => select(c.case_id)}
               >
                 <span className="request-icon">
-                  <ArrowDownLeft size={17} />
+                  <ArrowDownLeftIcon size={17} />
                 </span>
                 <span>
                   <strong>{c.case_id}</strong>
@@ -383,19 +371,19 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                   </small>
                 </span>
                 <span className={'pill ' + c.status}>{label(c.status)}</span>
-                <ArrowRight size={14} />
+                <ArrowRightIcon size={14} />
               </button>
             ))}
             {incoming && (
               <p className="tracker-foot">
-                <BriefcaseBusiness size={13} /> {file.case_id} originated at {label(incoming.desk)}.
+                <BriefcaseIcon size={13} /> {file.case_id} originated at {label(incoming.desk)}.
               </p>
             )}
           </section>
           <section className="track-panel">
             <div className="panel-title">
               <div className="track-heading">
-                <ShieldCheck size={18} />
+                <ShieldCheckIcon size={18} />
                 <h2>Human review</h2>
               </div>
               <small>Revision {file.revision}</small>
@@ -409,7 +397,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                 <div className="desk-disposition" key={d}>
                   {label(d)}
                   <span className={'pill ' + disposition}>
-                    {disposition === 'clear' && <Check size={12} />} {label(disposition)}
+                    {disposition === 'clear' && <CheckIcon size={12} />} {label(disposition)}
                   </span>
                 </div>
               )
@@ -432,7 +420,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
         <section className="track-panel feed">
           <div className="panel-title">
             <div className="track-heading">
-              <Activity size={18} />
+              <PulseIcon size={18} />
               <h2>Activity stream</h2>
             </div>
             <small>UTC</small>
@@ -441,7 +429,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
             {(allEvents ? history : history.slice(0, 5)).map((e) => (
               <li key={e.event_id}>
                 <span className={'feed-dot ' + (e.desk === 'analysis' ? 'automated' : '')}>
-                  {e.desk === 'analysis' ? <Bot size={13} /> : <Clock3 size={13} />}
+                  {e.desk === 'analysis' ? <CpuIcon size={13} /> : <ClockIcon size={13} />}
                 </span>
                 <div>
                   <strong>{eventName(e.action)}</strong>
@@ -458,12 +446,12 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
           {!history.length && <p className="tracker-foot">No visible activity yet.</p>}
           {history.length > 5 && (
             <button className="stream-more" onClick={() => setAllEvents((v) => !v)}>
-              <RotateCcw size={13} />
+              <ArrowCounterClockwiseIcon size={13} />
               {allEvents ? 'Show latest five' : 'Show all ' + history.length + ' events'}
             </button>
           )}
           <p className="tracker-foot">
-            <CircleDot size={12} /> Visible to {label(staff.role)}
+            <RadioButtonIcon size={12} /> Visible to {label(staff.role)}
           </p>
         </section>
       </div>

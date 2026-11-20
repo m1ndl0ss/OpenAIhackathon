@@ -1,8 +1,8 @@
-# Clearance | Corporate banking hackathon build specification
+# Redwood | Corporate banking hackathon build specification
 
 **Build one internal case agent that helps bank employees decide whether to issue a corporate letter of credit.** The agent gathers evidence, checks the applicable bank policy and drafts a short review for each department. A person in Trade Finance, Credit Risk and Compliance signs for their own desk. A separate officer makes the final decision. Operations can then create one simulated issuance receipt.
 
-**Status:** implementation specification for the MAIN Summit AI-Z track, 20–21 November 2026. The diagram describes the target. The scenarios, mandates, amounts and timings below are proposed demo inputs. Live BRANE results, business measurements and sign-offs must come from actual runs.
+**Status:** implementation specification for the MAIN Summit AI-Z track, 20–21 November 2026. The diagram shows the implemented letter-of-credit workflow. The sections below also describe proposed extensions. The scenarios, mandates, amounts and timings below are proposed demo inputs. Live BRANE results, business measurements and sign-offs must come from actual runs.
 
 ![Corporate banking architecture. Coverage opens a case. One agent prepares desk reviews using scoped read-only tools and BRANE. Three human desk owners sign, a distinct final officer decides, and Operations records simulated issuance. Holds and material changes return the case to review.](corporate-banking-architecture.png)
 

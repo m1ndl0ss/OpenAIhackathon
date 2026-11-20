@@ -16,7 +16,7 @@ the five acceptance tests in §6.
 
 ## 1. Scope
 
-Every model-bound byte in Clearance goes through this adapter. That includes
+Every model-bound byte in Redwood goes through this adapter. That includes
 prompts, system messages, retrieved policy passages, **tool results**, intermediate
 summaries and final drafting turns. A model call with no tools still uses this path.
 

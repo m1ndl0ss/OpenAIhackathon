@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { bank, label, textError, type Staff } from './api'
+import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, ShippingContainerIcon } from '@phosphor-icons/react'
+import { Brand, DeskIcon } from './Brand'
+import harbor from './assets/harbor.webp'
 import './sign-in.css'
-
-export function Brand() {
-  return <div className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>Clearance</div>
-}
 
 type Desk = Pick<Staff, 'id' | 'name' | 'role'>
 type Session = { staff: Staff; token: string }
@@ -19,17 +18,20 @@ const duties: Record<string, string> = {
 
 function CaseBrief() {
   return <aside className="case-brief" aria-label="Walkthrough case">
-    <div className="brief-graphic" aria-hidden="true">
-      <div className="paper-back" />
-      <div className="paper-front"><i className="paper-seal" /><i className="paper-lines" /><i className="paper-sign" /></div>
+    <div className="brief-art">
+      <img src={harbor} alt="" width="1000" height="430" />
+      <span className="case-tag"><ShippingContainerIcon size={16} /> LC-001</span>
     </div>
-    <div className="brief-info"><div className="entry-kicker">Walkthrough case</div>
-      <h2>Import letter<br /> of credit</h2>
-      <div className="brief-meta"><code>LC-001</code><span>USD 2,000,000</span></div>
+    <div className="brief-info">
+      <span className="entry-kicker">Walkthrough case</span>
+      <h2>Import letter of credit</h2>
+      <dl className="brief-meta">
+        <div><dt>Requested amount</dt><dd>USD 2,000,000</dd></div>
+        <div><dt>File type</dt><dd>Synthetic case</dd></div>
+      </dl>
     </div>
   </aside>
 }
-
 export default function SignIn({ start }: { start: (staff: Staff, token: string) => void }) {
   const [desks, setDesks] = useState<Desk[] | null>(null)
   const [live, setLive] = useState(false)
@@ -79,26 +81,27 @@ export default function SignIn({ start }: { start: (staff: Staff, token: string)
       {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : 'Local fixture') : 'Staff access'}</span>}
     </header>
     {demo ? <section className="entry-body">
-      <div className="entry-intro"><div className="entry-kicker">Trade finance</div>
+      <div className="entry-intro"><div className="entry-kicker section-label">Trade finance</div>
         <h1>Choose your desk</h1>
-        <p>Start with Coverage, or pick a desk to take over its part of the case.</p>
+        <p>Start with Coverage to open the case. Choose another desk to take over its review.</p>
       </div>
       <div className="entry-layout">
         <CaseBrief />
         <div className="desk-grid" aria-label="Demo desks">{desks!.map(desk =>
           <button key={desk.id} type="button" className={'desk-choice desk-' + desk.role} disabled={Boolean(pending)} onClick={() => enter(desk)}>
-            <span className="desk-top"><span className="desk-avatar" aria-hidden="true">{desk.name.split(' ').map(word => word[0]).join('')}</span><span className="desk-arrow" aria-hidden="true">↗</span></span>
-            <strong>{label(desk.role)}</strong><span className="desk-name">{desk.name}</span>
+            <span className="desk-top" aria-hidden="true"><span className="desk-icon"><DeskIcon role={desk.role} /></span><ArrowUpRightIcon className="desk-arrow" size={19} /></span>
+            <strong>{label(desk.role)}</strong>
+            <span className="desk-name">{desk.name}</span>
             <span className="desk-duty">{pending === desk.id ? 'Opening desk…' : duties[desk.role]}</span>
           </button>
         )}</div>
       </div>
       {error && <p role="alert" className="error">{error}</p>}
     </section> : <div className="login-center"><section className="login-card">
-      <div className="entry-kicker">Corporate banking</div><h1>Staff sign-in</h1>
+      <KeyholeIcon size={32} weight="duotone" /><h1>Staff sign-in</h1>
       {desks && <form className="action-form" onSubmit={event => { event.preventDefault(); void enter() }}>
         <label>Staff token<input required type="password" value={token} onChange={e => setToken(e.target.value)} autoComplete="off" spellCheck={false} /></label>
-        <button className="primary" disabled={Boolean(pending) || !token.trim()}>{pending ? 'Opening desk…' : 'Sign in'}</button>
+        <button className="primary" disabled={Boolean(pending) || !token.trim()}>{pending ? 'Opening desk…' : 'Sign in'} <ArrowRightIcon size={16} /></button>
       </form>}
       {!desks && !error && <p role="status">Loading workspace…</p>}
       {error && <p role="alert" className="error">{error}</p>}

@@ -1,6 +1,6 @@
-# Clearance | Corporate banking through BRANE
+# Redwood | Corporate banking through BRANE
 
-A relationship manager receives a USD 2 million import letter-of-credit request. Clearance prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
+A relationship manager receives a USD 2 million import letter-of-credit request. Redwood prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
 
 ## Open the demo
 
@@ -23,7 +23,7 @@ Open the local rehearsal, choose **Coverage**, select **LC-001** and click **Run
 | Mandated officer and Operations | Show three signatures on the same revision. The officer records the decision. Operations records the simulated receipt. A retry returns the same receipt. |
 | Security evidence | Show one clean OpenAI route, a protected case, the raw-firewall failures, and the outage trace. In the outage the bank attempted its policy read, submitted zero model requests and sealed nothing. |
 
-The backup is a captioned sequence of actual browser captures from a separate live run on 20 November 2026. Its second revision is `RUN-8bedd380d1804240bfbc4b4626d965f4`. The machine-readable rehearsal below has its own run IDs. [Play the 37-second backup](docs/evidence/live-walkthrough.gif)
+The backup is a captioned sequence of actual browser captures from a separate live run on 20 November 2026. Its second revision is `RUN-5f7355181dc94cdb88473c1ddd5fe978`. The machine-readable rehearsal below has its own run IDs. [Play the 37-second backup](docs/evidence/live-walkthrough.gif)
 
 ## What ran
 

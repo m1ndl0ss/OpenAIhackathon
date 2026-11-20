@@ -1,4 +1,4 @@
-# Clearance · Who builds what
+# Redwood · Who builds what
 
 ## 1. Run the letter-of-credit workflow and finish the challenge demo
 

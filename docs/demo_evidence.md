@@ -1,4 +1,4 @@
-# Clearance · security evidence (35 seconds)
+# Redwood · security evidence (35 seconds)
 
 Team Redwood · department `Team 09` · policy `hardened-v2` `sha256:7238362a…` · all data synthetic
 

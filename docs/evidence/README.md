@@ -6,7 +6,7 @@
 | [Network-denied outage](firewall-outage.json) | T5 in its official firewall-unavailable meaning. An independent Python audit hook denied DNS and IP socket operations. The bank attempted its policy lookup, submitted zero model requests and left the case unsealed. |
 | [Submission test worksheet](submission-tests.csv) | The five official scenarios and the team's five edge cases. Each row identifies the application, gateway or controlled-outage evidence. |
 | [Submission policy matrix](submission-policy-matrix.csv) | Eleven rules from Ilaria's legal worksheet with observed gateway behaviour and application controls. The legal-source column matches her source sheet. |
-| [Timed backup walkthrough](live-walkthrough.gif) | Seven captioned browser captures of a second live case from desk entry to simulated issuance. |
+| [Timed backup walkthrough](live-walkthrough.gif) | Seven Redwood browser captures from a separate live case, from desk entry through simulated issuance. |
 | [Fixture hold and retry checks](workflow-fixture.csv) | A compliance hold prevents approval. A stale revision fails. Concurrent requests and application restart preserve one receipt. |
 | [Fixture utility](agent-utility-fixture.json) | Two offline scenarios scored against the case answer key. |
 

@@ -80,5 +80,5 @@ class CaseTools:
             raise PermissionError("Policy passage is unavailable for this desk")
         return {
             ref: {"text": POLICY_TEXT[desk], "effective_from": POLICY_EFFECTIVE.isoformat(),
-                  "citation": "Clearance synthetic bank policy, " + ref}
+                  "citation": "Redwood synthetic bank policy, " + ref}
         }
