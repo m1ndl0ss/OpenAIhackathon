@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import PacketList from './PacketList'
 import { bank, BankError, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type Submit, type Summary } from './api'
@@ -73,7 +73,12 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
       <p>{file.next_action}</p>
     </section>
     {file.revision > 1 && <div className="revision-note">Revised file · Only signatures on revision {file.revision} count toward approval.{file.invoice_ref && <> Invoice <code>{file.invoice_ref}</code> is on file.</>}</div>}
-    {file.last_run && ['analysis_unavailable', 'unavailable', 'failed'].includes(file.last_run.status) && <Notice danger>Analysis unavailable. The run did not produce a signed packet. <code>{file.last_run.run_id}</code></Notice>}
+    {file.last_run && ['analysis_unavailable', 'analysis_refused', 'analysis_invalid', 'unavailable', 'failed'].includes(file.last_run.status) && <Notice danger>
+      {file.last_run.status === 'analysis_refused' ? 'BRANE refused the request. Review the file internally.'
+        : file.last_run.status === 'analysis_invalid' ? 'The draft failed validation. Review the evidence and retry.'
+        : 'Analysis unavailable. Retry when the configured service is available.'}
+      {' '}<code>{file.last_run.run_id}</code>
+    </Notice>}
     <nav className="view-tabs" aria-label="Case sections">{['Overview', 'Desk messages', 'Audit trail'].map(title => <button key={title} aria-current={title === tab ? 'page' : undefined} className={tab === title ? 'active' : ''} onClick={() => setTab(title)}>{title}</button>)}</nav>
     {tab === 'Overview' && <div className="case-grid">
       <div className="stack">
@@ -84,7 +89,7 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
             return <div key={desk} className="desk-row"><div><strong>{label(desk)}</strong><small>{hold ? label(hold.reason_code) : review ? 'Signed by ' + review.actor_id : 'Awaiting desk finding'}</small>{review?.reason && <p>{review.reason}</p>}</div><Badge value={hold ? 'hold' : review?.disposition || 'pending'} /></div>
           })}
         </section>
-        <PacketList packets={file.packets} sources={file.sources} currency={file.currency} />
+        <PacketList packets={file.packets} sources={file.sources} currency={file.currency} mode={file.mode} />
         {file.decision && <section className="card"><h2>Final disposition</h2><p><strong>{label(file.decision.decision)}</strong> · {file.decision.actor_id} · Rev. {file.decision.revision}</p></section>}
         {receipt && <section className="card receipt"><h2>Simulated issuance receipt</h2><p><code>{receipt.receipt_id}</code></p><p>{receipt.actor_id} · Rev. {receipt.revision}</p></section>}
       </div>
@@ -97,6 +102,13 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
           <dt>Deployment</dt><dd>{file.configured_mode === 'live' ? 'Live · BRANE' : 'Fixture · synthetic'}</dd>
           {mode && <><dt>Packet analysis</dt><dd>{mode === 'fixture' ? 'Fixture · synthetic' : 'Live · BRANE'}</dd></>}
           {file.last_run && <><dt>Last run</dt><dd>{label(file.last_run.status)} <code>{file.last_run.run_id}</code></dd></>}
+          {file.last_run?.analysis && <>
+            <dt>Configured policy</dt><dd>{file.last_run.analysis.policy_version}</dd>
+            {file.last_run.analysis.observations.filter(item => item.route !== 'fixture').map((item, index) =>
+              <Fragment key={index}><dt>BRANE route</dt><dd>{label(item.route)}{' '}
+                {(item.log_ref || item.provider_request_id) && <code>{item.log_ref || item.provider_request_id}</code>}
+              </dd></Fragment>)}
+          </>}
           {file.packet_hash && <><dt>Sealed packet</dt><dd><code>{file.packet_hash}</code></dd></>}
         </dl></section>
       </aside>

@@ -9,17 +9,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from .agent.tools import POLICY_REFS
 from .demo import demo_case
 
 DESKS = ("trade_finance", "credit_risk", "compliance")
 ROLES = ("coverage", *DESKS, "final_officer", "operations")
-POLICIES = {
-    "trade_finance": "POL-TRADE-01@1",
-    "credit_risk": "POL-CREDIT-01@1",
-    "compliance": "POL-COMPLIANCE-01@1",
-}
-
-
 def now():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -61,6 +55,10 @@ def snapshot(case_id, customer, complete=False, fixture_id="LC-DEMO-001"):
     suffix = "01" if stage else hashlib.sha256(customer.encode()).hexdigest()[:8]
     facility_ref = base["facility_ref"] if stage else "FAC-" + suffix
     facility = {**base["facility"], "revision": 1}
+    if fixture_id == "LC-EXPIRED-FACILITY":
+        facility["expiry"] = "2026-11-19"
+    if fixture_id == "LC-INVALID-FACILITY":
+        facility["limit_minor"] = None
     return {
         "case_id": case_id,
         "customer_ref": customer,
@@ -80,7 +78,7 @@ def snapshot(case_id, customer, complete=False, fixture_id="LC-DEMO-001"):
             ["INTAKE-" + suffix + "@1", "TRADE-" + suffix + "@1", facility_ref + "@1"]
             + (["DOC-INV-" + suffix + "@1"] if complete else [])
         ),
-        "policy_refs": {desk: [ref] for desk, ref in POLICIES.items()},
+        "policy_refs": {desk: [ref] for desk, ref in POLICY_REFS.items()},
         "desk_list": list(DESKS),
         "bank_policy_version": "bank-fixture-v1",
         "brane_policy_version": "fixture-v1",
@@ -137,6 +135,9 @@ CREATE TRIGGER IF NOT EXISTS immutable_audit_delete BEFORE DELETE ON audit BEGIN
 CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY, case_id TEXT NOT NULL REFERENCES cases(id), revision INTEGER NOT NULL,
     mode TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL, ended_at TEXT
+);
+CREATE TABLE IF NOT EXISTS run_analysis (
+    run_id TEXT PRIMARY KEY REFERENCES runs(run_id), details TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS reviews (
     event_id TEXT PRIMARY KEY REFERENCES audit(event_id), case_id TEXT NOT NULL, revision INTEGER NOT NULL,

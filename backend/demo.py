@@ -8,6 +8,7 @@ import secrets
 import sqlite3
 import sys
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,18 +61,20 @@ def create_sessions(directory):
     destination = directory / "sessions.json"
     if destination.exists():
         return
-    # Publish the complete 0600 file atomically. Two setup processes can share a checkout.
-    with tempfile.NamedTemporaryFile(mode="w", dir=directory, delete=False) as draft:
-        try:
+    # Publish the completed file atomically. Windows must close the draft before
+    # creating its final name or removing the draft link.
+    draft = tempfile.NamedTemporaryFile(mode="w", dir=directory, delete=False)
+    try:
+        with draft:
             json.dump(make_principals(), draft, indent=2)
             draft.flush()
             os.fsync(draft.fileno())
-            try:
-                os.link(draft.name, destination)
-            except FileExistsError:
-                pass
-        finally:
-            Path(draft.name).unlink(missing_ok=True)
+        try:
+            os.link(draft.name, destination)
+        except FileExistsError:
+            pass
+    finally:
+        Path(draft.name).unlink(missing_ok=True)
 
 
 EDGE_CASES = {
@@ -134,7 +137,7 @@ def main():
             with tempfile.TemporaryDirectory(dir=directory) as scratch:
                 fresh = Path(scratch) / "demo.sqlite3"
                 initialize(fresh, principals)
-                with sqlite3.connect(fresh) as source, sqlite3.connect(db_path) as destination:
+                with closing(sqlite3.connect(fresh)) as source, closing(sqlite3.connect(db_path)) as destination:
                     source.backup(destination)
         else:
             initialize(db_path, principals)

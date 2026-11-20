@@ -1,4 +1,5 @@
 import csv
+import os
 import sys
 
 import pytest
@@ -19,7 +20,8 @@ def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):
     run("setup")
     path, first = demo.settings()
     assert len(first) == len({person["id"] for person in first.values()}) == 6
-    assert (tmp_path / "sessions.json").stat().st_mode & 0o077 == 0
+    if os.name == "posix":
+        assert (tmp_path / "sessions.json").stat().st_mode & 0o077 == 0
     for policy in ("baseline", "hardened"):
         with (tmp_path / "evidence" / f"{policy}.csv").open(newline="") as source:
             rows = list(csv.DictReader(source))

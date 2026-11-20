@@ -55,6 +55,15 @@ export interface DeskPacket {
   suggested_next_step?: string
   limitations?: string[]
 }
+export interface AnalysisRun {
+  run_id: string
+  mode: 'fixture' | 'live'
+  status: string
+  analysis?: {
+    policy_version: string
+    observations: { task: string; route: string; log_ref?: string | null; provider_request_id?: string | null }[]
+  } | null
+}
 export interface CaseFile extends Summary {
   packet_hash: string | null
   facility_ref: string
@@ -77,7 +86,7 @@ export interface CaseFile extends Summary {
   sources: Source[]
   receipt: { receipt_id: string; revision: number; actor_id: string } | null
   decision: { decision: string; revision: number; actor_id: string } | null
-  last_run: { run_id: string; mode: string; status: string } | null
+  last_run: AnalysisRun | null
 }
 export interface AuditEvent {
   sequence: number
