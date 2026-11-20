@@ -50,7 +50,7 @@ Slides for the security section are in [`docs/pitch/`](pitch/), in speaking orde
 
 **2:20–2:45 · The result**
 
-> In rehearsal, the same setup ran 26 different department workflows, and every one reached a signed outcome. So yes, bank staff can have an AI agent they're allowed to use, even on their most sensitive work. Both revisions of our case were ready in under thirty seconds, and a person still signs every one.
+> In rehearsal, the same setup ran 26 different department workflows, and every one reached a signed outcome. So yes, bank staff can have an AI agent they're allowed to use, even on their most sensitive work. Both revisions of our case were ready in under thirty seconds, and a person still signs every one. An average breach in financial services costs five and a half million dollars. Preparing our case cost about a thousand tokens.
 >
 > The US bank found out after its customers' data had already left. With Redwood, the bank decides before anything leaves, and it can prove it.
 
@@ -72,6 +72,8 @@ Slides for the security section are in [`docs/pitch/`](pitch/), in speaking orde
 | BRANE down, nothing leaves | [firewall-outage.json](evidence/firewall-outage.json): one policy GET, zero model POSTs, zero other destinations · [brane-check-failure.csv](evidence/brane-check-failure.csv) |
 | Thirty attacks on the final build, none got through | 20 against BRANE and our masking (19 held, 0 bypassed, 1 inconclusive) plus 10 against the app (10 held), at `evidence-freeze-v1`. [redteam_findings.md](redteam_findings.md) |
 | Certified penetration tester and AI systems security specialist | INE Security eJPT, credential 179627600; INE Security eAIS, credential 194447489 |
+| Average financial-industry breach USD 5.56M; high shadow AI adds USD 670K | IBM Cost of a Data Breach Report 2025: [financial industry summary](https://www.northdoor.co.uk/wp-content/uploads/2025/08/2025-Financial-CODB-Industry_Final.pdf) · [Help Net Security summary](https://helpnetsecurity.com/2025/08/04/ibm-cost-data-breach-report-2025) |
+| About a thousand tokens per case | 1,029 tokens for both revisions, [SUBMISSION.md business case](../SUBMISSION.md#business-case) |
 | 26 workflows reached a signed outcome | [department-rehearsal-live.json](evidence/department-rehearsal-live.json) |
 
 ## Likely questions

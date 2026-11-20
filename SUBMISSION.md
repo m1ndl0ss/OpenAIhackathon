@@ -7,7 +7,7 @@ A relationship manager receives a USD 2 million import letter-of-credit request.
 | The brief asks for | Where to find it |
 | --- | --- |
 | A working AI agent with BRANE integration | `make run-live` (steps below) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py) · [Live run](docs/evidence/submission-live.json) |
-| Legal research with concrete sources | [Corporate banking legal research](research/bank-data-classification/README.md) · legal-source column of the policy matrix |
+| Legal research with concrete sources | [Legal position of the submitted agent](docs/legal-position.md) · [Corporate banking legal research](research/bank-data-classification/README.md) · legal-source column of the policy matrix |
 | Policy matrix | [Submission policy matrix](docs/evidence/submission-policy-matrix.csv): 11 rules with sources, technical controls, observed results and product gaps |
 | Five security tests and five edge cases | [Submission test worksheet](docs/evidence/submission-tests.csv) · [Gateway-only worksheet](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md) |
 | Live demo and business case | The sections below · [Pitch script and evidence for every claim](docs/pitch.md) |
@@ -90,9 +90,15 @@ The security team's standalone suite went from **1/12 on the delivered open poli
 
 ## Business case
 
-The bank's immediate problem is rework between desks when a document changes. In this case the organizer prepared six cited desk packets over two revisions, identified the missing invoice and its owner, and stopped staff from acting on an old signature. The two rounds together took **29.55 seconds** and used **1,029 tokens**. This measures preparation and validation. Staff reading, judgment and sign-off still take time. [Utility scorecard](eval/utility-scorecard.csv)
+**Who buys it.** The head of trade finance operations, with the CISO and the data protection officer co-signing. For the first two it removes rework between desks. For the last two it replaces unapproved AI use with a governed path.
 
-For a planning example, assume 500 cases per year, EUR 60 per staff-hour and three staff minutes saved per case. That yields 25 staff-hours, or EUR 1,500 of capacity per year. At an assumed EUR 0.10 per case in variable costs, EUR 1,450 remains before fixed costs. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity and compare error corrections and total operating cost. The 26 specialist workflows have their own functional rehearsal. The timing and financial assumptions here cover the letter-of-credit case. [Measured inputs](docs/evidence/submission-live.json) · [Specialist coverage](docs/department-workflows.md)
+**1. Staff already use AI, and unapproved use is expensive.** In May 2026 a US bank filed the first SEC disclosure caused by an employee pasting customer names, Social Security numbers and dates of birth into an unapproved AI app. The Dutch Data Protection Authority received dozens of similar reports in 2025, more than in 2024. IBM's 2025 Cost of a Data Breach report puts the average breach in the financial industry at USD 5.56 million, and organisations with high levels of shadow AI paid on average USD 670,000 more per breach. Redwood gives staff an AI path the bank can prove is safe: zero tested private fields left the bank across six live model requests, and nothing is sent when BRANE cannot be verified. [Live transport observation](docs/evidence/submission-live.json) · [Outage trace](docs/evidence/firewall-outage.json) · [Sources for these figures](docs/pitch.md#where-every-claim-comes-from)
+
+**2. Rework between desks when a document changes (measured).** In the letter-of-credit case the organizer prepared six cited desk packets over two revisions, identified the missing invoice and its owner, and stopped staff from acting on an old signature. The two rounds took **29.55 seconds** and used **1,029 tokens**. This measures preparation and validation. Staff reading, judgment and sign-off still take time. [Utility scorecard](eval/utility-scorecard.csv)
+
+**3. One control plane for the whole bank (measured).** The same organizer, gateway, BRANE policy and evidence harness run 27 workflows. In the live specialist rehearsal BRANE handled 69 calls for 23 workflows, with 57 cloud and 12 local-model routes, and three restricted desks needed no model call at all. A new desk registers its tasks and approved wordings and inherits the existing controls. [Specialist run results](docs/evidence/department-rehearsal-live.json)
+
+**Planning example (assumptions, not measurements).** Assume 27 workflows with 1,000 cases each per year, three staff minutes saved per case and EUR 60 per staff-hour. That is 1,350 staff-hours, or about EUR 81,000 of capacity per year. At an assumed EUR 0.10 per case in variable costs (EUR 2,700), about EUR 78,000 remains before fixed costs. For the letter-of-credit desk alone at 500 cases, the same assumptions give EUR 1,500. The larger figure is the avoided incident in point 1. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity, and compare error corrections and total operating cost.
 
 ## Reproduce the evidence
 
