@@ -46,7 +46,7 @@ Slides for the security section are in [`docs/pitch/`](pitch/), in speaking orde
 
 *[Slide 4: pen test]*
 
-> Then I pen-tested it. I'm eJPT and eAIS certified. Indirect prompt injection in invoices, payloads in earlier turns, system-prompt exfiltration, homoglyph names, zero-width-split IBANs, health data in Dutch, forged tokens, and approval disguised three ways. On the app: cross-customer reads, role smuggling, race conditions and replayed signatures. Thirty attacks on the final build. None got through.
+> I'm a certified penetration tester and AI systems security specialist, so I assessed our system the way an attacker would. I tried indirect prompt injection in invoices, payloads in earlier turns, system-prompt exfiltration, homoglyph names, zero-width-split IBANs, health data in Dutch, forged tokens, and approval disguised three ways. On the app: cross-customer reads, role smuggling, race conditions and replayed signatures. Thirty attacks on the final build. None got through.
 
 **2:20–2:45 · The result**
 
@@ -71,7 +71,7 @@ Slides for the security section are in [`docs/pitch/`](pitch/), in speaking orde
 | Cross-customer reads, role smuggling, races, replayed signatures | Y1, Y10, Y7, Y9 in [redteam_findings.md](redteam_findings.md) |
 | BRANE down, nothing leaves | [firewall-outage.json](evidence/firewall-outage.json): one policy GET, zero model POSTs, zero other destinations · [brane-check-failure.csv](evidence/brane-check-failure.csv) |
 | Thirty attacks on the final build, none got through | 20 against BRANE and our masking (19 held, 0 bypassed, 1 inconclusive) plus 10 against the app (10 held), at `evidence-freeze-v1`. [redteam_findings.md](redteam_findings.md) |
-| eJPT and eAIS certified | INE Security credentials 179627600 (eJPT) and 194447489 (eAIS) |
+| Certified penetration tester and AI systems security specialist | INE Security eJPT, credential 179627600; INE Security eAIS, credential 194447489 |
 | 26 workflows reached a signed outcome | [department-rehearsal-live.json](evidence/department-rehearsal-live.json) |
 
 ## Likely questions
