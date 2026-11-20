@@ -74,13 +74,19 @@ dd { margin: 0; }
 }
 .brand { display: inline-flex; align-items: center; gap: 9px; font: 630 1.82rem/1 var(--sans); letter-spacing: -.072em; white-space: nowrap; }
 .brand img { display: block; flex: none; }
+.brand-lockup { display: inline-flex; align-items: center; gap: 9px; }
+.brand-partner { color: var(--accent-ink); font: .73rem/1 var(--mono); letter-spacing: .035em; }
+@media (max-width: 470px) {
+  .brand-lockup { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .brand-partner { font-size: .57rem; }
+}
 .product-name, .mast-unit { color: var(--muted); border-left: 1px solid var(--line); padding-left: 22px; font-size: .85rem; }
 .account { display: flex; align-items: center; gap: 11px; margin-left: auto; }
 .account strong, .account small { display: block; line-height: 1.32; }
 .account strong { font-size: .85rem; font-weight: 580; }
 .account small { color: var(--muted); font-size: .75rem; }
 .account-icon, .finding-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; }
-.account button { margin-left: 6px; font-size: .8rem; }
+.account button { margin-left: 6px; font-size: .8rem; white-space: nowrap; }
 .login-center { min-height: calc(100vh - 66px); display: grid; place-items: center; padding: 24px; }
 .login-card { background: var(--paper); border: 1px solid var(--line); width: min(100%, 430px); padding: clamp(24px, 5vw, 40px); }
 .login-card > svg { color: var(--accent-ink); }

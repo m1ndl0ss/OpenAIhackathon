@@ -15,7 +15,6 @@ import {
   GitBranchIcon,
   TrayIcon,
   StackIcon,
-  CircuitryIcon,
   PauseCircleIcon,
   PlayIcon,
   BroadcastIcon,
@@ -35,6 +34,7 @@ import {
   type Summary,
   type Submit,
 } from './api'
+import RoutingWallet from './RoutingWallet'
 import './tracker.css'
 
 const tradeTasks = [
@@ -55,48 +55,6 @@ const runLabels: Record<string, string> = {
   analysis_invalid: 'Draft failed validation',
   superseded: 'Superseded',
 }
-const tracks = [
-  ['M 132 151 H 432', 'M 200 82 H 670'],
-  ['M432 151 H536 L633 54 H816', 'M670 82 V133 L626 151 H212 L166 170 V219'],
-  ['M 432 151 H 816', 'M670 82 V145 L500 181 V219'],
-  ['M432 151 H536 L633 248 H816', 'M670 82 V133 L716 151 H790 L833 170 V219'],
-]
-
-function LinkLayer({ narrow, active }: { narrow: boolean; active: number | undefined }) {
-  return (
-    <svg
-      className={'route-lines ' + (narrow ? 'narrow-lines' : 'wide-lines')}
-      viewBox="0 0 1000 300"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      {tracks.map((paths, i) => {
-        const path = paths[narrow ? 1 : 0]
-        const color = active === i ? '#ff7041' : '#84887a'
-        return (
-          <g key={i}>
-            <path
-              d={path}
-              fill="none"
-              stroke={color}
-              strokeOpacity={active === i ? 1 : .8}
-              strokeWidth={active === i ? 2 : 1.4}
-              vectorEffect="non-scaling-stroke"
-            />
-            {active === i && (
-              <g className="flying-packet" key={path}>
-                <animateMotion dur="1.6s" path={path} repeatCount="indefinite" />
-                <rect x="-9" y="-10" width="18" height="20" rx="2" fill="#ff7041" />
-                <path d="M-5 -3 H5 M-5 2 H3 M-5 6 H0" fill="none" stroke="#252720" strokeWidth="1.8" />
-              </g>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
 function eventName(action: string) {
   if (action.startsWith('task.')) {
     const [, desk, stage] = action.split('.')
@@ -146,8 +104,8 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
   }, [])
   const playback = preview || run?.status !== 'pending'
   useEffect(() => {
-    setFrame(!reduced && playback && (file.configured_mode === 'fixture' || !preview) ? 0 : null)
-  }, [run?.run_id, run?.status, reduced, playback, preview, file.configured_mode])
+    setFrame(!reduced && playback ? 0 : null)
+  }, [run?.run_id, run?.status, reduced, playback])
   useEffect(() => {
     if (frame === null) return
     const timeout = window.setTimeout(() => setFrame(frame + 1 < steps.length ? frame + 1 : null), 1600)
@@ -159,7 +117,8 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
       .at(-1)
       ?.action.split('.')
       .at(-1)
-    if (stage === 'prepared' || run?.status === 'sealed') return 'Packet ready'
+    if (run?.status === 'sealed') return 'Packet ready'
+    if (stage === 'prepared') return run?.status === 'pending' ? 'Draft prepared' : 'Draft withheld'
     if (run?.status.startsWith('analysis_')) {
       return stage === 'started' ? runLabels[run.status] ?? 'Stopped' : 'No packet'
     }
@@ -185,7 +144,11 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
         e.detail === run.mode + ' · ' + run.run_id,
     )?.desk
   const source = deskName(file, sender ?? origin?.desk ?? 'unknown')
-  const hubState = frame === null && run?.status === 'sealed' ? 'Completed' : display
+  const replayedSteps = frame === null || preview ? null : steps.slice(0, frame)
+  const prepared = tasks.filter((task, i) => {
+    const finished = run?.status === 'sealed' || recorded.some(event => event.action === 'task.' + task.desk + '.prepared')
+    return finished && (!replayedSteps || replayedSteps.includes(i + 1))
+  }).length
   const taskStatus = (i: number) => {
     if (frame === null || active === undefined) return states[i]
     if (active === i + 1) return 'Receiving request'
@@ -213,42 +176,8 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
           </button>
         )}
       </div>
-      <div className="route-board">
-        <div className="route-stage">
-          <LinkLayer key={'wide-' + active} narrow={false} active={reduced ? undefined : active} />
-          <LinkLayer key={'narrow-' + active} narrow active={reduced ? undefined : active} />
-          <div className="origin-node">
-            <div className="origin-icon">
-              <TrayIcon weight="duotone" />
-            </div>
-            <strong>{source}</strong>
-            <small>Request source</small>
-          </div>
-          <div className={'hub-node' + (active !== undefined ? ' energized' : '')}>
-            <div className="orbit">
-              <div className="hub-core">
-                <CircuitryIcon weight="bold" />
-              </div>
-            </div>
-            <strong>Organizer</strong>
-            <small>{hubState}</small>
-          </div>
-          {tasks.map((task, i) => (
-            <div
-              key={task.desk}
-              className={'work-node node-' + i + (active === i + 1 ? ' energized' : '')}
-            >
-              <span className="worker-icon">
-                <task.icon weight="duotone" />
-              </span>
-              <div>
-                <strong>{task.title}</strong>
-                <small>{taskStatus(i)}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <RoutingWallet source={source} tasks={tasks} states={tasks.map((_, i) => taskStatus(i))}
+        prepared={prepared} active={active} reduced={reduced} />
       <div className="map-footer">
         <span>
           <RadioButtonIcon size={14} />

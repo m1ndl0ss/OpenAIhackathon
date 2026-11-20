@@ -11,11 +11,10 @@
 .case-brief { min-width: 0; display: flex; flex-direction: column; background: #262822; color: white; border-radius: 4px; overflow: hidden; }
 .brief-art { position: relative; flex: 1; min-height: 156px; overflow: hidden; background: #232520; }
 .brief-art img { position: absolute; width: 100%; height: 100%; object-fit: contain; display: block; }
-.case-tag { display: flex; align-items: center; gap: 7px; position: absolute; top: 15px; left: 16px; padding: 4px 7px; background: #242720; border: 1px solid #6a6c62; color: #e6e8df; font: .69rem/1.3 var(--mono); }
-.case-tag svg { color: #ff774b; }
 .brief-info { border-top: 1px solid #4c4e44; padding: clamp(16px, 1.7vw, 28px); }
-.brief-info .entry-kicker { color: #d2d3c8; }
-.brief-info h2 { font-size: clamp(1.7rem, 2.4vw, 2.55rem); font-weight: 500; line-height: 1.08; margin: 6px 0 18px; }
+.brief-info h2 { font-size: clamp(1.65rem, 2.6vw, 2.75rem); font-weight: 520; line-height: 1.08; letter-spacing: -.055em; }
+.brief-info h2 span { color: #ff8055; font-weight: 380; }
+.campus-purpose { margin: 4px 0 16px; color: #d4d5c9; font-size: .91rem; }
 .brief-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; border-top: 1px solid #4c4e44; padding-top: 13px; }
 .brief-meta dt { font-size: .75rem; color: #c3c5b9; }
 .brief-meta dd { margin-top: 3px; font: .79rem/1.4 var(--mono); }
@@ -43,7 +42,6 @@
 }
 @media (max-width: 900px) {
   .entry-layout { grid-template-columns: minmax(0,.72fr) minmax(0,1.2fr); gap: 12px; }
-  .brief-art img { object-fit: cover; }
 }
 @media (max-width: 700px) {
   .entry-header { min-height: 60px; padding-inline: 18px; gap: 9px; }
@@ -53,14 +51,11 @@
   .entry-layout { display: flex; flex-direction: column; gap: 15px; }
   .entry-intro { margin-bottom: 19px; }
   .entry-intro h1 { font-size: clamp(2.7rem, 10.5vw, 4rem); }
-  .case-brief { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1fr); }
-  .brief-art { min-height: 140px; }
-  .brief-art img { object-fit: contain; }
-  .brief-info { padding: 14px; border-top: 0; border-left: 1px solid #4c4e44; }
-  .brief-info h2 { font-size: 1.35rem; margin: 5px 0 10px; }
-  .brief-meta { padding-top: 7px; gap: 2px; }
-  .brief-meta > div:last-child { display: none; }
-  .case-tag { left: 7px; top: 7px; padding: 2px 5px; }
+  .brief-info { padding: 13px 15px; }
+  .brief-info h2 { font-size: 1.5rem; }
+  .campus-purpose { margin: 3px 0 10px; font-size: .82rem; }
+  .brief-meta { padding-top: 7px; gap: 16px; }
+  .brief-meta > div { display: flex; align-items: baseline; gap: 5px; }
   .desk-grid { gap: 8px; }
   .desk-choice { padding: 13px 12px; }
 }
@@ -82,7 +77,7 @@
 .seat-controls button { padding:5px 9px; }
 .entry-layout { align-items:start; }
 .entry-layout .case-brief { width:100%; }
-.brief-art { min-height:0; aspect-ratio:1.84; }
+.brief-art { flex: none; min-height:0; aspect-ratio:1120/540; }
 .brief-art img { object-fit:contain; }
 @media(max-width:700px) {
   .directory-bar { align-items:stretch; }
@@ -90,6 +85,10 @@
   .directory-search input[type=search] { width:100%; }
   .directory-groups button { padding:7px 8px; }
   .entry-layout { align-items:stretch; }
-  .brief-art { min-height:120px; aspect-ratio:auto; }
-  .brief-meta { gap:10px; } .brief-meta > div:last-child { display:block; }
+  .brief-meta { gap:16px; }
+}
+@media (min-width: 480px) and (max-width: 700px) {
+  .case-brief { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; }
+  .brief-info { align-self: stretch; display: flex; flex-direction: column; justify-content: center; border-top: 0; border-left: 1px solid #4c4e44; }
+  .brief-meta { flex-wrap: wrap; gap: 2px 10px; }
 }

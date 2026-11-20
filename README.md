@@ -4,7 +4,7 @@ Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases
 
 **Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
 
-![Redwood’s bank and offices beside the corporate banking desk directory](docs/evidence/redwood-desk-picker.jpg)
+![The BRANE × Redwood desk directory and the corporate banking campus](docs/evidence/redwood-desk-picker.jpg)
 
 ## Run from a fresh clone
 
@@ -15,7 +15,9 @@ make setup
 make run
 ```
 
-Open [the local staff console](http://127.0.0.1:8000) and choose **Coverage**. The agent dashboard shows that desk’s assigned requests, the organizer’s routing map and recent case activity. **Preview route** animates a sample handoff. **Run analysis** prepares the three fixture packets and **Replay run** animates the recorded handoffs. **Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. Both the offline console and the isolated live rehearsal support one-click desk entry. A persistent staff deployment uses individual tokens.
+Open the local staff console and choose **Coverage**. In **Request routing**, a coin follows the request from its source to the organizer and on to each agent. The wallet counts prepared tasks. **Preview route** shows the path for an unrun case. **Run analysis** prepares the three fixture packets and **Replay run** follows the recorded handoffs. [Local staff console](http://127.0.0.1:8000) · [Watch a recorded replay](docs/evidence/organizer-wallet.gif)
+
+**Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. Both the offline console and the isolated live rehearsal support one-click desk entry. A persistent staff deployment uses individual tokens.
 
 Setup installs the dependencies, builds the React console, creates the six original demo identities and two identities per specialist desk, seeds SQLite and prepares evidence worksheets. An existing checkout can run `make seed` and `make build`, then restart its server to pick up the new directory. Setup keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation. The console uses Neue Haas Grotesk Display when installed and bundles Inter, IBM Plex Mono and its icons for offline use. [Bundled font and icon licenses](console/public/design-licenses.txt)
 

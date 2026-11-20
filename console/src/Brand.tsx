@@ -27,5 +27,8 @@ export function DeskIcon({ role, size = 24 }: { role: string; size?: number }) {
 }
 
 export function Brand() {
-  return <div className="brand"><img src={import.meta.env.BASE_URL + 'redwood.svg'} alt="" width="32" height="32" />Redwood</div>
+  return <div className="brand">
+    <img src={import.meta.env.BASE_URL + 'redwood.svg'} alt="" width="32" height="32" />
+    <span className="brand-lockup">Redwood <span className="brand-partner">× BRANE</span></span>
+  </div>
 }

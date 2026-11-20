@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { bank, label, textError, type Department, type Staff } from './api'
-import { ArrowRightIcon, ArrowUpRightIcon, BankIcon, KeyholeIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
 import { Brand, DeskIcon } from './Brand'
 import campus from './assets/redwood-campus.webp'
 import './sign-in.css'
@@ -22,13 +22,13 @@ const groups = [
 ]
 
 function Campus({ departments }: { departments: number }) {
-  return <aside className="case-brief" aria-label="Redwood corporate banking campus">
+  return <aside className="case-brief" aria-labelledby="campus-heading">
     <div className="brief-art">
-      <img src={campus} alt="Isometric bank with a columned entrance, orange trim and three office buildings." width="1000" height="430" />
-      <span className="case-tag"><BankIcon size={16} /> REDWOOD</span>
+      <img src={campus} alt="An orange-trimmed tower rises above the bank’s columned entrance, surrounded by office buildings and tree-lined streets." width="1120" height="540" />
     </div>
     <div className="brief-info">
-      <span className="entry-kicker">Corporate banking</span><h2>Redwood offices</h2>
+      <h2 id="campus-heading">BRANE <span>×</span> Redwood</h2>
+      <p className="campus-purpose">Corporate banking agentic application</p>
       <dl className="brief-meta">
         <div><dt>Workflows</dt><dd>{departments + 1}</dd></div>
         <div><dt>Seeded cases</dt><dd>{departments * 2 + 2}</dd></div>
@@ -141,7 +141,7 @@ export default function SignIn({ start, preferred }: { start: (staff: Staff, tok
       </div>
       {error && <p role="alert" className="error">{error}</p>}
     </section> : <div className="login-center"><section className="login-card">
-      <KeyholeIcon size={32} weight="duotone" /><h1>Staff sign-in</h1>
+      {desks ? <><KeyholeIcon size={32} weight="duotone" /><h1>Staff sign-in</h1></> : <h1>Corporate banking</h1>}
       {desks && <form className="action-form" onSubmit={event => { event.preventDefault(); void enter() }}>
         <label>Staff token<input required type="password" value={token} onChange={e => setToken(e.target.value)} autoComplete="off" spellCheck={false} /></label>
         <button className="primary" disabled={Boolean(pending) || !token.trim()}>{pending ? 'Opening desk…' : 'Sign in'} <ArrowRightIcon size={16} /></button>

@@ -4,12 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f7f4" />
-    <meta name="description" content="Track corporate banking requests, review the agents’ evidence and record human decisions across Redwood’s departments." />
+    <meta name="description" content="BRANE × Redwood’s corporate banking agentic application routes requests, prepares evidence and records human decisions across departments." />
     <link rel="icon" href="%BASE_URL%redwood.svg" type="image/svg+xml" />
-    <title>Redwood · Corporate banking</title>
+    <link rel="stylesheet" href="/src/launch.css" />
+    <title>BRANE × Redwood · Corporate banking</title>
   </head>
   <body>
+    <div id="launch-curtain" aria-hidden="true">
+      <div class="launch-signature">
+        <img class="launch-tree" src="%BASE_URL%redwood.svg" width="64" height="64" alt="" />
+        <div class="launch-names"><span>BRANE</span><i>×</i><b>Redwood</b></div>
+        <div class="launch-rule"></div>
+      </div>
+    </div>
     <div id="root"></div>
+    <noscript>Enable JavaScript to open the corporate banking workspace.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
