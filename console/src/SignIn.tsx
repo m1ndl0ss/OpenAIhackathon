@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { bank, label, textError, type Department, type Staff } from './api'
-import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, ArrowUpRightIcon, KeyholeIcon, MagnifyingGlassIcon, PlusCircleIcon } from '@phosphor-icons/react'
 import { Brand, DeskIcon } from './Brand'
 import campus from './assets/redwood-campus.webp'
 import './sign-in.css'
@@ -37,7 +37,7 @@ function Campus({ departments }: { departments: number }) {
   </aside>
 }
 export type PreferredDesk = { workflowId: string; seat: 'analyst' | 'approver'; partner?: string }
-export default function SignIn({ start, preferred }: { start: (staff: Staff, token: string) => void; preferred?: PreferredDesk }) {
+export default function SignIn({ start, preferred, compose }: { compose: () => void; start: (staff: Staff, token: string) => void; preferred?: PreferredDesk }) {
   const [desks, setDesks] = useState<Desk[] | null>(null)
   const [departments, setDepartments] = useState<Department[]>([])
   const [group, setGroup] = useState('Letter of credit')
@@ -105,10 +105,10 @@ export default function SignIn({ start, preferred }: { start: (staff: Staff, tok
       {desks && <span className="mode-pill"><i />{demo ? (live ? 'Live BRANE rehearsal' : 'Local fixture') : 'Staff access'}</span>}
     </header>
     {demo ? <section className="entry-body">
-      <div className="entry-intro"><div className="entry-kicker section-label">Staff directory</div>
+      <div className="entry-intake"><div className="entry-intro"><div className="entry-kicker section-label">Staff directory</div>
         <h1>Choose your desk</h1>
-        <p>Open the letter-of-credit walkthrough or choose a specialist desk to work its assigned cases.</p>
-      </div>
+        <p>Start a corporate banking request or open a desk to review its cases.</p>
+      </div><button className="primary start-request" onClick={compose} disabled={Boolean(pending)}><PlusCircleIcon size={19} />New request</button></div>
       {departments.length > 0 && <div className="directory-bar">
         <nav className="directory-groups" aria-label="Desk groups">{groups.map(([key, title]) =>
           <button type="button" key={key} aria-pressed={!term && group === key} onClick={() => {setGroup(key); setQuery('')}}>{title}</button>

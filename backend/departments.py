@@ -72,7 +72,10 @@ def sources(s, p):
              "Supporting record verified." if s["evidence_verified"] else "Supporting record awaits verification.", assigned),
     ]
     if s["evidence_verified"]:
-        items.append(item(base + "-SOURCE@1", p["source"], p["observations"][s["example"] - 1], owners))
+        observation = p["observations"][s["example"] - 1]
+        if "request_input" in s and s["example"] != 1:
+            observation = "The assigned analyst verified the supporting record for this request."
+        items.append(item(base + "-SOURCE@1", p["source"], observation, owners))
     return dict(items)
 
 

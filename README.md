@@ -4,7 +4,7 @@ Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases
 
 **Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
 
-![The BRANE × Redwood desk directory and the corporate banking campus](docs/evidence/redwood-desk-picker.jpg)
+![A submitted Redwood payment request, its organizer recommendation and the three review agents](docs/evidence/request-result.jpg)
 
 ## Run from a fresh clone
 
@@ -15,7 +15,9 @@ make setup
 make run
 ```
 
-Open the local staff console and choose **Coverage**. In **Request routing**, a coin follows the request from its source to the organizer and on to each agent. The wallet counts prepared tasks. **Preview route** shows the path for an unrun case. **Run analysis** prepares the three fixture packets and **Replay run** follows the recorded handoffs. [Local staff console](http://127.0.0.1:8000) · [Watch a recorded replay](docs/evidence/organizer-wallet.gif)
+Open the console and click **New request**. Choose one of 27 workflows. **Fill demo example** fills in a request for that desk. **Next demo example** loads a case with missing evidence. You can enter your own details, including an amount and currency for monetary workflows. Click **Submit request** to open the case and run the organizer. [Local staff console](http://127.0.0.1:8000) · [Example request form](docs/evidence/request-intake.jpg)
+
+The routing diagram follows the request from the originating desk through the organizer to three agents. A sealed packet produces a recommendation. Green calls for human review and amber flags a next step such as collecting an invoice. **Replay run** follows the recorded handoffs. For an existing unrun case, use **Preview route** or **Run analysis**. [Recorded handoffs](docs/evidence/request-routing.gif)
 
 **Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. Both the offline console and the isolated live rehearsal support one-click desk entry. A persistent staff deployment uses individual tokens.
 
@@ -26,7 +28,7 @@ Setup installs the dependencies, builds the React console, creates the six origi
 1. Choose **Corporate banking → Payments & Cash**. The analyst’s dashboard opens with two cases. Select **PAY-001** and click **Run analysis**. The routing map follows evidence review, policy review and the handover draft.
 2. Click **Open case**. Expand the evidence packet to inspect the return-match record. Enter a reason and click **Sign desk review**. Use **Switch desk → Operations** to sign the assigned Operations review on the same case. The picker suggests the next required reviewer.
 3. Click **Switch desk** again. The picker selects the Payments approver. Open that desk, enter a reason and click **Confirm the return match** or **Refer for further review**. The outcome and its reference appear in the file.
-4. Try **PAY-002** as the analyst for an incomplete record. **Verify supporting record** creates revision 2. Run the organizer again to prepare that revision for the human reviewers. **New case template → Open example case** opens another independent copy of either scenario.
+4. Try **PAY-002** as the analyst for an incomplete record. **Verify supporting record** creates revision 2. Run the organizer again to prepare that revision for the human reviewers. To submit another payment, click **New request**, choose **Payment exception triage**, enter the payment details and click **Submit request**.
 
 Use the four department groups or search for a desk. Each specialist has its own examples, prompts, evidence and final action. M&A, AML & Financial Crime and Regulatory Surveillance keep all three drafting tasks inside the bank. The other 23 specialist desks use BRANE in live mode. All outcomes are simulated internal records. [Browse the 26 desks and their examples](docs/department-workflows.md) · [See the organizer running a payment case](docs/evidence/specialist-workflow.jpg)
 

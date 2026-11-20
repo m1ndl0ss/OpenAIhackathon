@@ -1,0 +1,52 @@
+.entry-intake { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: clamp(22px,2.4vw,39px); }
+.entry-intake .entry-intro { margin: 0; }
+.entry-intake .start-request, .compose-submit .primary { min-height: 44px; padding: 10px 20px; background: #244738; color: white; border-color: #244738; }
+.entry-intake .start-request:hover:not(:disabled), .compose-submit .primary:hover:not(:disabled) { background: #153528; }
+.workspace-nav button.new-request-button { color: #22452f; background: #e1efcb; border-color: #c2d5af; }
+.compose-page { min-height: 100dvh; }
+.compose-body { max-width: 1170px; margin: 0 auto; padding: 35px clamp(18px,4vw,60px) 60px; }
+.compose-intro { margin: 0 0 25px; }
+.compose-intro h1 { font: 520 clamp(2.9rem,5vw,4.7rem)/1.02 var(--sans); letter-spacing: -.075em; }
+.compose-intro p { color: var(--muted); margin-top: 8px; }
+.compose-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(240px, .92fr); gap: 22px; align-items: start; }
+.compose-form, .compose-route { background: white; border: 1px solid var(--line); border-radius: 8px; }
+.compose-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.compose-form label { display: block; min-width: 0; font: 580 .85rem/1.45 var(--sans); }
+.compose-form label input, .compose-form label select, .compose-form label textarea { display: block; width: 100%; margin-top: 5px; padding: 9px 11px; min-height: 40px; min-width: 0; background: #fff; border: 1px solid #bfc7bc; border-radius: 4px; font: 440 .91rem/1.4 var(--sans); color: var(--ink); }
+.compose-form input::placeholder { color: #73796f; }
+.compose-form label textarea { resize: vertical; }
+.compose-form .type-picker { padding: 19px 23px; border-bottom: 1px solid var(--line); background: #f2f5ef; border-radius: 8px 8px 0 0; }
+.compose-form .type-picker select { font-weight: 540; }
+.compose-fields { padding: 20px 23px 12px; display: grid; gap: 13px; }
+.compose-section { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.compose-section h2, .compose-route h2 { font-size: 1.28rem; line-height: 1.15; letter-spacing: -.045em; }
+.compose-section .fill-demo { color: #23523a; border-color: #adbea7; background: #f7faf2; font-size: .8rem; min-height: 34px; }
+.compose-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; align-items: end; }
+.compose-row.amount-row { grid-template-columns: 2fr 1fr; }
+.compose-form .optional { margin-left: 4px; color: #677062; font-size: .71rem; font-weight: 400; }
+.compose-submit { padding: 10px 23px 22px; display: flex; justify-content: flex-end; }
+.fill-feedback, .compose-error { font-size: .84rem; }
+.fill-feedback { color: #345d3e; }.compose-error { color: #972f19; margin: 4px 23px 8px; }
+.compose-route { padding: 25px; background: #eff4e9; border-color: #d8e2cf; }
+.compose-desk-icon { width: 57px; height: 57px; display: grid; place-items: center; border: 1px solid #b5c9ad; border-radius: 50%; background: #fafff3; color: #355e45; margin-bottom: 22px; }
+.compose-route h2 { font-size: 1.75rem; }.compose-route > p { color: #566650; margin: 5px 0 19px; }
+.compose-route ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid #d0dcc8; }
+.compose-route li { display: flex; align-items: flex-start; gap: 12px; margin-top: 17px; }
+.compose-route li > svg { flex: none; color: #52745a; margin-top: 3px; }
+.compose-route li small, .compose-route li strong { display: block; }.compose-route li small { font: .67rem/1.5 var(--mono); color: #52634f; }.compose-route li strong { font-weight: 550; font-size: .87rem; }
+.request-result { position: relative; display: flex; align-items: flex-start; gap: 16px; background: #d8f69c; color: #203b24; padding: clamp(16px,2vw,26px); border: 1px solid #afcf78; border-radius: 8px; animation: reveal-result 350ms ease-out both; }
+.request-result.attention { background: #ffddb0; border-color: #e8b47f; color: #593213; }.request-result.processing { background: #e8efeb; border-color: #c5d5c9; }
+.result-symbol { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #f5ffe1; color: #284b2e; }
+.attention .result-symbol { background: #fff1dc; color: #8e461b; }.processing .result-symbol { background: #f5faf6; }
+.result-body { min-width: 0; }.result-label { display: block; font: 500 .68rem/1.4 var(--mono); text-transform: uppercase; letter-spacing: .065em; }
+.request-result h2 { margin: 4px 0 4px; font: 580 clamp(1.55rem,2.35vw,2.55rem)/1.07 var(--sans); letter-spacing: -.058em; }
+.request-result p { font-size: .94rem; max-width: 75ch; line-height: 1.45; }
+.result-context { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 11px; margin-top: 12px; font: .72rem/1.45 var(--mono); overflow-wrap: anywhere; }
+.result-context span + span { padding-left: 10px; border-left: 1px solid currentColor; }
+.submitted-details { margin-bottom: 14px; }.submitted-details h3 { margin: 10px 0; font-size: 1.18rem; overflow-wrap: anywhere; }
+.submitted-details dl { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; }.submitted-details dl div { max-width: 100%; }.submitted-details dt { font-size: .72rem; color: var(--muted); }.submitted-details dd { margin: 1px 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+@keyframes reveal-result { from { opacity: .45; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (max-width: 730px) { .compose-layout { grid-template-columns: 1fr; gap: 16px; }.compose-body { padding-top: 24px; }.compose-route { padding: 18px; } }
+@media (max-width: 500px) { .entry-intake { align-items: flex-start; flex-direction: column; gap: 13px; }.compose-back { font-size: .76rem; }.compose-form .type-picker, .compose-fields { padding-inline: 15px; }.compose-submit { padding-inline: 15px; }.compose-row:not(.amount-row) { grid-template-columns: 1fr; }.result-symbol { width: 33px; height: 33px; }.result-symbol svg { width: 23px; }.request-result { gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .request-result { animation: none; } }
+@media (max-width: 500px) { .result-context { display: grid; gap: 3px; }.result-context span + span { padding: 0; border: 0; } }

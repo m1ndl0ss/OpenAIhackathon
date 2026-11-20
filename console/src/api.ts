@@ -81,6 +81,8 @@ export interface AnalysisRun {
   } | null
 }
 export interface FileBase extends Summary {
+  request_input?: RequestValues | null
+  recommendation?: { tone: 'review' | 'attention'; title: string; guidance: string } | null
   packet_hash: string | null
   as_of: string
   mode: string | null
@@ -123,6 +125,39 @@ export interface DepartmentFile extends FileBase {
   }
 }
 export type StaffFile = CaseFile | DepartmentFile
+
+export function caseLabel(id: string) {
+  const generated = /^([A-Z]+)-([0-9a-f]{8})[0-9a-f]{24}$/.exec(id)
+  return generated ? generated[1] + '-' + generated[2].toUpperCase() : id
+}
+
+export interface RequestValues {
+  subject: string
+  context: string
+  reference: string
+  requested_date: string
+  amount_minor: number | null
+  currency: string | null
+  notes: string
+}
+export interface RequestType {
+  id: string
+  code: string
+  group: string
+  title: string
+  desk: string
+  owner_role: string
+  desk_id: string
+  decision_desk: string
+  context_label: string
+  source_label: string
+  date_label: string
+  min_date: string
+  amount_label: string | null
+  currencies: string[]
+  examples: RequestValues[]
+}
+export type StaffSession = { staff: Staff; token: string }
 export function deskName(file: StaffFile, role: string) {
   return file.department_case?.role_labels[role] || label(role)
 }

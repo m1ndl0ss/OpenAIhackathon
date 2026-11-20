@@ -22,9 +22,12 @@ import {
   ShieldCheckIcon,
   StopIcon,
   FlowArrowIcon,
+  ArrowCircleUpRightIcon,
+  WarningCircleIcon,
 } from '@phosphor-icons/react'
 import {
   desks,
+  caseLabel,
   label,
   money,
   type AuditEvent,
@@ -34,7 +37,7 @@ import {
   type Summary,
   type Submit,
 } from './api'
-import RoutingWallet from './RoutingWallet'
+import RoutingDiagram from './RoutingDiagram'
 import './tracker.css'
 
 const tradeTasks = [
@@ -104,8 +107,8 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
   }, [])
   const playback = preview || run?.status !== 'pending'
   useEffect(() => {
-    setFrame(!reduced && playback ? 0 : null)
-  }, [run?.run_id, run?.status, reduced, playback])
+    setFrame(!reduced && (preview || (run?.status === 'sealed' && run.mode === 'fixture')) ? 0 : null)
+  }, [run?.run_id, run?.status, run?.mode, reduced, preview])
   useEffect(() => {
     if (frame === null) return
     const timeout = window.setTimeout(() => setFrame(frame + 1 < steps.length ? frame + 1 : null), 1600)
@@ -144,11 +147,6 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
         e.detail === run.mode + ' · ' + run.run_id,
     )?.desk
   const source = deskName(file, sender ?? origin?.desk ?? 'unknown')
-  const replayedSteps = frame === null || preview ? null : steps.slice(0, frame)
-  const prepared = tasks.filter((task, i) => {
-    const finished = run?.status === 'sealed' || recorded.some(event => event.action === 'task.' + task.desk + '.prepared')
-    return finished && (!replayedSteps || replayedSteps.includes(i + 1))
-  }).length
   const taskStatus = (i: number) => {
     if (frame === null || active === undefined) return states[i]
     if (active === i + 1) return 'Receiving request'
@@ -165,7 +163,7 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
           <div>
             <h2>Request routing</h2>
             <p>
-              {file.case_id} <span>·</span> {file.workflow_title}
+              <abbr title={file.case_id}>{caseLabel(file.case_id)}</abbr> <span>·</span> {file.workflow_title}
             </p>
           </div>
         </div>
@@ -176,8 +174,8 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
           </button>
         )}
       </div>
-      <RoutingWallet source={source} tasks={tasks} states={tasks.map((_, i) => taskStatus(i))}
-        prepared={prepared} active={active} reduced={reduced} />
+      <RoutingDiagram source={source} organizer={display} tasks={tasks} states={tasks.map((_, i) => taskStatus(i))}
+        active={active} reduced={reduced} />
       <div className="map-footer">
         <span>
           <RadioButtonIcon size={14} />
@@ -204,6 +202,26 @@ type Props = {
   open: () => void
   select: (id: string) => void
   submit: Submit
+}
+
+function RequestResult({ file }: { file: StaffFile }) {
+  const result = file.recommendation
+  const stage = file.last_run?.status
+  const pending = stage === 'pending'
+  const stopped = stage && ['analysis_refused', 'analysis_unavailable', 'analysis_invalid', 'superseded'].includes(stage)
+  if (!result && !pending && !stopped) return null
+  const attention = result?.tone === 'attention' || stopped
+  const Icon = pending ? ClockIcon : attention ? WarningCircleIcon : ArrowCircleUpRightIcon
+  const amount = file.request_input?.amount_minor ?? file.amount_minor
+  const currency = file.request_input?.currency || file.currency
+  return <section className={'request-result ' + (pending ? 'processing' : attention ? 'attention' : 'review')} role="status">
+    <span className="result-symbol"><Icon size={32} weight="duotone" /></span>
+    <div className="result-body"><span className="result-label">{result ? 'Organizer recommendation' : pending ? 'Request received' : 'Organizer update'}</span>
+      <h2>{result?.title || (pending ? 'Preparing your review packet' : runLabels[stage!] || 'Analysis stopped')}</h2>
+      <p>{result?.guidance || (pending ? 'Follow the handoffs below while the agents check the file.' : 'This run produced no current recommendation. Open the case to review its status.')}</p>
+      <div className="result-context"><span title={file.case_id}>{caseLabel(file.case_id)}</span><span>{file.request_input?.subject || file.workflow_title}</span>
+        {currency && amount != null && <span>{money(amount, currency)}</span>}</div>
+    </div></section>
 }
 
 export default function RequestDashboard({ file, staff, queue, audit, busy, open, select, submit }: Props) {
@@ -238,6 +256,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
           Open case <ArrowUpRightIcon size={15} />
         </button>
       </div>
+      <RequestResult file={file} />
       <div className="tracker-summary">
         <div className="tracker-stats">
           {stats.map((s) => (
@@ -301,7 +320,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
                   <ArrowDownLeftIcon size={17} />
                 </span>
                 <span>
-                  <strong>{c.case_id}</strong>
+                  <strong title={c.case_id}>{caseLabel(c.case_id)}</strong>
                   <small>
                     {c.currency && c.amount_minor != null ? money(c.amount_minor, c.currency) : c.case_title} · Rev. {c.revision}
                   </small>
@@ -312,7 +331,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
             ))}
             {incoming && (
               <p className="tracker-foot">
-                <BriefcaseIcon size={13} /> {file.case_id} originated at {deskName(file, incoming.desk)}.
+                <BriefcaseIcon size={13} /> {caseLabel(file.case_id)} originated at {deskName(file, incoming.desk)}.
               </p>
             )}
           </section>

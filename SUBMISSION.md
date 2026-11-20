@@ -11,7 +11,7 @@ make brane-check
 make run-live
 ```
 
-Open the local rehearsal, choose **Coverage**, select **LC-001** and click **Run analysis**. The dashboard shows actual task starts, completions and the resulting review queue. **Open case** shows the file. **Switch desk** keeps the current case selected. Each launch of the live rehearsal has fresh cases and its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
+Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount. **Submit request** starts the organizer and opens its live routing diagram. The sealed packet produces a recommendation for the human reviewers. For the seeded letter-of-credit walkthrough, choose **Coverage → LC-001 → Run analysis**. **Open case** shows the file and **Switch desk** keeps that case selected. Each fresh rehearsal has its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
 
 ## What to show the jury
 

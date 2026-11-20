@@ -174,6 +174,35 @@ def visible_run_analysis(db, run_id, role):
     return report
 
 
+def recommendation(row, run, mode, s, role, status, next_action, p=None):
+    if (not row["packet_hash"] or row["mode"] != mode or not run or run["status"] != "sealed"
+            or run["run_id"] != row["run_id"] or status not in {"in_review", "on_hold", "ready_for_decision"}):
+        return None
+    packets = json.loads(row["packets"])
+    if status == "on_hold":
+        tone, title, guidance = "attention", "Resolve the open hold", next_action
+    elif status == "ready_for_decision":
+        tone, title, guidance = "review", "Send for a human decision", next_action
+    elif p:
+        evidence = packets["evidence"]
+        if evidence["missing_items"]:
+            tone, title, guidance = "attention", "Verify the supporting record", evidence["summary"]
+        else:
+            tone, title, guidance = "review", "Send for desk sign-off", evidence["summary"]
+    elif not within_mandate(s):
+        tone, title = "attention", "Refer to a higher credit authority"
+        guidance = "The requested credit exceeds the officer’s mandate. The mandated officer must handle the referral."
+    elif role in {"credit_risk", "final_officer"} and not capacity(s):
+        tone, title, guidance = "attention", "Review the facility exception", packets["credit_risk"]["summary"]
+    elif not valid_invoice(s):
+        tone, title = "attention", "Collect the supplier invoice"
+        guidance = "Coverage should attach the invoice for the requested amount and currency before the desks sign."
+    else:
+        tone, title = "review", "Send for desk sign-off"
+        guidance = "The invoice is on file. Trade Finance, Credit Risk and Compliance must each review their packet."
+    return {"tone": tone, "title": title, "guidance": guidance}
+
+
 def detail(db, r, s, actor, configured_mode="fixture"):
     p = departments.profile(s)
     if p:
@@ -252,10 +281,13 @@ def detail(db, r, s, actor, configured_mode="fixture"):
     decision_view = dict(decision) if decision else None
     if decision_view and role != "final_officer":
         decision_view.pop("reason")
+    intake = s.get("request_input") if role in {"coverage", "final_officer"} else None
     return {
         "case_id": case_id, "workflow_id": departments.TRADE, "definition_version": 1,
         "workflow_title": "Import letter of credit", "department": "Trade Finance",
-        "case_title": "Import letter of credit",
+        "case_title": intake["subject"] if intake else "Import letter of credit",
+        "request_input": intake,
+        "recommendation": recommendation(r, run, configured_mode, s, role, status, next_action),
         "customer_ref": s["customer_ref"],
         "revision": s["revision"],
         "status": status,

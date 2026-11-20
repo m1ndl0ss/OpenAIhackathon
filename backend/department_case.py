@@ -4,7 +4,7 @@ import json
 
 from . import departments as dep, integrations
 from .store import canonical, event, identifier, now
-from .workflow import Problem, active_holds, active_reviews, conflict, on_version, require_open
+from .workflow import Problem, active_holds, active_reviews, conflict, on_version, recommendation, require_open
 
 
 def state(db, row, s, p):
@@ -65,11 +65,14 @@ def next_action(status, s, p, sealed):
     return "The assigned reviewers must sign the current evidence and draft."
 
 
-def summary(db, row, s, p, status=None):
+def summary(db, row, s, p, role, status=None):
     status = status or state(db, row, s, p)[0]
-    return {k: s[k] for k in ("case_id", "customer_ref", "revision", "case_title", "workflow_id", "definition_version")} | {
+    intake = s.get("request_input") if role in (dep.analyst(p), dep.approver(p)) else None
+    return {k: s[k] for k in ("case_id", "customer_ref", "revision", "workflow_id", "definition_version")} | {
+        "case_title": intake["subject"] if intake else s["case_title"],
+        "amount_minor": intake["amount_minor"] if intake else None, "currency": intake["currency"] if intake else None,
         "workflow_title": p["workflow"], "department": p["desk"], "status": status,
-        "next_action": next_action(status, s, p, row["packet_hash"]), "amount_minor": None, "currency": None,
+        "next_action": next_action(status, s, p, row["packet_hash"]),
     }
 
 
@@ -92,7 +95,10 @@ def detail(db, row, s, actor, mode, p):
         analysis = db.execute("SELECT details FROM run_analysis WHERE run_id=?", (run["run_id"],)).fetchone()
         report = json.loads(analysis["details"]) if analysis else None
     return {
-        **summary(db, row, s, p, status),
+        **summary(db, row, s, p, role, status),
+        "request_input": s.get("request_input") if role in (dep.analyst(p), dep.approver(p)) else None,
+        "recommendation": recommendation(row, run, mode, s, role, status,
+                                         next_action(status, s, p, row["packet_hash"]), p),
         "department_case": {"analyst": dep.analyst(p), "approver": dep.approver(p),
                             "reviewers": dep.reviewers(p), "role_labels": role_labels(p),
                             "local_only": p["local_only"], "source": p["source"], "outcome": p["outcome"], "examples": p["examples"],

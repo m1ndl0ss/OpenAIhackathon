@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import department_case, departments, integrations
+from . import department_case, departments, integrations, request_intake
 from .demo import FIXTURE, ROOT, settings
 from .store import ALL_ROLES, DESKS, ROLES, canonical, digest, event, grouped_assignments, identifier, initialize
 from .store import insert_case, now, snapshot, transaction
@@ -140,6 +140,14 @@ def retry_key(idempotency_key: Optional[str] = Header(default=None)):
     if not idempotency_key or not 1 <= len(idempotency_key) <= 128 or not idempotency_key.isprintable():
         raise Problem(422, "idempotency_key_required", "Provide an Idempotency-Key for this action.")
     return idempotency_key
+
+
+def schedule_run(db, request, tasks, s, actor):
+    mode, cid, run_id = request.app.state.mode, s["case_id"], identifier("RUN")
+    db.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,NULL)", (run_id, cid, s["revision"], mode, "pending", now()))
+    event(db, s, actor, "run.started", mode + " · " + run_id)
+    tasks.add_task(finish_run, request.app.state.path, cid, run_id, actor)
+    return {"run_id": run_id, "mode": mode, "revision": s["revision"], "status": "pending"}
 
 
 def finish_run(path, case_id, run_id, actor):
@@ -335,7 +343,47 @@ def create_app(db_path=None, principals=None, *, mode=None):
 
     @app.get(PREFIX + "/me")
     def me(request: Request, actor=Depends(authenticated)):
-        return staff_view(request, actor, local_demo(request))
+        demo = request.app.state.demo_sessions.get(actor["id"])
+        return staff_view(request, actor, bool(demo and local_demo(request)
+                          and request.headers["authorization"].split()[1] == demo[0]))
+
+    @app.get(PREFIX + "/request-types")
+    def request_types(request: Request, authorization: Optional[str] = Header(default=None)):
+        if authorization is None and local_demo(request):
+            actors = [actor for _, actor in request.app.state.demo_sessions.values()]
+        else:
+            actors = [authenticated(request, authorization)]
+        by_role = {actor["role"]: actor for actor in actors}
+        forms = []
+        for p in [None, *departments.CATALOG]:
+            owner = departments.analyst(p) if p else "coverage"
+            actor = by_role.get(owner)
+            if actor:
+                group = request.app.state.assignments[actor["customer_ref"]]
+                if all(role in group for role in request_intake.members(p)):
+                    forms.append(request_intake.form(p, actor["customer_ref"], group))
+        return forms
+
+    @app.post(PREFIX + "/intake")
+    def submit_request(request: Request, body: request_intake.RequestInput, tasks: BackgroundTasks,
+                       actor=Depends(authenticated), key=Depends(retry_key)):
+        p = departments.CURRENT.get(body.workflow_id)
+        if p is None and body.workflow_id != departments.TRADE:
+            unavailable()
+        owner = departments.analyst(p) if p else "coverage"
+
+        def persist(db, _row, _snapshot):
+            customer = actor["customer_ref"]
+            group = request.app.state.assignments[customer]
+            members = request_intake.members(p)
+            if not all(role in group for role in members):
+                unavailable()
+            s = request_intake.build(body, p, request_intake.form(p, customer, group), customer)
+            insert_case(db, s, {role: group[role] for role in members}, actor)
+            run = schedule_run(db, request, tasks, s, actor)
+            return 201, {"case_id": s["case_id"], "run": run}
+
+        return mutate(request, actor, key, "request_intake", None, body, persist, (owner,))
 
     @app.get(CASES)
     def cases(request: Request, actor=Depends(authenticated)):
@@ -349,7 +397,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
                 if integrations.is_assigned(actor, json.loads(row["assignments"])):
                     r, s = record(db, row["id"], actor)
                     p = departments.profile(s)
-                    view = department_case.summary(db, r, s, p) if p else detail(db, r, s, actor, request.app.state.mode)
+                    view = department_case.summary(db, r, s, p, actor["role"]) if p else detail(db, r, s, actor, request.app.state.mode)
                     result.append({k: view[k] for k in fields})
         # Keep the original walkthrough first for its six staff. Specialists start in their own queue.
         return sorted(result, key=lambda case: (case["workflow_id"] != departments.TRADE, case["case_id"]))
@@ -430,14 +478,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
             on_version(s, body.revision)
             if r["packet_hash"]:
                 conflict("already_sealed", "This revision already has a sealed review packet.")
-            run_id = identifier("RUN")
-            db.execute(
-                "INSERT INTO runs VALUES(?,?,?,?,?,?,NULL)",
-                (run_id, case_id, s["revision"], body.mode, "pending", now()),
-            )
-            event(db, s, actor, "run.started", body.mode + " · " + run_id)
-            tasks.add_task(finish_run, request.app.state.path, case_id, run_id, actor)
-            return 202, {"run_id": run_id, "mode": body.mode, "revision": s["revision"], "status": "pending"}
+            return 202, schedule_run(db, request, tasks, s, actor)
 
         return mutate(request, actor, key, "run", case_id, body, persist, ALL_ROLES)
 
