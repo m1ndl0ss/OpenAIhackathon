@@ -17,11 +17,13 @@ Setup installs the dependencies, builds the React console, creates six private s
 
 ## Walk the case
 
-1. **Coverage** opens `LC-001` and prepares its first review packet.
-2. **Credit Risk** reviews the facility and signs clear. **Compliance** records a hold and sends Coverage a supplier-invoice request. The final officer can see who is blocking the case.
-3. **Coverage** attaches the supplied invoice against that request. The file advances to revision 2. Prepare the new packet. The Compliance hold stays open and the first Credit signature is historical.
-4. **Trade Finance** and **Credit Risk** sign the new file. **Compliance** explicitly clears its own hold against the invoice. Each reviewer enters a reason.
-5. **Final officer** chooses and explains the decision. After approval, **Operations** selects **Simulate issuance**. Refreshing the case shows the saved receipt.
+Use `make login ROLE=<role>` with the role shown below. When returning to an already-open tab, click **Refresh** to load the latest case.
+
+1. **Coverage** (`coverage)) selects `LC-001` in the queue and clicks **Run analysis**.
+2. **Credit Risk** (`credit_risk)) chooses **Clear**, enters a reason and clicks **Sign desk finding**. **Compliance** (`compliance`) chooses **Hold** and **Invoice required**, enters a reason and signs. Coverage receives the request.
+3. **Coverage** refreshes, selects the Compliance request under **Attach supplier invoice**, enters an evidence note, then clicks **Attach invoice and revise file**. Click **Run analysis** for revision 2. The hold stays open and the earlier Credit signature is historical.
+4. **Trade Finance** (`trade_finance`) and **Credit Risk** each sign **Clear** on revision 2. **Compliance** chooses **Clear**, selects its open hold, selects `DOC-INV-01@1` as the reviewed evidence, enters a reason and signs.
+5. **Final officer** (`final_officer`) selects **Approve**, enters a reason and clicks **Record final decision**. **Operations** (`operations`) clicks **Simulate issuance**. Refresh the case to see the same saved receipt.
 
 `LC-002` starts with a complete invoice. Use it to demonstrate that a Compliance hold alone prevents final approval. `make reset` replaces the local demo cases with their original seeded state and keeps logins and evidence worksheets. Stop the local server before resetting a rehearsal.
 
@@ -45,4 +47,4 @@ Setup installs the dependencies, builds the React console, creates six private s
 | `make dev-console` | Run the Vite development server on port 5173. Run the API on port 8000 alongside it. |
 | `make build` | Type-check and bundle the console for the single-origin server. |
 
-The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Export overrides in the shell before starting the app. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md)
+The API reference is at [local OpenAPI docs](http://127.0.0.1:8000/docs). Configuration variables are listed in [.env.example](.env.example). Export overrides in the shell before starting the app. [Full specification](docs/corporate-banking-hackathon-spec.md) · [Who builds what](docs/team-build-plan.md) · [Planned workflows](docs/team-build-plan.md#2-support-multiple-banking-workflows)
