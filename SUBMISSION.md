@@ -1,6 +1,6 @@
 # Clearance | Corporate banking through BRANE
 
-A relationship manager receives a USD 2 million import letter-of-credit request. Clearance prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout.
+A relationship manager receives a USD 2 million import letter-of-credit request. Clearance prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
 
 ## Open the demo
 
