@@ -1,8 +1,9 @@
 import SignIn, { type PreferredDesk } from './SignIn'
 import { Brand, DeskIcon } from './Brand'
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
 import { ApprovalInbox, ApprovalPanel, type ApprovalEditor, type ApprovalTask } from './Approvals'
+import AgentReply from './AgentReply'
 import PacketList from './PacketList'
 import DepartmentWorkspace from './DepartmentWorkspace'
 import RequestDashboard from './RequestDashboard'
@@ -68,12 +69,6 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
       <p>{file.next_action}</p>
     </section>
     {file.revision > 1 && <div className="revision-note">Revised file · Only signatures on revision {file.revision} count toward approval.{file.invoice_ref && <> Invoice <code>{file.invoice_ref}</code> is on file.</>}</div>}
-    {file.last_run && ['analysis_unavailable', 'analysis_refused', 'analysis_invalid', 'unavailable', 'failed'].includes(file.last_run.status) && <Notice danger>
-      {file.last_run.status === 'analysis_refused' ? 'BRANE refused the request. Review the file internally.'
-        : file.last_run.status === 'analysis_invalid' ? 'The draft failed validation. Review the evidence and retry.'
-        : 'Analysis unavailable. Retry when the configured service is available.'}
-      {' '}<code>{file.last_run.run_id}</code>
-    </Notice>}
     <nav className="view-tabs" aria-label="Case sections">{[{ title: 'Overview', Icon: ListBulletsIcon }, { title: 'Desk messages', Icon: ChatCircleTextIcon }, { title: 'Audit trail', Icon: ClockCounterClockwiseIcon }].map(({ title, Icon }) => <button key={title} aria-current={title === tab ? 'page' : undefined} className={tab === title ? 'active' : ''} onClick={() => setTab(title)}><Icon size={16} />{title}</button>)}</nav>
     {tab === 'Overview' && <div className="case-grid">
       <div className="stack">
@@ -117,10 +112,11 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
 
 type WorkspaceView = 'dashboard' | 'case' | 'approvals'
 
-function Workspace({ token, staff, end, initialView, initialCase, compose, reviewDesk, initialEditor }: {
+function Workspace({ token, staff, end, initialView, initialCase, compose, reviewDesk, initialEditor, focusRun }: {
   token: string; staff: Staff; end: (nextView?: WorkspaceView, preferred?: PreferredDesk) => void; initialView: WorkspaceView
   initialCase: string; compose: (workflow: string, caseId: string, view: WorkspaceView) => void
   reviewDesk: (session: StaffSession, editor: ApprovalEditor, view: WorkspaceView) => void; initialEditor: ApprovalEditor | null
+  focusRun: MutableRefObject<string | null>
 }) {
   const [view, setView] = useState<WorkspaceView>(initialView)
   const [syncError, setSyncError] = useState('')
@@ -162,6 +158,15 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
   useEffect(() => { void load(initialCase || tabValue(selectedKey) || undefined); return () => { sequence.current++ } }, [load, initialCase])
 
   useEffect(() => {
+    if (!focusRun.current || file?.last_run?.run_id !== focusRun.current) return
+    const panel = document.getElementById('agent-reply')
+    if (!panel) return
+    focusRun.current = null
+    panel.focus({ preventScroll: true })
+    panel.scrollIntoView({ block: window.matchMedia('(max-width: 750px)').matches ? 'start' : 'nearest' })
+  }, [file?.last_run?.run_id, view, focusRun])
+
+  useEffect(() => {
     const pending = file?.last_run?.status === 'pending'
     if (loading || busy) return
     let stopped = false
@@ -183,14 +188,15 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
     const key = retryKeys.current.get(identity) || crypto.randomUUID()
     retryKeys.current.set(identity, key)
     try {
-      await bank(token, path, body, key)
+      const result = await bank<{ run_id?: string }>(token, path, body, key)
+      if (suffix === '/runs' && result.run_id) focusRun.current = result.run_id
       retryKeys.current.delete(identity)
       const updated = await load(selected)
       const plan = updated?.human_approval
       if (plan?.stage === 'decision' && file?.human_approval?.stage !== 'decision') {
         setNotice('Desk review signed. Sent to ' + plan.final.name + ' for final approval.')
         document.querySelector('.approval-panel')?.scrollIntoView({ block: 'start' })
-      } else setNotice(message)
+      } else if (suffix !== '/runs') setNotice(message)
       return true
     } catch (err) {
       if (err instanceof BankError && err.status === 401) { end(); return false }
@@ -237,7 +243,7 @@ function Workspace({ token, staff, end, initialView, initialCase, compose, revie
     content = <RequestDashboard key={file.case_id} file={file} audit={audit} queue={filteredQueue} approval={approval}
       open={() => setView('case')} select={id => { setNotice(''); void load(id) }} {...controls} />
   } else {
-    content = <>{approval}<SubmittedDetails file={file} />
+    content = <><AgentReply file={file} />{approval}<SubmittedDetails file={file} />
       {file.department_case
         ? <DepartmentWorkspace key={file.case_id} file={file} history={<History audit={audit} file={file} />} {...controls} />
         : <CaseContents key={file.case_id} file={file} audit={audit} {...controls} />}</>
@@ -287,6 +293,7 @@ export default function App() {
   const [composing, setComposing] = useState<string | null>(null)
   const [initialCase, setInitialCase] = useState('')
   const [initialEditor, setInitialEditor] = useState<ApprovalEditor | null>(null)
+  const focusRun = useRef<string | null>(null)
   const end = useCallback((nextView: WorkspaceView = 'dashboard', preferredDesk?: PreferredDesk) => {
     setPreferred(preferredDesk)
     setInitialCase('')
@@ -311,11 +318,12 @@ export default function App() {
   if (saved) return <main className="login-page"><div className="login-bar"><Brand /></div><div className="login-center"><section className="login-card action-form">
     <h1>Staff session</h1>{restoreError ? <><Notice danger>{restoreError}</Notice><button onClick={() => setAttempt(value => value + 1)}>Reconnect</button><button onClick={() => end()}>Sign out</button></> : <p role="status">Verifying your staff credential…</p>}
   </section></div></main>
-  if (composing !== null) return <RequestComposer preferred={composing} session={session} cancel={() => setComposing(null)} created={(owner, caseId) => {
+  if (composing !== null) return <RequestComposer preferred={composing} session={session} cancel={() => setComposing(null)} created={(owner, caseId, runId) => {
+    focusRun.current = runId
     tabValue(sessionKey, owner.token); tabValue(selectedKey, caseId)
     setSession(owner); setInitialCase(caseId); setInitialEditor(null); setInitialView('dashboard'); setComposing(null); window.scrollTo(0, 0)
   }} />
-  return session ? <Workspace key={session.staff.id} {...session} initialCase={initialCase} initialView={initialView} end={end} initialEditor={initialEditor} reviewDesk={(next, editor, view) => {
+  return session ? <Workspace key={session.staff.id} {...session} initialCase={initialCase} initialView={initialView} end={end} initialEditor={initialEditor} focusRun={focusRun} reviewDesk={(next, editor, view) => {
     tabValue(sessionKey, next.token); tabValue(selectedKey, editor.caseId)
     setSession(next); setInitialCase(editor.caseId); setInitialView(view); setInitialEditor(editor)
   }} compose={(workflow, caseId, view) => {

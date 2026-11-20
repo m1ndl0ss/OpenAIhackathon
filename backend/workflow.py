@@ -3,7 +3,7 @@
 import json
 
 from . import departments, integrations
-from .agent.packets import facility_source, headroom_after as headroom, invoice_is_current, validate_draft
+from .agent.packets import SHAREABLE_TRADE_WORDINGS, facility_source, headroom_after as headroom, invoice_is_current, validate_draft
 from .agent.runtime import contexts
 from .agent.tools import POLICY_TEXT
 from .store import DESKS, ROLES, canonical, digest, event, identifier, now
@@ -181,33 +181,46 @@ def visible_run_analysis(db, run_id, role):
     return report
 
 
-def recommendation(row, run, mode, s, role, status, next_action, p=None):
-    if (not row["packet_hash"] or row["mode"] != mode or not run or run["status"] != "sealed"
-            or run["run_id"] != row["run_id"] or status not in {"in_review", "on_hold", "ready_for_decision"}):
+def revision_run(db, row):
+    # Two requests can overlap. Once sealed, the revision owns the run that produced its packets.
+    return db.execute(
+        "SELECT * FROM runs WHERE case_id=? AND revision=? ORDER BY (run_id=?) DESC,rowid DESC LIMIT 1",
+        (row["case_id"], row["revision"], row["run_id"]),
+    ).fetchone()
+
+
+def recommendation(row, run, mode, s, role, drafts, sources, p=None):
+    """Read the reply at seal time. Subsequent human decisions have their own projection."""
+    if (not row["packet_hash"] or not run or run["status"] != "sealed" or run["run_id"] != row["run_id"]
+            or run["revision"] != s["revision"] or run["mode"] != mode or row["mode"] != mode):
         return None
-    packets = json.loads(row["packets"])
-    if status == "on_hold":
-        tone, title, guidance = "attention", "Resolve the open hold", next_action
-    elif status == "ready_for_decision":
-        tone, title, guidance = "review", "Desk signatures complete", next_action
-    elif p:
-        evidence = packets["evidence"]
-        if evidence["missing_items"]:
-            tone, title, guidance = "attention", "Verify the supporting record", evidence["summary"]
+    if p:
+        agent = "evidence"
+        if drafts["evidence"]["missing_items"]:
+            tone, title = "attention", "Verify the " + p["source"].lower()
         else:
-            tone, title, guidance = "review", "Ready for desk sign-off", evidence["summary"]
-    elif not within_mandate(s):
-        tone, title = "attention", "Refer to a higher credit authority"
-        guidance = "The requested credit exceeds the officer’s mandate. The mandated officer must handle the referral."
-    elif role in {"credit_risk", "final_officer"} and not capacity(s):
-        tone, title, guidance = "attention", "Review the facility exception", packets["credit_risk"]["summary"]
-    elif not valid_invoice(s):
-        tone, title = "attention", "Collect the supplier invoice"
-        guidance = "Coverage should attach the invoice for the requested amount and currency before the desks sign."
+            tone, title = "review", p["outcome"]
     else:
-        tone, title = "review", "Ready for desk sign-off"
-        guidance = "The invoice is on file. Trade Finance, Credit Risk and Compliance must each review their packet."
-    return {"tone": tone, "title": title, "guidance": guidance}
+        agent = role if role in DESKS else "trade_finance"
+        if role == "final_officer" and not capacity(s):
+            agent = "credit_risk"
+        if not within_mandate(s):
+            tone, title = "attention", "Refer to a higher credit authority"
+        elif role in {"credit_risk", "final_officer"} and not capacity(s):
+            tone, title = "attention", "Review the facility exception"
+        elif not valid_invoice(s):
+            tone, title = "attention", "Collect the supplier invoice"
+        else:
+            tone, title = "review", "Send the letter of credit for desk review"
+    lead = drafts[agent]
+    allowed = {source["ref"] for source in sources}
+    if not p and role in ("coverage", "operations"):
+        if lead["summary"] not in SHAREABLE_TRADE_WORDINGS.get(lead["suggested_next_step"], ()):
+            return None
+        allowed = {ref for ref in allowed if ref.startswith("TRADE-") or ref == s["invoice_ref"]}
+    refs = list(dict.fromkeys(ref for ref in [*lead["evidence_refs"], *lead["policy_refs"]] if ref in allowed))
+    return {"tone": tone, "title": title, "guidance": lead["summary"], "agent": agent, "source_refs": refs,
+            "run_id": run["run_id"], "revision": run["revision"], "sealed_at": row["sealed_at"]}
 
 
 def detail(db, r, s, actor, configured_mode="fixture"):
@@ -220,11 +233,7 @@ def detail(db, r, s, actor, configured_mode="fixture"):
     holds = active_holds(db, s)
     decision = db.execute("SELECT * FROM decisions WHERE case_id=?", (case_id,)).fetchone()
     receipt = db.execute("SELECT * FROM receipts WHERE case_id=?", (case_id,)).fetchone()
-    run = db.execute(
-        "SELECT run_id,revision,mode,status FROM runs WHERE case_id=? AND revision=? "
-        "ORDER BY rowid DESC LIMIT 1",
-        (case_id, s["revision"]),
-    ).fetchone()
+    run = revision_run(db, r)
     if receipt:
         status, next_action = "issued_simulated", "Read the simulated receipt."
     elif decision:
@@ -289,12 +298,13 @@ def detail(db, r, s, actor, configured_mode="fixture"):
     if decision_view and role != "final_officer":
         decision_view.pop("reason")
     intake = s.get("request_input") if role in {"coverage", "final_officer"} else None
+    sources = sources_for(s, role)
     return {
         "case_id": case_id, "workflow_id": departments.TRADE, "definition_version": 1,
         "workflow_title": "Import letter of credit", "department": "Trade Finance",
         "case_title": intake["subject"] if intake else "Import letter of credit",
         "request_input": intake,
-        "recommendation": recommendation(r, run, configured_mode, s, role, status, next_action),
+        "recommendation": recommendation(r, run, configured_mode, s, role, drafts, sources),
         "customer_ref": s["customer_ref"],
         "revision": s["revision"],
         "status": status,
@@ -321,7 +331,7 @@ def detail(db, r, s, actor, configured_mode="fixture"):
         "holds": holds,
         "requests": requests,
         "packets": packets,
-        "sources": sources_for(s, role),
+        "sources": sources,
         "decision": decision_view,
         "receipt": dict(receipt) if receipt else None,
         "last_run": {**dict(run), "analysis": visible_run_analysis(db, run["run_id"], role)} if run else None,

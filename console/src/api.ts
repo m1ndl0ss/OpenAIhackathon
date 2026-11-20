@@ -98,7 +98,16 @@ export interface AnalysisRun {
 export interface FileBase extends Summary {
   human_approval?: HumanApproval
   request_input?: RequestValues | null
-  recommendation?: { tone: 'review' | 'attention'; title: string; guidance: string } | null
+  recommendation: {
+    tone: 'review' | 'attention'
+    title: string
+    guidance: string
+    agent: string
+    source_refs: string[]
+    run_id: string
+    revision: number
+    sealed_at: string
+  } | null
   packet_hash: string | null
   as_of: string
   mode: string | null

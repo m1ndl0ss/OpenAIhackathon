@@ -21,7 +21,7 @@ function exampleDraft(value: RequestValues): Draft {
     amount: n == null ? '' : Math.floor(n / 100) + '.' + String(n % 100).padStart(2, '0') }
 }
 
-type ComposerProps = { session: StaffSession | null; preferred: string; cancel: () => void; created: (session: StaffSession, id: string) => void }
+type ComposerProps = { session: StaffSession | null; preferred: string; cancel: () => void; created: (session: StaffSession, id: string, runId: string) => void }
 
 export default function RequestComposer({ session, preferred, cancel, created }: ComposerProps) {
   const [types, setTypes] = useState<RequestType[] | null>(null)
@@ -80,8 +80,8 @@ export default function RequestComposer({ session, preferred, cancel, created }:
       const owner = demo && session?.staff.id !== type.desk_id
         ? await bank<StaffSession>(null, '/demo-session', { desk_id: type.desk_id }) : session
       if (!owner) throw Error('The originating desk is unavailable.')
-      const receipt = await bank<{ case_id: string }>(owner.token, '/intake', body, attempt.current.key)
-      created(owner, receipt.case_id)
+      const receipt = await bank<{ case_id: string; run: { run_id: string } }>(owner.token, '/intake', body, attempt.current.key)
+      created(owner, receipt.case_id, receipt.run.run_id)
     } catch (err) {
       if (err instanceof BankError && err.status > 0 && err.status < 500) attempt.current = { input: '', key: '' }
       setError(textError(err))
@@ -90,7 +90,7 @@ export default function RequestComposer({ session, preferred, cancel, created }:
   const groups = [...new Set(types?.map(item => item.group))]
   return <main className="compose-page"><header className="entry-header"><div className="entry-mast"><Brand /><span className="mast-unit">Corporate banking</span></div>
     <button className="compose-back" type="button" disabled={busy} onClick={cancel}><ArrowLeftIcon size={16} /> {session ? 'Back to desk' : 'Desk directory'}</button></header>
-    <div className="compose-body"><div className="compose-intro"><h1>New request</h1><p>Choose a workflow and send the details to its review team.</p></div>
+    <div className="compose-body"><div className="compose-intro"><h1>New request</h1><p>Submit the details to get an agent recommendation before you send the case for desk review.</p></div>
       {!types ? <div className="card" role={error ? 'alert' : 'status'}>{error || 'Loading request types…'} {error && <button onClick={() => setRetry(n => n + 1)}>Try again</button>}</div>
       : !type ? <p className="card">Your desk reviews existing requests. Open your desk to see the assigned files.</p>
       : <div className="compose-layout"><form className="compose-form" onSubmit={submit}><fieldset disabled={busy}>

@@ -13,7 +13,7 @@ make run-live
 
 Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount.
 
-1. **Submit request** starts the organizer and opens the routing diagram. Its recommendation appears above the Human approval panel.
+1. Click **Submit request**. When the organizer finishes, **Agent reply** shows the recommended next step, the wording returned by the agent and the supporting record. For the first payment example, read the recommendation to confirm the return match and the account-closed reason. Open **Review findings and sources** to inspect the policy and handover drafts before sending anything to the reviewers.
 2. **Send for desk review** delivers the packet to Sam Reed in Payments and Amir Cole in Operations. Click **Review finding** for Sam, inspect the current evidence, enter a reason and click **Sign desk finding**. Click **Review as Amir Cole** and sign the Operations finding. **Use demo reason** supplies an editable example for either person.
 3. With **2 of 2 signed**, click **Final approve** beside Ari Fox. Enter Ari’s decision reason and confirm with **Final approve**. The dashboard shows **Approved by Ari Fox** and the case history records the individual signatures.
 

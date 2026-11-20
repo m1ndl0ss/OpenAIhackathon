@@ -51,7 +51,6 @@ export default function DepartmentWorkspace({file, staff, busy, submit, history}
     <div className="case-stats">{[['Department',file.department],['Drafting route',route],['Supporting record',meta.evidence_verified ? 'Verified' : 'Awaiting verification'],
       ['Desk signatures',file.reviews.filter(r => r.disposition === 'clear').length + ' of ' + meta.reviewers.length]].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>
     <section className={'next-step ' + (file.holds.length ? 'held' : '')}><div className="eyebrow">Next handoff</div><p>{file.next_action}</p></section>
-    {file.last_run && file.last_run.status.startsWith('analysis_') && <p className="error" role="alert">{label(file.last_run.status)}. The file is still open for review.</p>}
     <nav className="view-tabs" aria-label="Case sections">{(['Overview','Audit trail'] as const).map(t =>
       <button className={tab === t ? 'active' : ''} aria-current={tab === t ? 'page' : undefined} key={t} onClick={()=>setTab(t)}>
         {t === 'Overview' ? <ClipboardTextIcon size={16} /> : <ClockCounterClockwiseIcon size={16} />}{t}</button>)}</nav>

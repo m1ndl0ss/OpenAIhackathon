@@ -391,6 +391,7 @@ def test_live_deployment_refuses_fixture_approval_and_issuance_replays(bank, alr
         assert read(deployment, "/v2/trade/me", "operations")["configured_mode"] == "live"
         ops = read(deployment, COMPLETE, "operations")
         assert "issue" not in ops["permitted_actions"]
+        assert ops["recommendation"] is None
         assert ops["status"] == ("issued_simulated" if already_issued else "approved")
         assert (ops["receipt"]["receipt_id"] if already_issued else ops["receipt"]) == receipt_id
         for request in (
@@ -440,6 +441,7 @@ def test_amendment_during_analysis_discards_old_completion(bank, monkeypatch):
         pending = pool.submit(post, bank, STAGE + "/runs", "coverage", {"revision": 1, "mode": "fixture"})
         try:
             assert started.wait(timeout=10)
+            assert read(bank, STAGE)["recommendation"] is None
             ok(post(bank, STAGE + "/evidence", "coverage", {
                 "fixture_document_id": "DOC-INV-01", "expected_revision": 1
             }))
@@ -449,6 +451,7 @@ def test_amendment_during_analysis_discards_old_completion(bank, monkeypatch):
     assert read(bank, STAGE + f"/runs/{run_id}")["status"] == "superseded"
     updated = read(bank, STAGE)
     assert updated["revision"] == 2 and updated["packet_hash"] is None
+    assert updated["recommendation"] is None
 
 
 def test_tracker_records_only_task_status_for_current_run(bank):

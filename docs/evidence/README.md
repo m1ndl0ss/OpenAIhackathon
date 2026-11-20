@@ -7,7 +7,7 @@
 | [Specialist routing dashboard](specialist-workflow.jpg) | Payments & Cash servicing a returned payment during an actual live run. |
 | [Editable payment request](request-intake.jpg) | The originating desk can enter a subject, payment rail, amount, currency, review date and supporting reference before submission. |
 | [Organizer routing replay](request-routing.gif) | A submitted Payments & Cash request moves from the analyst to the organizer, then to the evidence, policy and handover agents. This recording replays an offline case at 2.35 seconds per handoff. |
-| [Submitted payment](request-result.jpg) | The recommendation shows the people who will receive the packet for desk review and final approval. |
+| [Payment agent reply](request-result.jpg) | A live Payments & Cash request shows the recommended action, the agent’s wording and the supporting payment-return record before dispatch to Sam Reed and Amir Cole. |
 | [Final approval form](human-approval.jpg) | In the offline demo, Sam Reed and Amir Cole have signed. Ari Fox can inspect the packet, enter a reason and approve or refer the request from the dashboard. |
 | [Signed letter of credit](signed-letter-of-credit.jpg) | The live rehearsal shows three named desk findings and Eva Lin’s recorded approval of revision 2 of synthetic case LC-001 after Coverage supplied the invoice. |
 | [Merged BRANE client checks](brane-check-failure.csv) | Five faults repeated three times returned zero answer text. Three healthy controls returned a verified response. The observer checked each destination and port from the client process. |

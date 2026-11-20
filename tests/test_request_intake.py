@@ -68,6 +68,12 @@ def test_each_form_submits_and_routes(desk, workflow, example):
     assert case['last_run']['status'] == 'sealed' and case['packet_hash']
     assert case['request_input'] == data and case['decision'] is None
     assert case['recommendation']['tone'] == ('review' if example == 0 else 'attention')
+    reply = case['recommendation']
+    assert reply['run_id'] == case['last_run']['run_id'] and reply['revision'] == case['revision'] and reply['sealed_at']
+    assert set(reply['source_refs']) <= {source['ref'] for source in case['sources']}
+    if workflow != departments.TRADE:
+        evidence = next(packet for packet in case['packets'] if packet['desk'] == 'evidence')
+        assert reply['guidance'] == evidence['summary'] and reply['agent'] == 'evidence'
     plan = case['human_approval']
     assert plan['stage'] == 'ready' and plan['can_send'] and plan['final']['status'] == 'waiting'
     assert plan['owner'] == form['owner'] and plan['owner']['role'] == form['owner_role']
@@ -77,7 +83,9 @@ def test_each_form_submits_and_routes(desk, workflow, example):
     assert plan['final']['id'] == form['final']['id'] and plan['final']['id'] not in {p['id'] for p in plan['reviewers']}
     if example == 0:
         assert post(desk, cid, form['owner_role'], 'desk-review', packet(case)).status_code == 201
-        sent = file(desk, cid, form['owner_role'])['human_approval']
+        after_send = file(desk, cid, form['owner_role'])
+        assert after_send['recommendation'] == reply
+        sent = after_send['human_approval']
         assert sent['stage'] == 'review' and not sent['can_send']
         assert all(p['status'] == 'awaiting' and p['sent_at'] for p in sent['reviewers'])
         assert sent['final']['sent_at'] is None
@@ -137,6 +145,7 @@ def test_deliveries_require_named_people_and_a_human_final_decision(desk, workfl
         last_signature = next(r['event_id'] for r in ready['reviews'] if r['desk'] == partner)
         held = review(partner, action='hold', expected_event_id=last_signature)
         assert held.status_code == 201
+        assert file(desk, cid, final)['recommendation'] == ready['recommendation']
         assert inbox(desk, cid, final) is None and approve(final).status_code == 409
         assert inbox(desk, cid, partner) == 'review'
         assert review(partner, expected_event_id=held.json()['event_id']).status_code == 201
@@ -145,6 +154,7 @@ def test_deliveries_require_named_people_and_a_human_final_decision(desk, workfl
     assert [e['action'] for e in audit if e['action'].startswith('approval.')] == ['approval.review_sent', 'approval.decision_sent']
     assert approve(final).status_code == 201
     closed = file(desk, cid, final)
+    assert closed['recommendation'] == ready['recommendation'] and closed['recommendation'] is not None
     assert closed['decision']['actor_id'] == form['final']['id'] and closed['human_approval']['final']['status'] == 'approve'
     assert {r['actor_id'] for r in closed['reviews']} == {p['id'] for p in form['reviewers']}
     assert inbox(desk, cid, final) is None
@@ -241,9 +251,56 @@ def test_custom_reference_revision_and_local_projection(desk):
     assert post(desk, cid, f['owner_role'], 'runs', {'revision': 2, 'mode': 'fixture'}).status_code == 202
     initialize(desk[3], desk[0].app.state.principals)
     new_packet = file(desk, cid, f['owner_role'])
+    assert new_packet['recommendation']['revision'] == 2 and new_packet['recommendation']['tone'] == 'review'
+    assert new_packet['recommendation']['run_id'] != owner['recommendation']['run_id']
     assert new_packet['human_approval']['can_send'] and inbox(desk, cid, 'operations') is None
     assert post(desk, cid, f['owner_role'], 'desk-review', packet(new_packet)).status_code == 201
     assert inbox(desk, cid, 'operations') == 'review'
+
+
+def test_agent_reply_relays_the_selected_wording_and_scoped_citations(desk, monkeypatch):
+    from backend import integrations
+    from backend.agent.runtime import ModelTurn
+
+    returned = {}
+
+    def choose_second(**turn):
+        wording = json.loads(turn['messages'][-1]['content'])['wordings'][1]
+        returned[turn['task']] = wording
+        return ModelTurn('fixture', json.dumps({'summary': wording}))
+
+    monkeypatch.setattr(integrations, 'fixture_turn', choose_second)
+    cid = submit(desk, desk[1][departments.TRADE]).json()['case_id']
+    for role in ('coverage', 'operations', 'trade_finance', 'credit_risk', 'compliance', 'final_officer'):
+        case = file(desk, cid, role)
+        reply = case['recommendation']
+        assert reply['guidance'] == returned['draft_' + reply['agent']]
+        assert set(reply['source_refs']) <= {source['ref'] for source in case['sources']}
+        if role in ('coverage', 'operations'):
+            assert case['packets'] == [] and reply['agent'] == 'trade_finance'
+            assert set(reply['source_refs']) == {source['ref'] for source in case['sources']
+                                                if source['label'] in ('Trade terms', 'Supplier invoice')}
+    pay = next(f for f in desk[1].values() if f['code'] == 'PAY')
+    cid = submit(desk, pay).json()['case_id']
+    owner = file(desk, cid, pay['owner_role'])
+    partner = file(desk, cid, 'operations')
+    assert owner['recommendation']['guidance'] == returned[departments.task_id(departments.CURRENT[pay['id']], 'evidence')]
+    assert cid + '-SOURCE@1' in owner['recommendation']['source_refs']
+    assert cid + '-SOURCE@1' not in partner['recommendation']['source_refs']
+
+
+@pytest.mark.parametrize('workflow', [departments.TRADE, 'payments-cash-correspondent'])
+def test_late_superseded_run_keeps_the_reply_from_the_sealed_run(desk, workflow):
+    form = desk[1][workflow]
+    cid = submit(desk, form).json()['case_id']
+    sealed = file(desk, cid, form['owner_role'])
+    with transaction(desk[3]) as db:
+        db.execute("INSERT INTO runs VALUES(?,?,?,?,?,?,?)",
+                   ('RUN-' + uuid4().hex, cid, 1, 'fixture', 'superseded',
+                    sealed['recommendation']['sealed_at'], sealed['recommendation']['sealed_at']))
+    after = file(desk, cid, form['owner_role'])
+    assert after['recommendation'] == sealed['recommendation']
+    assert after['last_run']['run_id'] == after['recommendation']['run_id']
 
 
 def test_unavailable_run_does_not_issue_advice(desk, monkeypatch):

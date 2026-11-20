@@ -4,7 +4,7 @@ import json
 
 from . import departments as dep, integrations
 from .store import canonical, event, identifier, now
-from .workflow import Problem, active_holds, active_reviews, conflict, on_version, recommendation, require_open
+from .workflow import Problem, active_holds, active_reviews, conflict, on_version, recommendation, require_open, revision_run
 
 
 def state(db, row, s, p):
@@ -84,8 +84,7 @@ def detail(db, row, s, actor, mode, p):
     packets = json.loads(row["packets"]) if row["packets"] else {}
     projected = [{**packets[lane], "evidence_refs": [r for r in packets[lane]["evidence_refs"] if r in permitted_refs]}
                  for lane in dep.LANES if lane in packets]
-    run = db.execute("SELECT * FROM runs WHERE case_id=? AND revision=? ORDER BY rowid DESC LIMIT 1",
-                     (cid, s["revision"])).fetchone()
+    run = revision_run(db, row)
     final = dict(decision) if decision else None
     if final and role != dep.approver(p):
         final.pop("reason")
@@ -97,8 +96,7 @@ def detail(db, row, s, actor, mode, p):
     return {
         **summary(db, row, s, p, role, status),
         "request_input": s.get("request_input") if role in (dep.analyst(p), dep.approver(p)) else None,
-        "recommendation": recommendation(row, run, mode, s, role, status,
-                                         next_action(status, s, p, row["packet_hash"]), p),
+        "recommendation": recommendation(row, run, mode, s, role, packets, source_list, p),
         "department_case": {"analyst": dep.analyst(p), "approver": dep.approver(p),
                             "reviewers": dep.reviewers(p), "role_labels": role_labels(p),
                             "local_only": p["local_only"], "source": p["source"], "outcome": p["outcome"], "examples": p["examples"],

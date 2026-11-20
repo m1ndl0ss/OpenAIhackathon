@@ -74,6 +74,13 @@ def request_for(desk, needs_invoice, capacity):
     return (["supplier_invoice"], "request_invoice") if needs_invoice else ([], "review")
 
 
+# These sentences describe only the shared invoice status and trade terms.
+# The organizer may relay them to the originating desk without sharing a private packet.
+SHAREABLE_TRADE_WORDINGS = {
+    "request_invoice": ("Coverage must supply the supplier invoice.", "Trade Finance review awaits the supplier invoice."),
+    "review": ("The supplier invoice is on file for Trade Finance review.", "Review the invoice and current trade terms."),
+}
+
 # Closed wording keeps unsupported numbers, private notes and false approvals out of the UI.
 APPROVED_WORDINGS = {
     "credit_risk": {
@@ -84,10 +91,7 @@ APPROVED_WORDINGS = {
         "review": ("The facility covers the proposed instrument.",
                    "Review the calculated facility capacity for the proposed instrument."),
     },
-    "trade_finance": {
-        "request_invoice": ("Coverage must supply the supplier invoice.", "Trade Finance review awaits the supplier invoice."),
-        "review": ("The supplier invoice is on file for Trade Finance review.", "Review the invoice and current trade terms."),
-    },
+    "trade_finance": SHAREABLE_TRADE_WORDINGS,
     "compliance": {
         "request_invoice": ("Coverage must supply the supplier invoice.", "Request the supplier invoice from Coverage."),
         "review": ("The supplier invoice is on file for Compliance review.", "Review the current intake evidence."),

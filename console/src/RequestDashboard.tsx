@@ -21,8 +21,6 @@ import {
   ShieldCheckIcon,
   StopIcon,
   FlowArrowIcon,
-  ArrowCircleUpRightIcon,
-  WarningCircleIcon,
 } from '@phosphor-icons/react'
 import {
   caseLabel,
@@ -36,6 +34,7 @@ import {
   type Submit,
 } from './api'
 import RoutingDiagram, { replayStepMs } from './RoutingDiagram'
+import AgentReply from './AgentReply'
 import './tracker.css'
 
 const tradeTasks = [
@@ -205,27 +204,6 @@ type Props = {
   approval: ReactNode
 }
 
-function RequestResult({ file }: { file: StaffFile }) {
-  const result = file.recommendation
-  const stage = file.last_run?.status
-  const pending = stage === 'pending'
-  const stopped = stage && ['analysis_refused', 'analysis_unavailable', 'analysis_invalid', 'superseded'].includes(stage)
-  if (!result && !pending && !stopped) return null
-  const attention = result?.tone === 'attention' || stopped
-  const Icon = pending ? ClockIcon : attention ? WarningCircleIcon : ArrowCircleUpRightIcon
-  const amount = file.request_input?.amount_minor ?? file.amount_minor
-  const currency = file.request_input?.currency || file.currency
-  const reviewing = file.human_approval?.stage === 'review' && result?.tone === 'review'
-  return <section className={'request-result ' + (pending ? 'processing' : attention ? 'attention' : 'review')} role="status">
-    <span className="result-symbol"><Icon size={32} weight="duotone" /></span>
-    <div className="result-body"><span className="result-label">{result ? 'Organizer recommendation' : pending ? 'Request received' : 'Organizer update'}</span>
-      <h2>{reviewing ? 'In human review' : result?.title || (pending ? 'Preparing your review packet' : runLabels[stage!] || 'Analysis stopped')}</h2>
-      <p>{result?.guidance || (pending ? 'Follow the handoffs below while the agents check the file.' : 'This run produced no current recommendation. Open the case to review its status.')}</p>
-      <div className="result-context"><span title={file.case_id}>{caseLabel(file.case_id)}</span><span>{file.request_input?.subject || file.workflow_title}</span>
-        {currency && amount != null && <span>{money(amount, currency)}</span>}</div>
-    </div></section>
-}
-
 export default function RequestDashboard({ file, staff, queue, audit, busy, open, select, submit, approval }: Props) {
   const stats = [
     { name: 'Assigned requests', value: queue.length, icon: StackIcon },
@@ -259,7 +237,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
           Open case <ArrowUpRightIcon size={15} />
         </button>
       </div>
-      <RequestResult file={file} />
+      <AgentReply file={file} />
       {approval}
       {approval && route}
       <div className="tracker-summary">
