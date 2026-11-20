@@ -1,0 +1,20 @@
+# Secrets — never commit
+.env
+.env.local
+
+# Local databases
+*.db
+
+# Raw evidence: full prompts, full responses and all X-Brane-* headers.
+# Kept local by design; the committed CSV/REPORT.md carry the citable rows.
+evidence/raw/
+
+# Case-party alias -> token mapping. This is the rehydration key: it re-identifies
+# every token in the evidence, so it never enters git.
+local/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
