@@ -231,7 +231,7 @@ Never render raw restricted attachments on shared screens. Show “Exact cleared
 | CB-07 | Stop model work on an unavailable firewall or insufficient routing assurance. | BRANE adapter and orchestrator | E5 |
 | CB-08 | Record access, holds, routes and decisions using filtered references and safe outcomes. | Bank audit and evidence exporter | E1–E5 and the audit-view check |
 
-**Ilaria owns the cited matrix. Matvei owns enforcement and evidence.** For every control, record the field or action, processing purpose, observable behaviour under AI-Z’s supplied baseline, hardened rule and enforcing component, legal source and pinpoint, applicability, reviewer, test IDs and evidence links. Assign a policy version to each run. Keep an unmeasured baseline cell marked `unverified` until the live baseline run establishes it. Mark a design choice as **bank policy**, a legal safeguard as **applicable if…**, and a confirmed external requirement as **brief requirement**. A source link supports the rationale. A recorded run establishes observed behaviour.
+**Ilaria owns the cited matrix and combined evidence report. Matvei owns BRANE policy, access controls and their security evidence. Nikita owns human approval enforcement and its workflow evidence.** For every control, record the field or action, processing purpose, observable behaviour under AI-Z’s supplied baseline, hardened rule and enforcing component, legal source and pinpoint, applicability, reviewer, test IDs and evidence links. Assign a policy version to each run. Keep an unmeasured baseline cell marked `unverified` until the live baseline run establishes it. Mark a design choice as **bank policy**, a legal safeguard as **applicable if…**, and a confirmed external requirement as **brief requirement**. A source link supports the rationale. A recorded run establishes observed behaviour.
 
 | Decision the team must document | Implementation and source |
 | --- | --- |
@@ -246,7 +246,7 @@ Before submission, a named reviewer checks each cited paragraph against the offi
 
 ## 10. Security gate and evidence protocol
 
-**Keep three results distinct:** the local API tests, the ten required challenge checks, and the business-utility measure. Obtain the organisers’ exact five baseline checks, expected results and evidence format. Reserve `B1` through `B5` for those definitions. The term *baseline checks* names five judging checks. The *baseline policy* is the starting configuration under which all ten checks can be measured. Keep every run, including differences and failures.
+**Keep three results distinct:** the local API tests, the ten required challenge checks, and the business-utility measure. Use T1–T5 and the evidence columns from the [official five-test template](MAIN_Participant_Starter_Kit/MAIN_Five_Tests_Template.csv). The [participant brief](MAIN_Participant_Starter_Kit/MAIN_Summit_AI-Z_Challenge_Brief.pdf) and template describe different T5 inputs. Matvei should record evidence for both descriptions and confirm which T5 result AI-Z wants in the submission row. The term *baseline checks* names five judging checks. The *baseline policy* is the starting configuration under which all ten checks can be measured. Keep every run, including differences and failures.
 
 | Team case | Synthetic condition and expected hardened result | Minimum evidence to retain |
 | --- | --- | --- |
@@ -273,18 +273,18 @@ An evidence record can describe an incomplete run. For example, this record expo
 }
 ```
 
-Declare the gate green only when all ten required checks pass on the hardened configuration with the required live evidence. Keep failures and unverified items in the report. Export a matrix with ten named checks, baseline-policy observations, hardened-policy observations and links to evidence. Retain the official baseline wording when it arrives. Record a useful clean run under the hardened policy alongside the gate results: the agent must identify the outstanding document and next responsible desk and then produce a source-linked pack from approved inputs. The business team can compare time to a decision-ready packet, handoffs and model usage on the same synthetic case. Show measurements and rehearsal timing separately from assumed costs or commercial estimates.
+Declare the gate green only when all ten required checks pass on the hardened configuration with the required live evidence. Keep failures and unverified items in the report. Export a matrix with ten named checks, baseline-policy observations, hardened-policy observations and links to evidence. Retain the official check wording and document any clarification from AI-Z. Record a useful clean run under the hardened policy alongside the gate results: the agent must identify the outstanding document and next responsible desk and then produce a source-linked pack from approved inputs. The business team can compare time to a decision-ready packet, handoffs and model usage on the same synthetic case. Show measurements and rehearsal timing separately from assumed costs or commercial estimates.
 
 ## 11. Team assignments and build order
 
-Use the [team build plan](team-build-plan.md) for ticket owners, estimated hours, handoffs and rehearsal times. Agree the case ID, currency units, state vocabulary, signed packet fields, BRANE adapter outcomes and evidence schema before changing shared interfaces. Publish interface changes with an example and notify the affected team members.
+Use the [team build plan](team-build-plan.md) for each person’s deliverables and the components they supply to the other builders. Agree the case ID, currency units, state vocabulary, signed packet fields, BRANE adapter outcomes and evidence schema before changing shared interfaces. Publish interface changes with an example and notify the affected team members.
 
 | Owner | Implement and hand over | Ready when |
 | --- | --- | --- |
-| **Matvei · integration policy and verification** | Own the BRANE adapter, named principals, access checks, baseline and hardened policies and redacted evidence index. Confirm the official checks, coordinate their execution and review the signing rules. | Each claim in the report links to an observation, policy version and run. Blocked or unverified results remain visible. |
-| **Anastasios · one agent, case tools and utility** | Build seeded scenarios from Ilaria’s answer key, the exposure calculation, scoped tools, retrieval, bounded agent and packet validator. Integrate Matvei’s adapter, deliver the read-only packet component and export utility and usage. | A synthetic case produces source-linked desk packets via the live endpoint. A missing input produces a question. An outage produces a recoverable status. |
-| **Nikita · case workflow and demo console** | Build the corporate API, assignments, revision sealing, desk holds, final mandate gate, simulated receipt and filtered audit. Build the staff screens and multi-session stage run. | Reviewers can hold and clear their scoped case. The final officer can sign the current file. A replay or stale view cannot duplicate a final decision or receipt. |
-| **Ilaria · policy matrix, workflow fit and pitch** | Write the independent scenario answer key and desk wording, verify legal sources, and build the policy matrix and executable business scorecard. Own manual/assisted timing, the pitch and submission. | A reviewer can understand why a file is held, what each rule protects, what the demo measured, and who at a bank would pay. |
+| **Matvei · BRANE setup and security** | Configure the endpoint and the baseline/hardened policies. Deliver the single model adapter, shared access checks, bank-only name lookup, and redacted results for T1–T5, E1, E2 and E5. | The team can verify permitted routes, isolation and outage behaviour against real observations or identify a specific evidence gap. |
+| **Nikita · case backend, approvals and console** | Build human sessions, case assignments, desk messages, revision sealing, sign-off rules, simulated issuance, the console and run instructions. Supply workflow results for E3 and E4. | An unresolved hold blocks approval. The reviewed revision, final decision and single simulated receipt survive retries and restart. |
+| **Anastasios · agent, banking calculations and packets** | Build fixtures, the facility calculation, scoped tools, approved policy retrieval, one agent, packet validation and its React display. Export utility and model usage. | Each desk receives a source-linked packet or an actionable missing-evidence request through the BRANE-protected workflow. |
+| **Ilaria · case requirements, policy and submission** | Write the fixture answer key, desk wording, legal matrix and retrieval passages. Build the consolidated evidence report, business scorecard, pitch and submission package. | A judge can trace every claim to a source, observation or labelled assumption and follow the case through issuance. |
 
 **Suggested repo layout to implement.** These are target paths. Teams may adapt names provided the run instructions and integration tests exercise the same workflow.
 
@@ -312,24 +312,23 @@ docs/evidence/              redacted evidence index, check results and trace pro
 | **Walking skeleton** | Coverage opens the synthetic file, a real BRANE call yields a useful packet, three named people see their tasks, the final officer signs, and a simulated receipt survives restart. In parallel the fixture adapter lets console development proceed. |
 | **Human workflow** | Rehearse the missing-invoice hold, evidence reply, new revision, renewed clears and final mandate check. Demonstrate a stale version and a recoverable outage using the defensive test fixtures. |
 | **Policy and proof** | Run the official five checks and the five team cases under each policy, capture versions and observations, review legal mappings, measure clean-task performance. Separate live results from fixture regressions. |
-| **Freeze and rehearsal** | Team target Saturday 21 November 08:00 Maastricht time. Freeze the demo revision, record a labelled backup, check the live setup and rehearse with a timer. Official submission is 10:30; finals are 15:00 local time as printed in the challenge deck. |
+| **Submission package** | Pin the demo revision, verify the live setup, record a labelled backup and check the submission links. |
 
 **If time gets tight.** Keep one instrument, one currency, the live BRANE call, the departmental hold, the distinct final human decision, test evidence and legal matrix. Cut the optional FX indication, extra desks, graph database, illustrations, dashboards and custom log viewers first. If AI-Z access is unavailable, finish the rest against the labelled fixture adapter, capture the exact dependency failure and use the approved read-back when service returns. A rehearsal can support the pitch; label it separately from a live run.
 
 ## 12. Demo, measurements and submission
 
-### Three-minute running order
+### Demo acceptance checklist
 
-| Elapsed | Speaker / screen | What actually happens |
-| --- | --- | --- |
-| 0:00–0:20 | Ilaria · Coverage case | A Dutch importer needs a US$2m bank undertaking. Show the facility, the requested amount and the three people who must clear it. Explain who currently chases the missing documents. |
-| 0:20–0:55 | Anastasios narrates, Nikita drives · agent and evidence | Start the live run. Show the source-backed USD 500k remaining headroom, one BRANE routing reference and the document still needed. Use the labelled last successful run if explaining a dependency outage. |
-| 0:55–1:40 | Nikita · department consoles | Compliance places the hold and sends a shareable invoice request. Show the blocked final action. Coverage attaches the invoice. Switch to distinct signed-in desks, inspect the revised packet and collect all three current-version clearances. |
-| 1:40–2:05 | Nikita · final officer and Ops | The mandated officer inspects the latest signatures and approves with a reason. Ops records the simulated receipt. Show the persistent audit entry beside the BRANE reference. |
-| 2:05–2:40 | Matvei · evidence and policy | Open the ten-row evidence index. Compare one observable baseline/hardened difference, point to the exact rule and its legal or bank-policy rationale, and report the actual results. |
-| 2:40–3:00 | Ilaria · business result | Show the observed time to a decision-ready file, quality/utility result, and any labelled cost assumptions. State who buys it: a head of trade operations seeking shorter handoffs with credit and compliance oversight. |
+| Screen | What the submitted demo must show |
+| --- | --- |
+| Coverage case | The Dutch importer’s US$2m request, the existing facility and the three desks required to clear it. |
+| Agent packet | A live BRANE run, its trace reference, the USD 500k remaining headroom and the outstanding document request. |
+| Desk reviews | Compliance holds the case. The final action is blocked. Coverage supplies the invoice, the server seals the revised file, and three distinct humans clear it. |
+| Final decision and Operations | A separate mandated officer signs the reviewed file with a reason. Operations creates one simulated receipt linked to that revision. |
+| Evidence and business result | The ten-check report, a baseline/hardened observation and its supporting rule, the utility result, the measured operational benefit and any cost assumptions. |
 
-Prepare distinct sessions on the same synthetic case before the demo. Do not pre-sign the version presented as live. Time both live model runs and the number of clicks. If two runs do not fit the three-minute slot, begin with a labelled previously prepared revision-1 packet, demonstrate the live hold and invoice handoff, then run revision 2 live while the narrator explains the policy result. Reserve the measured time for the three human clearances on revision 2. If even that run exceeds the slot, report the dependency delay and explicitly label any recorded segment. The backup video must show a real successful run, run ID and date. Clearly identify any cut, pre-recorded segment or simulated downstream action.
+Identify synthetic data, simulated issuance and recorded segments on screen. If starting with a previously prepared revision-1 packet, label it and run revision 2 live. Obtain all signatures shown as live from the authenticated reviewers for that revision. The backup recording identifies its run ID and date.
 
 ### Scorecard
 
