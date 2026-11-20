@@ -2,7 +2,7 @@
 
 Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases**. The original USD 2 million letter of credit brings six people together across the bank. Another 26 specialist desks handle work such as returned payments, covenant exceptions, FX handovers and audit findings. The organizer prepares drafts. Assigned staff review the evidence and a separate human records the final decision.
 
-**Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
+**Judges and presenters** can open the [submission guide and business case](SUBMISSION.md), [three-minute pitch and team Q&A](docs/pitch.md) and [legal position of Redwood](docs/legal-position.md).
 
 ![A payment recommendation followed by the request routing diagram and the named human reviewers](docs/evidence/request-result.jpg)
 

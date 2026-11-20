@@ -2,6 +2,20 @@
 
 A relationship manager receives a USD 2 million import letter-of-credit request. Redwood prepares a cited file for Trade Finance, Credit Risk and Compliance. The organizer routes the work, staff sign against the current revision, a mandated officer decides and Operations records one simulated issuance. Redwood also has 26 specialist workflows spanning the rest of the bank. The demo uses synthetic data throughout. [AI-Z challenge brief and judging criteria](docs/AI-Z-Track-Description.pdf)
 
+## Hand-in at a glance
+
+| Judging question | Where to look |
+| --- | --- |
+| Where is the AI, and what can it decide? | [Bounded autonomy](#bounded-autonomy) · [Team pitch and Q&A](docs/pitch.md#likely-questions) |
+| Why would a bank pay for this? | [Business case and break-even estimate](#business-case) |
+| What is the legal position of this agent? | [One-page analysis](docs/legal-position.md) · [Printable brief](output/pdf/redwood-legal-position.pdf) · [Department research](research/bank-data-classification/README.md) |
+| How was the policy tested? | [Eleven rules with sources, controls and evidence](docs/evidence/submission-policy-matrix.csv) · [Five security tests and five edge cases](docs/evidence/submission-tests.csv) · [Gateway-only worksheet](evidence/MAIN_Five_Tests_Template.csv) |
+| How can the jury run the agent and inspect the integration? | [Live demo](#open-the-demo) · [Drafting loop](backend/agent/runtime.py) · [BRANE adapter](backend/brane_client.py) |
+| Can the bank repeat the workflow? | [Two live case revisions](docs/evidence/submission-live.json) · [26 signed specialist workflows](docs/evidence/department-rehearsal-live.json) · 261 automated tests |
+| What data are used in the demo? | The [case files](data/) contain invented identities, documents and transactions. |
+
+The team froze the security evidence against the `hardened-v2` policy, digest `sha256:7238362ad6b930085f5f850bc1dbf6cf`. [Evidence freeze](https://github.com/m1ndl0ss/OpenAIhackathon/tree/evidence-freeze-v1)
+
 ## Open the demo
 
 From the repository root, run `make setup` with Python 3.11+ and Node 22.12+. For the live rehearsal, copy `.env.example` to `.env` on a fresh clone and enter the team's AI-Z credential in `BRANE_API_KEY`. The sample already names the assigned endpoint, OpenAI model and policy. An existing configured checkout can go straight to the two commands below.
@@ -54,7 +68,17 @@ On 20 November the committed application ran both case revisions through `openro
 
 The measured API rehearsal used six distinct scripted staff identities. It recorded a rejected decision while held, a rejected stale decision, three current desk clearances, one final approval and one durable simulated receipt. A separate fixture check repeats concurrent decisions and issuance after restarting the application. [Live workflow](docs/evidence/submission-live.json) · [Restart and concurrency checks](docs/evidence/workflow-fixture.csv) · [Independent case answer key](legal/case-answer-key.md)
 
+## Bounded autonomy
+
+The organizer runs three drafting agents, one each for Trade Finance, Credit Risk and Compliance. Bank code reads the permitted evidence, computes the facility headroom and determines the next-step code. At the strictest setting used here, each agent makes a real model call through BRANE to choose one of two permitted sentences for that step. Bank code validates the reply, attaches figures and citations and makes the recommendation available to the reviewer. A rules engine could select a sentence at this setting. The deployment choice is how much discretion to delegate while keeping evidence access, arithmetic and signatures under bank control. [Drafting loop](backend/agent/runtime.py) · [Live responses](docs/evidence/submission-live.json)
+
+The security team separately exercised the live **hardened-v2** policy on realistic synthetic document text, including invoice wording, personal data and health-related language. Those trials reveal both protection and masking errors. A next use to evaluate is a model drafting a discrepancy note from an approved invoice excerpt. A bank would first authorise that text, test the quality of its citations and the outbound data, and verify its legal basis. The current letter-of-credit demo sends bank-authored drafting prompts. [Policy](policy/hardened-v2.json) · [Document-text test results](evidence/MAIN_Five_Tests_Template.csv) · [Legal position](docs/legal-position.md)
+
+Routing applies to individual tasks. The specialist rehearsal recorded **12 local-model calls across ten workflows**, including the KYC handover and two Credit & Counterparty Risk tasks. M&A, AML & Financial Crime and Regulatory Surveillance each completed three bank-side tasks with **zero model calls**. Their reviewers still received drafts for signature. [Task-level route observations](docs/evidence/department-rehearsal-live.json)
+
 ## Governance and the five security tests
+
+The submitted agent has its own assessment of controller and processor roles, overseas transfers, pseudonymisation, the DPIA and AI Act classification. The desk inventory and policy matrix document how those judgments apply to specific records. [Agent legal position](docs/legal-position.md) · [Desk research](research/bank-data-classification/README.md) · [Policy matrix](docs/evidence/submission-policy-matrix.csv)
 
 The submission matrix contains eleven rules with their sources, technical controls, observed results and remaining gaps. Examples from the implemented case follow. [Submission policy matrix](docs/evidence/submission-policy-matrix.csv) · [Corporate banking legal research](research/bank-data-classification/README.md)
 
@@ -71,13 +95,19 @@ The submission matrix contains eleven rules with their sources, technical contro
 | T4 · Untrusted instructions | The security team's recorded inputs stayed local. The letter-of-credit workflow accepts seven bank-owned message combinations. Each specialist workflow checks its own registered tasks and wordings. Human notes and source documents stay out of the model input. |
 | T5 · Firewall unavailable | The network-denied bank attempted one policy GET, zero model POSTs and zero other destinations. The case stayed unsealed. The security client also passed 15 fault runs and three healthy controls. The client process contacted only each scenario’s assigned destination. [Security client results](docs/evidence/brane-check-failure.csv) |
 
-The security team's standalone suite went from **1/12 baseline** to **18/20 hardened**. The suites differ in size. The latest hardened suite repeated all 20 checks three times. Raw name coverage and preservation of ordinary trade wording are the two recorded failures. Both matter if a future workflow starts forwarding document text. The submitted app only accepts prewritten drafting inputs and exact permitted replies. [Final ten-row protocol](docs/evidence/submission-tests.csv) · [Original gateway results](evidence/MAIN_Five_Tests_Template.csv) · [Full measured comparison](evidence/REPORT.md)
+The original standalone run recorded **1/12** on the delivered policy and **18/20** on the first reported hardened comparison. The team's later evidence freeze repeated 20 checks three times and found **17 consistent passes, two failures and one mixed result**. Raw name coverage and preservation of ordinary trade wording failed. A benign scheduling note was sometimes refused. Those findings matter before expanding the text a model may receive. [Original measurements](https://github.com/m1ndl0ss/OpenAIhackathon/blob/4344a6cf8b430f5fa2172a71149a1e454bf6338e/evidence/REPORT.md) · [Frozen comparison](https://github.com/m1ndl0ss/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md) · [Integrated test worksheet](docs/evidence/submission-tests.csv)
 
 ## Business case
 
-The bank's immediate problem is rework between desks when a document changes. In this case the organizer prepared six cited desk packets over two revisions, identified the missing invoice and its owner, and stopped staff from acting on an old signature. The two rounds together took **29.55 seconds** and used **1,029 tokens**. This measures preparation and validation. Staff reading, judgment and sign-off still take time. [Utility scorecard](eval/utility-scorecard.csv)
+**Risk comes first.** An operations head can offer staff an approved AI workflow, and the CISO and DPO can inspect what it sends. In May 2026, CB Financial Services disclosed that its subsidiary Community Bank had handled private customer information using an unauthorised AI application. The bank judged the incident material because of the volume and sensitivity of the information. Its filing gave no dollar loss. In Redwood’s live rehearsal, zero planted private fields appeared in six observed bank-to-BRANE requests. In the controlled outage, zero model requests were sent. These controls address use of the approved workflow. A bank would monitor adoption and use of other tools separately. [SEC filing, Item 1.05](https://www.sec.gov/Archives/edgar/data/1605301/000160530126000021/cbfv-20260507.htm) · [Live observation](docs/evidence/submission-live.json) · [Outage evidence](docs/evidence/firewall-outage.json)
 
-For a planning example, assume 500 cases per year, EUR 60 per staff-hour and three staff minutes saved per case. That yields 25 staff-hours, or EUR 1,500 of capacity per year. At an assumed EUR 0.10 per case in variable costs, EUR 1,450 remains before fixed costs. The team did not measure a manual comparison or receive a provider invoice. A pilot would time manual and assisted cases of similar complexity and compare error corrections and total operating cost. The 26 specialist workflows have their own functional rehearsal. The timing and financial assumptions here cover the letter-of-credit case. [Measured inputs](docs/evidence/submission-live.json) · [Specialist coverage](docs/department-workflows.md)
+**External estimates.** IBM’s 2025 study estimated **USD 5.56 million** as the average cost of a breach in the financial industry. Across industries, breached organisations with high use of unauthorised AI reported costs averaging **USD 670,000 more** than those with little or none. The second figure is an observed association across groups. Each benchmark describes its own population. A Redwood pilot would need a separate estimate of the loss it could prevent. [IBM financial-industry brief, p. 1](https://www.northdoor.co.uk/wp-content/uploads/2025/08/2025-Financial-CODB-Industry_Final.pdf) · [IBM study release and methodology](https://newsroom.ibm.com/2025-07-30-ibm-report-13-of-organizations-reported-breaches-of-ai-models-or-applications%2C-97-of-which-reported-lacking-proper-ai-access-controls)
+
+**Illustrative break-even estimate.** Preventing one comparable incident could cover years of operation. For example, at an assumed **USD 100,000 per year** for the fully operated service, three years would cost **USD 300,000**. Avoiding that much loss on one incident would cover the three-year budget. A bank should replace the assumption with its own integration, monitoring and service costs, then estimate incident likelihood, adoption and the share of loss these controls could prevent. The rehearsal measured neither operating cost nor avoided incidents.
+
+**Measured productivity and reach.** One letter-of-credit rehearsal produced **six cited desk drafts over two revisions in 29.55 seconds**, using **1,029 tokens**. Staff signatures were bound to the current revision. A separate live rehearsal carried **all 26 specialist workflows** through human sign-off. The timing covers draft preparation and validation for the trade case. Human decision time and manual time saved were unmeasured. [Timing and token counts](eval/utility-scorecard.csv) · [26 signed outcomes](docs/evidence/department-rehearsal-live.json)
+
+**Illustrative staff-capacity estimate.** Assuming 500 cases a year, three staff minutes saved per case and EUR 60 per hour gives 25 hours, or EUR 1,500 of annual capacity for one desk. At an assumed 1,000 cases per workflow across all 27 workflows, the same assumptions yield 1,350 hours or EUR 81,000 of annual capacity before costs. A pilot should compare manual and assisted reviews of similar complexity, including time spent correcting drafts.
 
 ## Reproduce the evidence
 
