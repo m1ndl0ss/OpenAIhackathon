@@ -26,7 +26,7 @@ def test_submission_and_gateway_matrices_use_the_reviewed_rationale_and_sources(
 
     reviewed = cited_rules("evidence/clearance_policy_matrix.source.csv")
     assert cited_rules("evidence/clearance_policy_matrix.csv") == reviewed
-    assert cited_rules("docs/evidence/submission-policy-matrix.csv") == reviewed
+    assert cited_rules("submission/MAIN_Policy_Matrix_Template.csv") == reviewed
 
 
 def test_repeatable_setup_and_named_demo_reset(tmp_path, monkeypatch):

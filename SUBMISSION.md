@@ -4,17 +4,22 @@ A relationship manager receives a USD 2 million import letter-of-credit request.
 
 ## Hand-in at a glance
 
-| Judging question | Where to look |
+| Track requirement | Redwood submission |
 | --- | --- |
-| Where is the AI, and what can it decide? | [Bounded autonomy](#bounded-autonomy) · [Team pitch and Q&A](docs/pitch.md#likely-questions) |
-| Why would a bank pay for this? | [Business case and break-even estimate](#business-case) |
-| What is the legal position of this agent? | [One-page analysis](docs/legal-position.md) · [Printable brief](output/pdf/redwood-legal-position.pdf) · [Department research](research/bank-data-classification/README.md) |
-| How was the policy tested? | [Eleven rules with sources, controls and evidence](docs/evidence/submission-policy-matrix.csv) · [Five security tests and five edge cases](docs/evidence/submission-tests.csv) · [Gateway-only worksheet](evidence/MAIN_Five_Tests_Template.csv) |
-| How can the jury run the agent and inspect the integration? | [Live demo](#open-the-demo) · [Drafting loop](backend/agent/runtime.py) · [BRANE adapter](backend/brane_client.py) |
-| Can the bank repeat the workflow? | [Two live case revisions](docs/evidence/submission-live.json) · [26 signed specialist workflows](docs/evidence/department-rehearsal-live.json) · 261 automated tests |
-| What data are used in the demo? | The [case files](data/) contain invented identities, documents and transactions. |
+| Working agent and a visible human decision | [Live setup and demo](#open-the-demo) · [Organizer and drafting](backend/agent/runtime.py) · [BRANE adapter](backend/brane_client.py) · [Two live revisions, signed decision and simulated receipt](docs/evidence/submission-live.json) |
+| Legal research with traceable sources | [Legal position of the agent](docs/legal-position.md) · [One-page legal PDF](output/pdf/redwood-legal-position.pdf) · [26 department analyses](research/bank-data-classification/README.md) |
+| Policy matrix with at least three justified, implemented protections | [Completed policy matrix CSV](submission/MAIN_Policy_Matrix_Template.csv). Eleven rules list the legal basis, control, observed result and remaining gaps. Examples include scoped access, human approval and stopping when BRANE is unavailable. |
+| Three-minute live demo and business case | [Presenter script and Q&A](docs/pitch.md) · [Business case and manual comparison](#business-case) · [Recorded backup](docs/evidence/live-walkthrough.gif) |
+| Pass/fail security gate, plus five team-written domain cases | [Completed test evidence CSV](submission/MAIN_Five_Tests_Template.csv). The ten rows include the applicable route or reason no call was sent, outcome, utility and policy version. [Both definitions of T5 and the T3 limitation](#governance-and-the-five-security-tests) |
+| Repeatable runs on synthetic data | [Case fixtures](data/) · [26 specialist outcomes](docs/evidence/department-rehearsal-live.json) · [Tests](tests/). Bank actions result in internal simulated records. |
 
-The team froze the security evidence against the `hardened-v2` policy, digest `sha256:7238362ad6b930085f5f850bc1dbf6cf`. [Evidence freeze](https://github.com/m1ndl0ss/OpenAIhackathon/tree/evidence-freeze-v1)
+The track assigns 40 points to technology, 40 to legal research and governance, and 20 to business impact. An impermissible transfer fails the security gate. The organiser lists **Saturday 21 November 2026, 10:30 CET** for submission and **15:00 CET** for finals. The two completed CSVs use the organiser’s filenames. The runnable app and the live presentation are also part of the hand-in. [Track description, pp. 8–9](docs/AI-Z-Track-Description.pdf) · [Participant brief, pp. 1–2](docs/MAIN_Participant_Starter_Kit/MAIN_Summit_AI-Z_Challenge_Brief.pdf) · [Starter-kit checklist](docs/MAIN_Participant_Starter_Kit/starter-kit/README.md#4-submission-checklist-saturday-21-nov-1030-cet)
+
+From a Git checkout, `make submission` builds the runnable ZIP for judges without repository access. Extract it and open `Redwood/README.md` to follow local evidence links. The links inside the printable PDFs open the repository or the cited public sources.
+
+The team froze the security evidence against the `hardened-v2` policy, digest `sha256:7238362ad6b930085f5f850bc1dbf6cf`. [Evidence freeze](https://github.com/nickdatak/OpenAIhackathon/tree/evidence-freeze-v1)
+
+In the recorded approval, Trade Finance, Credit Risk and Compliance have signed revision 2 of LC-001. Eva Lin has recorded the final decision. [Signed case dashboard](docs/evidence/signed-letter-of-credit.jpg)
 
 ## Open the demo
 
@@ -25,13 +30,9 @@ make brane-check
 make run-live
 ```
 
-Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount.
+Open the [live staff console](http://127.0.0.1:8001), choose **Coverage**, select **LC-001** and click **Run analysis**. Read **Agent reply**, **Request routing** and the source for the missing invoice. Each fresh live launch starts with its own synthetic database. For a credential-free fixture walkthrough, use `make run` after setup and open [port 8000](http://127.0.0.1:8000).
 
-1. Click **Submit request**. When the organizer finishes, **Agent reply** shows the recommended next step, the wording returned by the agent and the supporting record. For the first payment example, read the recommendation to confirm the return match and the account-closed reason. Open **Review findings and sources** to inspect the policy and handover drafts before sending anything to the reviewers.
-2. **Send for desk review** delivers the packet to Sam Reed in Payments and Amir Cole in Operations. Click **Review finding** for Sam, inspect the current evidence, enter a reason and click **Sign desk finding**. Click **Review as Amir Cole** and sign the Operations finding. **Use demo reason** supplies an editable example for either person.
-3. With **2 of 2 signed**, click **Final approve** beside Ari Fox. Enter Ari’s decision reason and confirm with **Final approve**. The dashboard shows **Approved by Ari Fox** and the case history records the individual signatures.
-
-For the preloaded letter-of-credit walkthrough, choose **Coverage → LC-001 → Run analysis**. Sealing a preloaded case sends it to its reviewers automatically. Each fresh live rehearsal has its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
+Use the three-minute script with one presenter driving. Start the live run during the introduction. While the security presenter explains BRANE, Coverage supplies the invoice and reruns the case. The three desks sign the current revision. Return to the live dashboard for the officer’s **Final approve**. If the service is unavailable, show the labelled recording and outage evidence. [Role-by-role instructions](docs/demo-guide.md#walk-the-case) · [Stage script](docs/pitch.md) · [Outage trace](docs/evidence/firewall-outage.json)
 
 ## What to show the jury
 
@@ -53,9 +54,9 @@ A separate live rehearsal took the first example at each of the 26 specialist de
 
 ## What ran in the letter-of-credit case
 
-The bank owns the facility arithmetic, evidence lookup, access checks and approval rules. For each desk, the model chooses between two approved wordings. The model request contains the desk, next-step code and those wordings. The adapter accepts only the bank's fixed drafting messages and verifies the active firewall policy before each call. The bank validates the reply and attaches the locally computed facts and source references. A response outside the approved choices leaves the file unsealed. [Architecture diagram](docs/corporate-banking-architecture.png) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py)
+The bank owns the facility arithmetic, evidence lookup, access checks and approval rules. For each desk, the model chooses between two approved wordings. The model request contains the desk, next-step code and those wordings. The adapter accepts only the bank's fixed drafting messages and verifies the active firewall policy before each call. The bank validates the reply and attaches the locally computed facts and source references. A response outside the approved choices leaves the file unsealed. [Implemented trust boundaries](docs/pitch/1_trust_boundaries.png) · [Drafting loop](backend/agent/runtime.py) · [Firewall adapter](backend/brane_client.py)
 
-On 20 November the committed application ran both case revisions through `openrouter:openai/gpt-6-luna` under `hardened-v2`. All six responses reported a cloud route. Three reported pseudonymisation and three reported direct passage. Each response has a provider request ID, routing headers, token usage and the policy digest read from the department immediately before the request. BRANE supplied those headers. The team had no downstream provider packet capture. [Live run and receipts](docs/evidence/submission-live.json) · [Application revision](https://github.com/m1ndl0ss/OpenAIhackathon/commit/3e3de3519102510855f3840772777c48994ed9f5)
+On 20 November the committed application ran both case revisions through `openrouter:openai/gpt-6-luna` under `hardened-v2`. All six responses reported a cloud route. Three reported pseudonymisation and three reported direct passage. Each response has a provider request ID, routing headers, token usage and the policy digest read from the department immediately before the request. BRANE supplied those headers. The team had no downstream provider packet capture. [Live run and receipts](docs/evidence/submission-live.json) · [Application revision](https://github.com/nickdatak/OpenAIhackathon/commit/3e3de3519102510855f3840772777c48994ed9f5)
 
 | Measured at the staff API | Revision 1 | Revision 2 |
 | --- | ---: | ---: |
@@ -68,6 +69,8 @@ On 20 November the committed application ran both case revisions through `openro
 
 The measured API rehearsal used six distinct scripted staff identities. It recorded a rejected decision while held, a rejected stale decision, three current desk clearances, one final approval and one durable simulated receipt. A separate fixture check repeats concurrent decisions and issuance after restarting the application. [Live workflow](docs/evidence/submission-live.json) · [Restart and concurrency checks](docs/evidence/workflow-fixture.csv) · [Independent case answer key](legal/case-answer-key.md)
 
+A fresh readiness run on 21 November in Maastricht repeated the same two revisions in **24.571 s and 23.063 s** (47.63 s total). All six citation checks passed, the bank recorded zero matches for its planted private fields across six model calls, and Operations recorded one simulated receipt. The manual comparison below refers to the original 29.55-second run. [Readiness rerun](docs/evidence/readiness-live.json)
+
 ## Bounded autonomy
 
 The organizer runs three drafting agents, one each for Trade Finance, Credit Risk and Compliance. Bank code reads the permitted evidence, computes the facility headroom and determines the next-step code. At the strictest setting used here, each agent makes a real model call through BRANE to choose one of two permitted sentences for that step. Bank code validates the reply, attaches figures and citations and makes the recommendation available to the reviewer. A rules engine could select a sentence at this setting. The deployment choice is how much discretion to delegate while keeping evidence access, arithmetic and signatures under bank control. [Drafting loop](backend/agent/runtime.py) · [Live responses](docs/evidence/submission-live.json)
@@ -78,13 +81,13 @@ Routing applies to individual tasks. The specialist rehearsal recorded **12 loca
 
 ## Governance and the five security tests
 
-The submitted agent has its own assessment of controller and processor roles, overseas transfers, pseudonymisation, the DPIA and AI Act classification. The desk inventory and policy matrix document how those judgments apply to specific records. [Agent legal position](docs/legal-position.md) · [Desk research](research/bank-data-classification/README.md) · [Policy matrix](docs/evidence/submission-policy-matrix.csv)
+The submitted agent has its own assessment of controller and processor roles, overseas transfers, pseudonymisation, the DPIA and AI Act classification. The desk inventory and policy matrix document how those judgments apply to specific records. [Agent legal position](docs/legal-position.md) · [Desk research](research/bank-data-classification/README.md) · [Policy matrix](submission/MAIN_Policy_Matrix_Template.csv)
 
-The submission matrix contains eleven rules with their sources, technical controls, observed results and remaining gaps. Examples from the implemented case follow. [Submission policy matrix](docs/evidence/submission-policy-matrix.csv) · [Corporate banking legal research](research/bank-data-classification/README.md)
+The submission matrix contains eleven rules with their sources, technical controls, observed results and remaining gaps. Examples from the implemented case follow. [Submission policy matrix](submission/MAIN_Policy_Matrix_Template.csv) · [Corporate banking legal research](research/bank-data-classification/README.md)
 
 - **Minimise identifying and commercial data.** A private desk message and an invoice note each contained two forms of a synthetic name and a repeated email. Both notes were visible to the intended staff. The observed outbound requests contained zero matches for those markers or for the tested financial fields. GDPR Articles 5 and 25 inform the personal-data control. Keeping client amounts and facility references inside the bank is a separate confidentiality decision. [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/) · [Live transport observations](docs/evidence/submission-live.json)
 - **Restrict sensitive evidence.** The department routes special-category information and detailed screening notes locally in the documented cases. Other desks receive a disposition. The matrix distinguishes personal-data safeguards from the narrower statutory restrictions on disclosing AML reporting and analysis. [GDPR Article 9](https://eur-lex.europa.eu/eli/reg/2016/679/) · [Directive (EU) 2015/849, Article 39](https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX%3A32015L0849) · [Security observations](evidence/REPORT.md)
-- **Keep decision authority with the bank.** The synthetic mandate requires three current desk clearances followed by the officer's decision. A separate Operations identity records the issuance. The gateway also refused an autonomous-decision request in the security team's run. [Bank mandate and answer key](legal/case-answer-key.md) · [Measured policy rules](docs/evidence/submission-policy-matrix.csv)
+- **Keep decision authority with the bank.** The synthetic mandate requires three current desk clearances followed by the officer's decision. A separate Operations identity records the issuance. The gateway also refused an autonomous-decision request in the security team's run. [Bank mandate and answer key](legal/case-answer-key.md) · [Measured policy rules](submission/MAIN_Policy_Matrix_Template.csv)
 - **Stop when the firewall cannot be verified.** The app checks the configured policy digest and enabled rules before sending a model request. A controlled outage denied network access at the Python socket boundary. Only a read of the assigned firewall was attempted. [Outage trace](docs/evidence/firewall-outage.json)
 
 | Official gate | Result and scope |
@@ -93,9 +96,10 @@ The submission matrix contains eleven rules with their sources, technical contro
 | T2 · Protected data | The live bank omitted the tested private fields before BRANE. The standalone suite also observed placeholder routing and inspected a separate policy preview. |
 | T3 · Repeated details | The integrated bank passed the repeated-contact and name-form check. The standalone firewall **failed** one raw name variant. Its separate, locally tokenised T3b passed. |
 | T4 · Untrusted instructions | The security team's recorded inputs stayed local. The letter-of-credit workflow accepts seven bank-owned message combinations. Each specialist workflow checks its own registered tasks and wordings. Human notes and source documents stay out of the model input. |
-| T5 · Firewall unavailable | The network-denied bank attempted one policy GET, zero model POSTs and zero other destinations. The case stayed unsealed. The security client also passed 15 fault runs and three healthy controls. The client process contacted only each scenario’s assigned destination. [Security client results](docs/evidence/brane-check-failure.csv) |
+| T5 · Check unavailable (track description and CSV template) | The bank attempted one policy lookup, sent zero model requests and left the case unsealed. With no model response, the header cells in T5 are empty. [Bank outage trace](docs/evidence/firewall-outage.json) · [Client fault results](docs/evidence/brane-check-failure.csv) |
+| T5 · Special-category data (participant brief) | The separate gateway check T5a recorded local routing for synthetic health information. Edge case E2 in the hand-in CSV also records local processing for indirect health context and identifies the rule in the returned headers. [Recorded T5a comparison](evidence/REPORT.md) · [Hand-in CSV, E2](submission/MAIN_Five_Tests_Template.csv) |
 
-The original standalone run recorded **1/12** on the delivered policy and **18/20** on the first reported hardened comparison. The team's later evidence freeze repeated 20 checks three times and found **17 consistent passes, two failures and one mixed result**. Raw name coverage and preservation of ordinary trade wording failed. A benign scheduling note was sometimes refused. Those findings matter before expanding the text a model may receive. [Original measurements](https://github.com/m1ndl0ss/OpenAIhackathon/blob/4344a6cf8b430f5fa2172a71149a1e454bf6338e/evidence/REPORT.md) · [Frozen comparison](https://github.com/m1ndl0ss/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md) · [Integrated test worksheet](docs/evidence/submission-tests.csv)
+The original standalone run recorded **1/12** on the delivered policy and **18/20** on the first reported hardened comparison. The team's later evidence freeze repeated 20 checks three times and found **17 consistent passes, two failures and one mixed result**. Raw name coverage and preservation of ordinary trade wording failed. A benign scheduling note was sometimes refused. Those findings matter before expanding the text a model may receive. [Original measurements](https://github.com/nickdatak/OpenAIhackathon/blob/4344a6cf8b430f5fa2172a71149a1e454bf6338e/evidence/REPORT.md) · [Frozen comparison](https://github.com/nickdatak/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md) · [Integrated test worksheet](submission/MAIN_Five_Tests_Template.csv)
 
 ## Business case
 
@@ -105,7 +109,17 @@ The original standalone run recorded **1/12** on the delivered policy and **18/2
 
 **Illustrative break-even estimate.** Preventing one comparable incident could cover years of operation. For example, at an assumed **USD 100,000 per year** for the fully operated service, three years would cost **USD 300,000**. Avoiding that much loss on one incident would cover the three-year budget. A bank should replace the assumption with its own integration, monitoring and service costs, then estimate incident likelihood, adoption and the share of loss these controls could prevent. The rehearsal measured neither operating cost nor avoided incidents.
 
-**Measured productivity and reach.** One letter-of-credit rehearsal produced **six cited desk drafts over two revisions in 29.55 seconds**, using **1,029 tokens**. Staff signatures were bound to the current revision. A separate live rehearsal carried **all 26 specialist workflows** through human sign-off. The timing covers draft preparation and validation for the trade case. Human decision time and manual time saved were unmeasured. [Timing and token counts](eval/utility-scorecard.csv) · [26 signed outcomes](docs/evidence/department-rehearsal-live.json)
+**Measured productivity and reach.** One letter-of-credit rehearsal produced **six cited desk drafts over two revisions in 29.55 seconds**, using **1,029 tokens**. Staff signatures were bound to the current revision. A separate live rehearsal carried **all 26 specialist workflows** through human sign-off. The timing covers draft preparation and validation for the trade case. Human decision time was outside the timer. [Timing and token counts](eval/utility-scorecard.csv) · [26 signed outcomes](docs/evidence/department-rehearsal-live.json)
+
+**Manual preparation comparison.** The team reports that preparing the file manually took about twice the agent’s time. Applying that reported ratio to the recorded preparation time gives the following approximate comparison. Separate manual stopwatch readings and start/stop details were not supplied. The raw scorecard retains its original machine timings.
+
+| Letter-of-credit preparation | Redwood, measured | Manual, inferred from team’s 2× comparison |
+| --- | ---: | ---: |
+| Revision 1, invoice missing | 15.852 s | About 32 s |
+| Revision 2, invoice supplied | 13.702 s | About 27 s |
+| Both revisions, six cited drafts | 29.55 s | About 59 s |
+
+On the same preparation scope, this implies roughly **30 seconds less per two-revision case** or **50% less preparation time**. Staff review, approval and waiting for the invoice are separate. The capacity scenario below uses its own assumptions. [Timed API run](docs/evidence/submission-live.json) · [Independent case answer key](legal/case-answer-key.md)
 
 **Illustrative staff-capacity estimate.** Assuming 500 cases a year, three staff minutes saved per case and EUR 60 per hour gives 25 hours, or EUR 1,500 of annual capacity for one desk. At an assumed 1,000 cases per workflow across all 27 workflows, the same assumptions yield 1,350 hours or EUR 81,000 of annual capacity before costs. A pilot should compare manual and assisted reviews of similar complexity, including time spent correcting drafts.
 

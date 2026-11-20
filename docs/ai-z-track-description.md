@@ -150,4 +150,4 @@ You learn how agentic AI applications are developed, how legal requirements are 
 | Test 5 | **Check failure:** BRANE unavailable → nothing sent, no cloud fallback | **Special category / local:** Art. 9 data kept local or refused (HTTP 422) |
 | Models | "OpenAI via BRANE" | OpenRouter cloud models + local vLLM models |
 
-The five-tests CSV template uses "Check unavailable / unverifiable", which matches this document. Covering both variants (T5a + T5b) is the safe choice until the AI-Z desk confirms.
+The five-tests CSV template uses "Check unavailable / unverifiable", which matches this document. Redwood documents both meanings. In the final CSV, T5 is the unavailable-check scenario and E2 also covers special-category information staying local. [Submitted results and observed limits](../SUBMISSION.md#governance-and-the-five-security-tests)

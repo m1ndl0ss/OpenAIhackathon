@@ -1,0 +1,296 @@
+{
+  "runs": [
+    {
+      "case_id": "LC-001",
+      "revision": 1,
+      "run_id": "RUN-f759cd1f8e0c499e8e79fed08e725d10",
+      "status": "sealed",
+      "mode": "live",
+      "policy_version": "hardened-v2",
+      "packet_hash": "ea0fc10d5b7c62f2fc6e152879787f317ecef65138bc9707133c1517e44b4ae9",
+      "expected": {
+        "headroom_before_minor": 250000000,
+        "headroom_after_minor": 50000000,
+        "missing": [
+          "supplier_invoice"
+        ],
+        "owner": "coverage",
+        "invoice": null
+      },
+      "observed": {
+        "headroom_before_minor": 250000000,
+        "headroom_after_minor": 50000000,
+        "missing": [
+          "supplier_invoice"
+        ],
+        "owner": "coverage"
+      },
+      "citation_checks": {
+        "trade_finance": true,
+        "credit_risk": true,
+        "compliance": true
+      },
+      "verdict": "pass",
+      "observations": [
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216737-02urePVzXjPhoxotPec9",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_trade_finance",
+          "timestamp_utc": "2026-11-20T23:18:52+00:00",
+          "usage": {
+            "completion_tokens": 46,
+            "prompt_tokens": 79,
+            "total_tokens": 125
+          }
+        },
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216745-n1rgPaVxYH3YQz4gYOMO",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_credit_risk",
+          "timestamp_utc": "2026-11-20T23:19:00+00:00",
+          "usage": {
+            "completion_tokens": 42,
+            "prompt_tokens": 80,
+            "total_tokens": 122
+          }
+        },
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216753-gGspuDNCvzSdHyq3X3nA",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_compliance",
+          "timestamp_utc": "2026-11-20T23:19:08+00:00",
+          "usage": {
+            "completion_tokens": 60,
+            "prompt_tokens": 77,
+            "total_tokens": 137
+          }
+        }
+      ],
+      "model_calls": 3,
+      "tool_reads": 8,
+      "total_tokens": 384,
+      "elapsed_seconds": 24.571
+    },
+    {
+      "case_id": "LC-001",
+      "revision": 2,
+      "run_id": "RUN-0b5b156325114576b960b73daf2dc4f7",
+      "status": "sealed",
+      "mode": "live",
+      "policy_version": "hardened-v2",
+      "packet_hash": "b83cb71dfe69159c9ee9b4cb875e42e7a6ac50c8b0c00162ebe029f50ded36ba",
+      "expected": {
+        "headroom_before_minor": 250000000,
+        "headroom_after_minor": 50000000,
+        "missing": [],
+        "owner": null,
+        "invoice": "DOC-INV-01@1"
+      },
+      "observed": {
+        "headroom_before_minor": 250000000,
+        "headroom_after_minor": 50000000,
+        "missing": [],
+        "owner": null
+      },
+      "citation_checks": {
+        "trade_finance": true,
+        "credit_risk": true,
+        "compliance": true
+      },
+      "verdict": "pass",
+      "observations": [
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216761-BqtEoc0Is88l9jlcNQuh",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_trade_finance",
+          "timestamp_utc": "2026-11-20T23:19:16+00:00",
+          "usage": {
+            "completion_tokens": 162,
+            "prompt_tokens": 82,
+            "total_tokens": 244
+          }
+        },
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216769-gL40VQcxoFODXcQ5DQzP",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_credit_risk",
+          "timestamp_utc": "2026-11-20T23:19:24+00:00",
+          "usage": {
+            "completion_tokens": 45,
+            "prompt_tokens": 80,
+            "total_tokens": 125
+          }
+        },
+        {
+          "action": "allow",
+          "allowed_types": null,
+          "http_status": 200,
+          "lane": "governed",
+          "local_cause": null,
+          "log_ref": null,
+          "model": "openrouter:openai/gpt-6-luna",
+          "pii_detected": "false",
+          "pii_types": null,
+          "policy_hash": "sha256:7238362ad6b930085f5f850bc1dbf6cf",
+          "policy_triggers": null,
+          "provider_request_id": "gen-1795216776-cu4ga3psM60bjsPikCWe",
+          "redacted": "false",
+          "redaction_classes": null,
+          "reported_policy_version": null,
+          "route": "direct",
+          "routed_to": "cloud",
+          "rule_id": null,
+          "semantic_matches": null,
+          "task": "draft_compliance",
+          "timestamp_utc": "2026-11-20T23:19:31+00:00",
+          "usage": {
+            "completion_tokens": 59,
+            "prompt_tokens": 78,
+            "total_tokens": 137
+          }
+        }
+      ],
+      "model_calls": 3,
+      "tool_reads": 8,
+      "total_tokens": 506,
+      "elapsed_seconds": 23.063
+    }
+  ],
+  "workflow": {
+    "hold": "on_hold",
+    "decision_while_held": {
+      "http": 409,
+      "reason": "review_incomplete"
+    },
+    "decision_on_old_revision": {
+      "http": 409,
+      "reason": "stale_revision"
+    },
+    "current_signatures": [
+      {
+        "desk": "trade_finance",
+        "actor_id": "staff-trade",
+        "disposition": "clear",
+        "revision": 2
+      },
+      {
+        "desk": "credit_risk",
+        "actor_id": "staff-credit",
+        "disposition": "clear",
+        "revision": 2
+      },
+      {
+        "desk": "compliance",
+        "actor_id": "staff-compliance",
+        "disposition": "clear",
+        "revision": 2
+      }
+    ],
+    "state_before_final_decision": "ready_for_decision",
+    "final_decision_role": "final_officer",
+    "decision_events": 1,
+    "receipt_events": 1,
+    "receipt_id": "SIM-8c168885e65643b1b0fa4fbf8ac69b7f",
+    "final_state": "issued_simulated"
+  },
+  "started_utc": "2026-11-20T23:18:51+00:00",
+  "mode": "live",
+  "answer_key": "legal/case-answer-key.md",
+  "participants": "Scripted actions with six separate synthetic staff identities through the staff API.",
+  "transport": {
+    "scope": "Python urllib audit event at the bank before transmission to BRANE.",
+    "requests": {
+      "GET /api/v1/policy": 6,
+      "POST /api/v1/chat/completions": 6
+    },
+    "matching_private_fields": 0,
+    "email_occurrences_per_note": 2,
+    "name_forms_per_note": 2,
+    "notes_verified_in_entitled_desk_views": 2
+  }
+}

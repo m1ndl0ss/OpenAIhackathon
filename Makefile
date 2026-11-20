@@ -4,7 +4,7 @@ ROLE ?= coverage
 PORT ?= 8000
 LIVE_PORT ?= 8001
 
-.PHONY: setup deps seed build run run-live dev-console doctor brane-check logins login test evidence live-evidence reset
+.PHONY: setup deps seed build run run-live dev-console doctor brane-check logins login test evidence live-evidence reset submission
 
 setup: deps
 	$(ENV_PY) -m backend.demo setup
@@ -61,3 +61,6 @@ live-evidence:
 
 reset:
 	$(ENV_PY) -m backend.demo reset
+
+submission:
+	$(PYTHON) tools/package_submission.py

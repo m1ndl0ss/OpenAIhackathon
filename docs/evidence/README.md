@@ -1,8 +1,11 @@
 # Evidence for the submission
 
+The two completed CSVs for the jury are in [submission/](../../submission/). This directory holds their supporting measurements and walkthroughs.
+
 | Open this file | What was observed |
 | --- | --- |
 | [Integrated live case](submission-live.json) | Two revisions, three departments, the real OpenAI model through BRANE, per-call route and digest, citation checks, three current signatures, the officer decision and one simulated receipt. Six distinct scripted staff identities used the API. |
+| [Submission-readiness rerun](readiness-live.json) | A separate live run of LC-001 on 21 November in Maastricht took 47.63 seconds across both revisions, with six real calls, three current signatures and one simulated receipt. |
 | [Specialist live rehearsal](department-rehearsal-live.json) | One case per specialist desk through approval. BRANE reported 57 cloud and 12 local-model calls. Three restricted desks recorded zero model calls. |
 | [Specialist routing dashboard](specialist-workflow.jpg) | Payments & Cash servicing a returned payment during an actual live run. |
 | [Editable payment request](request-intake.jpg) | The originating desk can enter a subject, payment rail, amount, currency, review date and supporting reference before submission. |
@@ -12,8 +15,8 @@
 | [Signed letter of credit](signed-letter-of-credit.jpg) | The live rehearsal shows three named desk findings and Eva Lin’s recorded approval of revision 2 of synthetic case LC-001 after Coverage supplied the invoice. |
 | [Merged BRANE client checks](brane-check-failure.csv) | Five faults repeated three times returned zero answer text. Three healthy controls returned a verified response. The observer checked each destination and port from the client process. |
 | [Network-denied outage](firewall-outage.json) | T5 in its official firewall-unavailable meaning. An independent Python audit hook denied DNS and IP socket operations. The bank attempted its policy lookup, submitted zero model requests and left the case unsealed. |
-| [Submission test worksheet](submission-tests.csv) | The five official scenarios and the team's five edge cases. Each row identifies the application, gateway or controlled-outage evidence. |
-| [Submission policy matrix](submission-policy-matrix.csv) | Eleven rules from Ilaria's legal worksheet with observed gateway behaviour and application controls. The legal-source column matches her source sheet. |
+| [Submission test worksheet](../../submission/MAIN_Five_Tests_Template.csv) | T1–T5 and E1–E5. T5 records check failure and E2 also covers the participant brief’s local-only T5. Each row identifies the application, gateway or outage observation. |
+| [Submission policy matrix](../../submission/MAIN_Policy_Matrix_Template.csv) | Eleven rules from Ilaria's legal worksheet with observed gateway behaviour and application controls. The legal-source column matches her source sheet. |
 | [Timed backup walkthrough](live-walkthrough.gif) | Seven Redwood browser captures from a separate live case, from desk entry through simulated issuance. |
 | [Fixture hold and retry checks](workflow-fixture.csv) | A compliance hold prevents approval. A stale revision fails. Concurrent requests and application restart preserve one receipt. |
 | [Fixture utility](agent-utility-fixture.json) | Two offline scenarios scored against the case answer key. |

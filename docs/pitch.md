@@ -7,9 +7,11 @@
 | 0:55–1:20 | Anastasios narrates, Nikita drives | LC-001, Agent reply and Request routing |
 | 1:20–2:20 | Matvei | Trust boundaries, model input, BRANE route and recorded results |
 | 2:20–2:45 | Ilaria | Breach-cost estimates, rehearsal timing and department reach |
-| 2:45–3:00 | Ilaria | Human approval |
+| 2:45–3:00 | Ilaria, Nikita drives | Eva makes the final decision on the live case |
 
 ## Script
+
+Nikita starts **Coverage → LC-001 → Run analysis** during the introduction. While Matvei presents the controls, complete the invoice revision and the three desk reviews. Return to Eva’s live approval form for the close. [Operator steps](demo-guide.md#walk-the-case)
 
 **0:00–0:30 · Why a bank needs this**
 
@@ -31,11 +33,11 @@
 >
 > If BRANE’s policy cannot be verified, the app stops before calling a model. In our rehearsal, KYC and Credit Risk had tasks run on BRANE’s local model. Three restricted desks used bank-side rules with zero model calls. People made every final decision.
 
-Use Matvei’s [trust boundaries](pitch/1_trust_boundaries.png), [model input](pitch/2_model_never_sees_case.png) and [egress](pitch/3_egress_fail_closed.png) slides. For the results, show the [security test worksheet](evidence/submission-tests.csv).
+Use Matvei’s [trust boundaries](pitch/1_trust_boundaries.png), [model input](pitch/2_model_never_sees_case.png) and [egress](pitch/3_egress_fail_closed.png) slides. For the results, show the [security test worksheet](../submission/MAIN_Five_Tests_Template.csv).
 
 **2:20–2:45 · Why it is worth doing**
 
-> IBM’s 2025 study estimated the average financial-sector breach at 5.56 million dollars. Across industries, heavy use of unauthorised AI was associated with 670,000 dollars more per breach. Avoiding one comparable incident could pay for years of operation. We also measured the work itself. Redwood prepared six cited drafts in about thirty seconds, and all 26 specialist workflows reached a signed outcome.
+> IBM’s 2025 study estimated the average financial-sector breach at 5.56 million dollars. Across industries, heavy use of unauthorised AI was associated with 670,000 dollars more per breach. Avoiding one comparable incident could pay for years of operation. In one run, Redwood prepared six cited drafts in thirty seconds. Our team estimates manual preparation took about a minute. All 26 specialist workflows reached a signed outcome.
 
 **2:45–3:00 · Close**
 
@@ -47,13 +49,15 @@ Use Matvei’s [trust boundaries](pitch/1_trust_boundaries.png), [model input](p
 
 **What does “local” mean for sensitive desks?** BRANE reported 12 local-model calls across ten workflows, including the KYC handover and the Credit & Counterparty Risk evidence and handover tasks. It reported 57 cloud calls across the specialist rehearsal. M&A, AML & Financial Crime and Regulatory Surveillance completed nine internal tasks with zero model calls. A bank-side rules task and a BRANE local-model call have distinct entries in the audit trail. [Per-task route and model](evidence/department-rehearsal-live.json)
 
-**What did you test on document text?** The security team sent synthetic document passages to the real hardened gateway. Some raw name variants escaped masking and some ordinary trade wording was over-masked. In the frozen comparison, one benign health-related scheduling note was refused intermittently. These results set limits on any future expansion to document drafting. The submitted case keeps source documents in the bank. [Frozen test results](https://github.com/m1ndl0ss/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md) · [Submission policy matrix](evidence/submission-policy-matrix.csv)
+**What did you test on document text?** The security team sent synthetic document passages to the real hardened gateway. Some raw name variants escaped masking and some ordinary trade wording was over-masked. In the frozen comparison, one benign health-related scheduling note was refused intermittently. These results set limits on any future expansion to document drafting. The submitted case keeps source documents in the bank. [Frozen test results](https://github.com/nickdatak/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md) · [Submission policy matrix](../submission/MAIN_Policy_Matrix_Template.csv)
 
-**What did the separate security review establish?** Across 30 checks of the final build, the team recorded 29 controls holding and one inconclusive result. The raw-firewall comparison is a different test set and its failures are reported separately. [Frozen security review](https://github.com/m1ndl0ss/OpenAIhackathon/blob/evidence-freeze-v1/docs/redteam_findings.md) · [Policy comparison](https://github.com/m1ndl0ss/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md)
+**What did the separate security review establish?** Across 30 checks of the final build, the team recorded 29 controls holding and one inconclusive result. The raw-firewall comparison is a different test set and its failures are reported separately. [Frozen security review](https://github.com/nickdatak/OpenAIhackathon/blob/evidence-freeze-v1/docs/redteam_findings.md) · [Policy comparison](https://github.com/nickdatak/OpenAIhackathon/blob/evidence-freeze-v1/evidence/REPORT.md)
 
 **How do you know what left the bank? What happens if the policy changes?** The bank observed its outgoing request bodies. All six were free of the tested private markers. Downstream routing is reported by BRANE’s headers. The adapter verifies the active policy digest before each call. In the controlled outage it attempted one policy lookup and sent zero model requests. [Live observation](evidence/submission-live.json) · [Adapter](../backend/brane_client.py) · [Outage trace](evidence/firewall-outage.json)
 
 **How does one incident pay for years of operation?** That is a conditional estimate. At an illustrative all-in cost of USD 100,000 a year, avoiding USD 300,000 of loss on one incident covers three years. The bank in the opening filing gave no loss figure. A pilot needs its own service cost, incident likelihood and estimate of how much loss Redwood could prevent. The USD 670,000 is a difference between study groups. [SEC filing](https://www.sec.gov/Archives/edgar/data/1605301/000160530126000021/cbfv-20260507.htm) · [Business case and assumptions](../SUBMISSION.md#business-case)
+
+**How did you compare with manual work?** The staff API recorded 15.852 and 13.702 seconds for the two revisions. The team reports that manual preparation took about twice as long, implying roughly 59 seconds for both. The per-revision manual figures are estimates. A second live run took 47.63 seconds. Human approval time is separate. [Readiness run](evidence/readiness-live.json) · [Comparison and limitations](../SUBMISSION.md#business-case)
 
 **Can a bank lawfully deploy it?** The submitted purpose is to prepare corporate reviews for people to decide. The agent does not score natural persons. For the proposed deployment with real personal data, the bank needs a DPIA, processor agreements, documented transfer safeguards and meaningful human review. Tokenisation reduces exposure and requires a recipient-specific identification assessment. [Legal position of Redwood](legal-position.md) · [Printable one-page brief](../output/pdf/redwood-legal-position.pdf)
 
