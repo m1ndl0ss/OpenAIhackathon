@@ -182,13 +182,13 @@ def recommendation(row, run, mode, s, role, status, next_action, p=None):
     if status == "on_hold":
         tone, title, guidance = "attention", "Resolve the open hold", next_action
     elif status == "ready_for_decision":
-        tone, title, guidance = "review", "Send for a human decision", next_action
+        tone, title, guidance = "review", "Desk signatures complete", next_action
     elif p:
         evidence = packets["evidence"]
         if evidence["missing_items"]:
             tone, title, guidance = "attention", "Verify the supporting record", evidence["summary"]
         else:
-            tone, title, guidance = "review", "Send for desk sign-off", evidence["summary"]
+            tone, title, guidance = "review", "Ready for desk sign-off", evidence["summary"]
     elif not within_mandate(s):
         tone, title = "attention", "Refer to a higher credit authority"
         guidance = "The requested credit exceeds the officer’s mandate. The mandated officer must handle the referral."
@@ -198,7 +198,7 @@ def recommendation(row, run, mode, s, role, status, next_action, p=None):
         tone, title = "attention", "Collect the supplier invoice"
         guidance = "Coverage should attach the invoice for the requested amount and currency before the desks sign."
     else:
-        tone, title = "review", "Send for desk sign-off"
+        tone, title = "review", "Ready for desk sign-off"
         guidance = "The invoice is on file. Trade Finance, Credit Risk and Compliance must each review their packet."
     return {"tone": tone, "title": title, "guidance": guidance}
 
@@ -380,8 +380,11 @@ def create_request(db, s, actor, to_desk, question, hold_id=None):
 
 
 def review(db, r, s, actor, body):
+    from .approvals import require_delivery
+
     on_packet(r, s, body)
     require_open(db, s)
+    require_delivery(db, r, s, actor, "review")
     desk = actor["role"]
     prior = active_reviews(db, s).get(desk)
     if body.expected_review_event_id != (prior["event_id"] if prior else None):
@@ -501,11 +504,14 @@ def add_invoice(db, r, s, actor, body):
 
 
 def decide(db, r, s, actor, body):
+    from .approvals import require_delivery
+
     on_packet(r, s, body)
     require_open(db, s)
     view = detail(db, r, s, actor)
     if view["status"] != "ready_for_decision":
         conflict("review_incomplete", "All three current desk clearances and no open holds are required.")
+    require_delivery(db, r, s, actor, "decision")
     if not within_mandate(s) and body.decision != "refer":
         conflict("mandate_exceeded", "Refer this case to a higher credit authority.")
     timestamp = now()

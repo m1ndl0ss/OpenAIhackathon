@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import department_case, departments, integrations, request_intake
+from . import approvals, department_case, departments, integrations, request_intake
 from .demo import FIXTURE, ROOT, settings
 from .store import ALL_ROLES, DESKS, ROLES, canonical, digest, event, grouped_assignments, identifier, initialize
 from .store import insert_case, now, snapshot, transaction
@@ -25,6 +25,7 @@ from .workflow import (
     decide,
     detail,
     issue,
+    on_packet,
     on_version,
     visible_run_analysis,
 )
@@ -211,6 +212,9 @@ def finish_run(path, case_id, run_id, actor):
             "run." + status,
             run["mode"] + " · " + run_id,
         )
+        if status == "sealed" and "request_input" not in current:
+            sealed, _ = record(db, case_id, actor)
+            approvals.deliver(db, sealed, current, "review", approvals.SERVICE)
 
 
 def mutate(request, actor, key, operation, case_id, body, handler, roles=ROLES, before_replay=None):
@@ -224,10 +228,12 @@ def mutate(request, actor, key, operation, case_id, body, handler, roles=ROLES, 
             require_role(actor, roles)
             if case_id:
                 p = departments.profile(s)
-                if (p and operation not in ("run", "department_action")) or (not p and operation == "department_action"):
+                if (p and operation not in ("run", "department_action", "send_for_review")) or (not p and operation == "department_action"):
                     unavailable()
                 if operation == "run":
                     require_role(actor, (departments.analyst(p), departments.approver(p)) if p else ("coverage", "final_officer"))
+                if operation == "send_for_review":
+                    require_role(actor, (approvals.roles(p)[0],))
             signed_action = isinstance(body, Signing) or (isinstance(body, DepartmentAction) and body.action != "verify")
             if signed_action and r["packet_hash"] and r["mode"] != request.app.state.mode:
                 conflict("mode_mismatch", "This packet belongs to a different analysis mode.")
@@ -243,6 +249,9 @@ def mutate(request, actor, key, operation, case_id, body, handler, roles=ROLES, 
                     conflict("conflicting_replay", "This action key was already used with different inputs.")
                 return JSONResponse(json.loads(prior["response"]), prior["status"])
             status, response = handler(db, r, s)
+            if (isinstance(body, Review) and body.disposition == "clear"
+                    or isinstance(body, DepartmentAction) and body.action == "sign"):
+                approvals.route_final_if_ready(db, r, s, actor, request.app.state.mode)
             db.execute(
                 "INSERT INTO retries VALUES(?,?,?,?,?,?,?)", (*args, body_hash, status, canonical(response))
             )
@@ -273,6 +282,7 @@ def create_app(db_path=None, principals=None, *, mode=None):
         initialize(path, people)
         app.state.path, app.state.principals = path, people
         app.state.assignments = grouped_assignments(people)
+        app.state.staff_names = {actor["id"]: actor["name"] for actor in people.values()}
         app.state.demo_sessions = {}
         if deployment_mode == "fixture" and os.getenv("CLEARANCE_DEMO_LOGIN") == "1":
             enable_demo_desks(app)
@@ -361,7 +371,8 @@ def create_app(db_path=None, principals=None, *, mode=None):
             if actor:
                 group = request.app.state.assignments[actor["customer_ref"]]
                 if all(role in group for role in request_intake.members(p)):
-                    forms.append(request_intake.form(p, actor["customer_ref"], group))
+                    forms.append({**request_intake.form(p, actor["customer_ref"], group),
+                                  **approvals.contacts(p, group, request.app.state.staff_names)})
         return forms
 
     @app.post(PREFIX + "/intake")
@@ -391,14 +402,21 @@ def create_app(db_path=None, principals=None, *, mode=None):
                   "workflow_id", "definition_version", "department", "workflow_title", "case_title")
         result = []
         with transaction(request.app.state.path) as db:
+            inbox = approvals.inbox(db, actor, request.app.state.mode)
             for row in db.execute(
-                "SELECT id,assignments FROM cases WHERE customer=? ORDER BY id", (actor["customer_ref"],)
+                "SELECT id,assignments,EXISTS(SELECT 1 FROM approval_deliveries WHERE case_id=c.id "
+                "AND revision=c.revision AND stage='review') AS sent FROM cases c WHERE customer=? ORDER BY id",
+                (actor["customer_ref"],)
             ):
                 if integrations.is_assigned(actor, json.loads(row["assignments"])):
                     r, s = record(db, row["id"], actor)
                     p = departments.profile(s)
                     view = department_case.summary(db, r, s, p, actor["role"]) if p else detail(db, r, s, actor, request.app.state.mode)
-                    result.append({k: view[k] for k in fields})
+                    view["status"] = approvals.display_status(view["status"], row["sent"])
+                    task = inbox.get(row["id"])
+                    if task == "decision" and view["status"] != "ready_for_decision":
+                        task = None
+                    result.append({**{k: view[k] for k in fields}, "my_approval": task})
         # Keep the original walkthrough first for its six staff. Specialists start in their own queue.
         return sorted(result, key=lambda case: (case["workflow_id"] != departments.TRADE, case["case_id"]))
 
@@ -449,7 +467,15 @@ def create_app(db_path=None, principals=None, *, mode=None):
     def case(request: Request, case_id: str, actor=Depends(authenticated)):
         with transaction(request.app.state.path) as db:
             r, s = record(db, case_id, actor)
-            return detail(db, r, s, actor, request.app.state.mode)
+            view = detail(db, r, s, actor, request.app.state.mode)
+            return approvals.present(db, r, s, view, actor, request.app.state.staff_names)
+
+    @app.post(CASE + "/desk-review")
+    def send_for_review(request: Request, case_id: str, body: Signing,
+                        actor=Depends(authenticated), key=Depends(retry_key)):
+        return mutate(request, actor, key, "send_for_review", case_id, body,
+                      lambda db, r, s: approvals.submit(db, r, s, actor), ALL_ROLES,
+                      before_replay=lambda db, r, s: on_packet(r, s, body))
 
     @app.get(CASE + "/audit")
     def audit(request: Request, case_id: str, actor=Depends(authenticated)):

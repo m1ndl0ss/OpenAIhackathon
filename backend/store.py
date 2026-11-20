@@ -151,6 +151,13 @@ CREATE TABLE IF NOT EXISTS reviews (
     reason TEXT NOT NULL, packet_hash TEXT NOT NULL, supersedes TEXT,
     FOREIGN KEY(case_id,revision) REFERENCES revisions(case_id,revision)
 );
+CREATE TABLE IF NOT EXISTS approval_deliveries (
+    case_id TEXT NOT NULL, revision INTEGER NOT NULL, packet_hash TEXT NOT NULL,
+    stage TEXT NOT NULL CHECK(stage IN ('review','decision')), desk TEXT NOT NULL,
+    recipient_id TEXT NOT NULL, sent_at TEXT NOT NULL,
+    PRIMARY KEY(case_id,revision,stage,desk),
+    FOREIGN KEY(case_id,revision) REFERENCES revisions(case_id,revision)
+);
 CREATE TABLE IF NOT EXISTS holds (
     hold_id TEXT PRIMARY KEY, case_id TEXT NOT NULL REFERENCES cases(id), revision INTEGER NOT NULL,
     desk TEXT NOT NULL, reason_code TEXT NOT NULL, resolved_event TEXT
@@ -214,6 +221,8 @@ def insert_case(db, s, assignments, actor):
 
 
 def initialize(path, principals):
+    from .approvals import restore_existing
+
     groups = grouped_assignments(principals)
     path = Path(path)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -233,3 +242,4 @@ def initialize(path, principals):
                 if not db.execute("SELECT 1 FROM cases WHERE id=?", (s["case_id"],)).fetchone():
                     owner = departments.analyst(departments.profile(s))
                     insert_case(db, s, members, {"id": members[owner], "role": owner})
+        restore_existing(db)

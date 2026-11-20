@@ -5,11 +5,12 @@ import './routing-diagram.css'
 type Task = { desk: string; title: string; icon: Icon }
 type Props = { source: string; organizer: string; tasks: Task[]; states: string[]; active?: number; reduced: boolean }
 type Point = { x: number; y: number }
+export const replayStepMs = 2350
 
 function MovingPacket({ path }: { path: string }) {
   const motion = useRef<SVGAnimateMotionElement>(null)
   useEffect(() => { motion.current?.beginElement() }, [path])
-  return <g><animateMotion ref={motion} begin="indefinite" dur="1.55s" path={path} repeatCount="indefinite" />
+  return <g><animateMotion ref={motion} begin="indefinite" dur={`${replayStepMs - 50}ms`} path={path} repeatCount="indefinite" />
     <circle r="8" fill="#f45b31" opacity=".17" /><circle r="4.3" fill="#dc4b24" /></g>
 }
 

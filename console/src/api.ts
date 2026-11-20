@@ -10,6 +10,7 @@ export interface Staff {
 }
 
 export interface Summary {
+  my_approval?: 'review' | 'decision' | null
   case_id: string
   customer_ref: string
   revision: number
@@ -22,6 +23,18 @@ export interface Summary {
   case_title: string
   amount_minor: number | null
   currency: string | null
+}
+
+export type StaffContact = Pick<Staff, 'id' | 'name' | 'role'>
+export interface ApprovalRecipient extends StaffContact {
+  status: 'not_sent' | 'awaiting' | 'signed' | 'hold' | 'waiting' | 'approve' | 'decline' | 'refer'
+  sent_at: string | null
+}
+export interface HumanApproval {
+  reviewers: ApprovalRecipient[]
+  final: ApprovalRecipient
+  can_send: boolean
+  stage: 'preparing' | 'other_mode' | 'ready' | 'review' | 'decision' | 'closed'
 }
 
 export interface Review {
@@ -81,6 +94,7 @@ export interface AnalysisRun {
   } | null
 }
 export interface FileBase extends Summary {
+  human_approval?: HumanApproval
   request_input?: RequestValues | null
   recommendation?: { tone: 'review' | 'attention'; title: string; guidance: string } | null
   packet_hash: string | null
@@ -149,6 +163,8 @@ export interface RequestType {
   owner_role: string
   desk_id: string
   decision_desk: string
+  reviewers: StaffContact[]
+  final: StaffContact
   context_label: string
   source_label: string
   date_label: string
@@ -225,7 +241,7 @@ const labels: Record<string, string> = {
   evidence: 'Evidence review', policy: 'Policy review', handover: 'Handover draft', completed: 'Completed',
   coverage: 'Coverage', trade_finance: 'Trade Finance', credit_risk: 'Credit Risk', compliance: 'Compliance',
   final_officer: 'Mandated officer', operations: 'Operations', issued_simulated: 'Issued · simulated',
-  preparing: 'Preparing file', in_review: 'In review', on_hold: 'On hold', ready_for_decision: 'Ready for decision',
+  preparing: 'Preparing file', ready_for_review: 'Ready to send', in_review: 'In review', on_hold: 'On hold', ready_for_decision: 'Ready for decision',
   clear: 'Cleared', hold: 'On hold', unknown: 'Unknown', MANUAL_REVIEW: 'Manual review',
   DOCUMENT_REQUIRED: 'Invoice required', FACILITY_EXCEPTION: 'Facility exception', CHECKS_COMPLETE: 'Checks complete',
 }

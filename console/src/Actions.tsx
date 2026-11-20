@@ -22,7 +22,7 @@ function ReviewForm({ file, staff, busy, submit }: Controls) {
   const requiresInvoice = ownHolds.some(hold => hold.reason_code === 'DOCUMENT_REQUIRED')
   const references = requiresInvoice ? (file.invoice_ref ? [file.invoice_ref] : []) : file.sources.map(item => item.ref)
 
-  return <form className="action-form" onSubmit={async event => {
+  return <form id="approval-action" tabIndex={-1} className="action-form" onSubmit={async event => {
     event.preventDefault()
     if (!choice) return
     const body = {
@@ -35,7 +35,7 @@ function ReviewForm({ file, staff, busy, submit }: Controls) {
     await submit('/reviews/' + staff.role, body, 'Your desk finding was recorded.')
   }}>
     <h2>Your desk finding</h2>
-    <p className="muted">{label(staff.role)} signs revision {file.revision}.</p>
+    <p className="muted">{staff.name} · {label(staff.role)} · Revision {file.revision}</p>
     <fieldset disabled={busy}><legend>Disposition</legend>
       <div className="options">
         {['clear', 'hold'].map(value => <label key={value}><input type="radio" name="finding" value={value} required checked={choice === value} onChange={() => setChoice(value)} />{value === 'clear' ? 'Clear' : 'Hold'}</label>)}
@@ -57,16 +57,16 @@ function ReviewForm({ file, staff, busy, submit }: Controls) {
   </form>
 }
 
-function DecisionForm({ file, busy, submit }: Controls) {
+function DecisionForm({ file, staff, busy, submit }: Controls) {
   const [decision, setDecision] = useState('')
   const [reason, setReason] = useState('')
   const overLimit = !file.within_mandate
-  return <form className="action-form" onSubmit={async e => {
+  return <form id="approval-action" tabIndex={-1} className="action-form" onSubmit={async e => {
     e.preventDefault()
     await submit('/decision', { ...signed(file), decision, reason: reason.trim() }, 'Final decision recorded.')
   }}>
     <h2>Final decision</h2>
-    <p className="muted">Per-instrument mandate · {money(file.mandate_minor, file.mandate_currency)}</p>
+    <p className="muted">{staff.name} · Mandate {money(file.mandate_minor, file.mandate_currency)}</p>
     <label>Decision<select required value={decision} onChange={e => setDecision(e.target.value)}>
       <option value="">Choose a decision</option>
       {(overLimit ? ['refer'] : ['approve', 'decline', 'refer']).map(value => <option key={value} value={value}>{label(value)}</option>)}

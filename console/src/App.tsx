@@ -2,15 +2,16 @@ import SignIn, { type PreferredDesk } from './SignIn'
 import { Brand, DeskIcon } from './Brand'
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ActionPanel, Inbox } from './Actions'
+import { ApprovalInbox, ApprovalPanel } from './Approvals'
 import PacketList from './PacketList'
 import DepartmentWorkspace from './DepartmentWorkspace'
 import RequestDashboard from './RequestDashboard'
 import RequestComposer, { SubmittedDetails } from './RequestComposer'
 import {
   ArrowsClockwiseIcon, ArrowsLeftRightIcon, ChatCircleTextIcon, CirclesFourIcon,
-  ClockCounterClockwiseIcon, FilePlusIcon, FolderOpenIcon, ListBulletsIcon, SignOutIcon,
+  ClockCounterClockwiseIcon, FilePlusIcon, FolderOpenIcon, ListBulletsIcon, SignOutIcon, TrayIcon,
 } from '@phosphor-icons/react'
-import { bank, BankError, caseLabel, deskName, desks, label, money, textError, type AuditEvent, type CaseFile, type Staff, type StaffFile, type Submit, type Summary } from './api'
+import { bank, BankError, caseLabel, deskName, desks, label, money, textError, type ApprovalRecipient, type AuditEvent, type CaseFile, type Staff, type StaffFile, type StaffSession, type Submit, type Summary } from './api'
 
 const sessionKey = 'clearance.staff-token'
 const selectedKey = 'clearance.selected-case'
@@ -114,11 +115,12 @@ function CaseContents({ file, audit, staff, submit, busy }: { file: CaseFile; au
   </>
 }
 
-type WorkspaceView = 'dashboard' | 'case'
+type WorkspaceView = 'dashboard' | 'case' | 'approvals'
 
-function Workspace({ token, staff, end, initialView, initialCase, compose }: {
+function Workspace({ token, staff, end, initialView, initialCase, compose, reviewDesk, focusAction }: {
   token: string; staff: Staff; end: (nextView?: WorkspaceView, preferred?: PreferredDesk) => void; initialView: WorkspaceView
   initialCase: string; compose: (workflow: string, caseId: string, view: WorkspaceView) => void
+  reviewDesk: (session: StaffSession, caseId: string) => void; focusAction: boolean
 }) {
   const [view, setView] = useState<WorkspaceView>(initialView)
   const [syncError, setSyncError] = useState('')
@@ -131,6 +133,8 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [visit, setVisit] = useState(focusAction ? 1 : 0)
+  const focusedVisit = useRef(0)
   const sequence = useRef(0)
   const lock = useRef(false)
   const retryKeys = useRef(new Map<string, string>())
@@ -145,6 +149,7 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
       const [detail, history] = target ? await Promise.all([bank<StaffFile>(token, path), bank<AuditEvent[]>(token, path + '/audit')]) : [null, []]
       if (request !== sequence.current) return
       setSyncError(''); setQueue(cases); setSelected(target); tabValue(selectedKey, target); setFile(detail); setAudit(history)
+      return detail
     } catch (err) {
       if (request !== sequence.current) return
       if (err instanceof BankError && err.status === 401) { end(); return }
@@ -158,8 +163,17 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
   useEffect(() => { void load(initialCase || tabValue(selectedKey) || undefined); return () => { sequence.current++ } }, [load, initialCase])
 
   useEffect(() => {
+    if (!loading && file && view === 'case' && visit > focusedVisit.current) {
+      focusedVisit.current = visit
+      const action = document.getElementById('approval-action')
+      action?.focus({ preventScroll: true })
+      action?.scrollIntoView({ block: 'center' })
+    }
+  }, [visit, file, loading, view])
+
+  useEffect(() => {
     const pending = file?.last_run?.status === 'pending'
-    if (loading || busy || (!pending && view !== 'dashboard')) return
+    if (loading || busy || (!pending && view === 'case')) return
     let stopped = false
     let timer: number
     const poll = async () => {
@@ -181,8 +195,12 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
     try {
       await bank(token, path, body, key)
       retryKeys.current.delete(identity)
-      await load(selected)
-      setNotice(message)
+      const updated = await load(selected)
+      const plan = updated?.human_approval
+      if (plan?.stage === 'decision' && file?.human_approval?.stage !== 'decision') {
+        setNotice('Desk review signed. Sent to ' + plan.final.name + ' for final approval.')
+        document.querySelector('.approval-panel')?.scrollIntoView({ block: 'start' })
+      } else setNotice(message)
       return true
     } catch (err) {
       if (err instanceof BankError && err.status === 401) { end(); return false }
@@ -193,6 +211,43 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
   }
   const workflows = new Map(queue.map(item => [item.workflow_id, item.workflow_title]))
   const filteredQueue = workflowFilter ? queue.filter(item => item.workflow_id === workflowFilter) : queue
+  const myApprovals = queue.filter(item => item.my_approval)
+  function openReview(caseId: string) {
+    setNotice(''); setView('case'); setVisit(n => n + 1)
+    if (caseId !== selected) void load(caseId)
+  }
+  async function openRecipient(person: ApprovalRecipient) {
+    if (lock.current || !file) return
+    if (person.id === staff.id) { openReview(file.case_id); return }
+    if (!staff.desk_picker) return
+    lock.current = true; setBusy(true); setError('')
+    try {
+      const next = await bank<StaffSession>(null, '/demo-session', {desk_id: person.id})
+      reviewDesk(next, file.case_id)
+    } catch (err) { setError(textError(err)) }
+    finally { lock.current = false; setBusy(false) }
+  }
+  const controls = { staff, submit, busy: busy || loading || !!syncError }
+  const stage = file?.human_approval?.stage
+  const approval = file && stage && stage !== 'preparing' && stage !== 'other_mode'
+    ? <ApprovalPanel file={file} open={openRecipient} {...controls} /> : null
+  let content: ReactNode
+  if (view === 'approvals') {
+    content = loading ? <p role="status">Loading your inbox…</p>
+      : !error && <ApprovalInbox items={myApprovals} open={openReview} staff={staff} busy={controls.busy} />
+  } else if (!file) {
+    content = loading ? <p className="card muted" role="status">Loading case workspace…</p>
+      : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>
+  } else if (view === 'dashboard') {
+    content = <RequestDashboard key={file.case_id} file={file} audit={audit} queue={filteredQueue} approval={approval}
+      open={() => setView('case')} select={id => { setNotice(''); void load(id) }} {...controls} />
+  } else {
+    const viewKey = file.case_id + ':' + visit
+    content = <>{approval}<SubmittedDetails file={file} />
+      {file.department_case
+        ? <DepartmentWorkspace key={viewKey} file={file} history={<History audit={audit} file={file} />} {...controls} />
+        : <CaseContents key={viewKey} file={file} audit={audit} {...controls} />}</>
+  }
   let handoff: PreferredDesk | undefined
   if (file?.department_case) {
     const meta = file.department_case
@@ -209,6 +264,7 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
           <button className="new-request-button" disabled={busy} onClick={() => compose(file?.workflow_id || '', selected, view)}><FilePlusIcon size={19} />New request</button>}
         <button aria-current={view === 'dashboard' ? 'page' : undefined} onClick={() => setView('dashboard')}><CirclesFourIcon size={19} weight="duotone" />Agent dashboard</button>
         <button aria-current={view === 'case' ? 'page' : undefined} onClick={() => setView('case')}><FolderOpenIcon size={19} weight="duotone" />Case workspace</button>
+        <button aria-current={view === 'approvals' ? 'page' : undefined} onClick={() => { setNotice(''); setView('approvals'); void load(selected) }}><TrayIcon size={19} weight="duotone" />My approvals <span className="inbox-count">{myApprovals.length}</span></button>
       </nav>
       <div className="sidebar-cases"><div className="queue-head"><h2>Assigned cases</h2><span>{queue.length}</span></div>
       {workflows.size > 1 && <label className="queue-filter">Workflow<select value={workflowFilter} onChange={e => {
@@ -216,15 +272,14 @@ function Workspace({ token, staff, end, initialView, initialCase, compose }: {
         const next=queue.find(item => item.workflow_id === id)
         if (id && next && file?.workflow_id !== id) {setNotice(''); void load(next.case_id)}
       }}><option value="">All assigned workflows</option>{[...workflows].map(([id,title])=><option key={id} value={id}>{title}</option>)}</select></label>}
-      <nav aria-label="Assigned cases">{filteredQueue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); void load(item.case_id) }}>
+      <nav aria-label="Assigned cases">{filteredQueue.map(item => <button disabled={busy} aria-current={item.case_id === selected ? 'true' : undefined} className={'queue-item ' + (item.case_id === selected ? 'selected' : '')} key={item.case_id} onClick={() => { setNotice(''); if (view === 'approvals') setView('case'); void load(item.case_id) }}>
         <strong title={item.case_id}>{caseLabel(item.case_id)}</strong><span>{item.case_title || item.customer_ref}</span><small>{label(item.status)} · Rev. {item.revision}</small>
       </button>)}</nav>
       </div>
     </aside><main className="case-main">
-      <div className="toolbar"><span>{file?.department || 'Corporate banking'} <i>/</i> {view === 'dashboard' ? 'Dashboard' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><ArrowsClockwiseIcon size={15} />Refresh</button></div>
+      <div className="toolbar"><span>{view === 'approvals' ? staff.name : file?.department || 'Corporate banking'} <i>/</i> {view === 'dashboard' ? 'Dashboard' : view === 'approvals' ? 'My approvals' : 'Case workspace'}</span><button className="refresh-button" disabled={busy || loading} onClick={() => {setNotice(''); void load(selected)}}><ArrowsClockwiseIcon size={15} />Refresh</button></div>
       {error && <Notice danger>{error}</Notice>}{syncError && <Notice>{syncError}</Notice>}{notice && <Notice>{notice}</Notice>}
-      {file && view === 'case' && <SubmittedDetails file={file} />}
-      {file ? view === 'dashboard' ? <RequestDashboard key={file.case_id} file={file} audit={audit} queue={filteredQueue} staff={staff} busy={busy || loading || !!syncError} submit={submit} open={() => setView('case')} select={id => { setNotice(''); void load(id) }} /> : file.department_case ? <DepartmentWorkspace key={file.case_id} file={file} staff={staff} busy={busy || loading} submit={submit} history={<History audit={audit} file={file} />} /> : <CaseContents key={file.case_id} file={file} audit={audit} staff={staff} busy={busy || loading} submit={submit} /> : loading ? <p className="card muted" role="status">Loading case workspace…</p> : !error && <section className="card empty"><h1>No assigned cases</h1><p>Your assigned work will appear here.</p></section>}
+      {content}
     </main></div></div>
 }
 
@@ -237,9 +292,11 @@ export default function App() {
   const [preferred, setPreferred] = useState<PreferredDesk>()
   const [composing, setComposing] = useState<string | null>(null)
   const [initialCase, setInitialCase] = useState('')
+  const [focusAction, setFocusAction] = useState(false)
   const end = useCallback((nextView: WorkspaceView = 'dashboard', preferredDesk?: PreferredDesk) => {
     setPreferred(preferredDesk)
     setInitialCase('')
+    setFocusAction(false)
     setInitialView(nextView)
     tabValue(sessionKey, null)
     setSaved(null); setRestoreError(''); setSession(null)
@@ -262,10 +319,13 @@ export default function App() {
   </section></div></main>
   if (composing !== null) return <RequestComposer preferred={composing} session={session} cancel={() => setComposing(null)} created={(owner, caseId) => {
     tabValue(sessionKey, owner.token); tabValue(selectedKey, caseId)
-    setSession(owner); setInitialCase(caseId); setInitialView('dashboard'); setComposing(null); window.scrollTo(0, 0)
+    setSession(owner); setInitialCase(caseId); setFocusAction(false); setInitialView('dashboard'); setComposing(null); window.scrollTo(0, 0)
   }} />
-  return session ? <Workspace {...session} initialCase={initialCase} initialView={initialView} end={end} compose={(workflow, caseId, view) => {
-    setInitialCase(caseId); setInitialView(view); setComposing(workflow)
+  return session ? <Workspace key={session.staff.id} {...session} initialCase={initialCase} initialView={initialView} end={end} focusAction={focusAction} reviewDesk={(next, caseId) => {
+    tabValue(sessionKey, next.token); tabValue(selectedKey, caseId)
+    setSession(next); setInitialCase(caseId); setInitialView('case'); setFocusAction(true)
+  }} compose={(workflow, caseId, view) => {
+    setFocusAction(false); setInitialCase(caseId); setInitialView(view); setComposing(workflow)
   }} /> : <SignIn preferred={preferred} compose={() => setComposing('')} start={(staff, token) => {
     tabValue(sessionKey, token); setSession({ staff, token })
   }} />

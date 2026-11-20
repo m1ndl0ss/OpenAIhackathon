@@ -16,7 +16,7 @@ if (curtain) {
     listeners.abort()
     window.clearTimeout(fallback)
   }
-  const fallback = window.setTimeout(dismiss, 2250)
+  const fallback = window.setTimeout(dismiss, 3000)
   curtain.addEventListener('animationend', event => {
     if (event.target === curtain) dismiss()
   }, { signal: listeners.signal })

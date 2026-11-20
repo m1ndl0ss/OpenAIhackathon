@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   PulseIcon,
   ArrowDownLeftIcon,
@@ -7,7 +7,6 @@ import {
   CpuIcon,
   BriefcaseIcon,
   ChartBarIcon,
-  CheckIcon,
   RadioButtonIcon,
   ClipboardTextIcon,
   ClockIcon,
@@ -26,7 +25,6 @@ import {
   WarningCircleIcon,
 } from '@phosphor-icons/react'
 import {
-  desks,
   caseLabel,
   label,
   money,
@@ -37,7 +35,7 @@ import {
   type Summary,
   type Submit,
 } from './api'
-import RoutingDiagram from './RoutingDiagram'
+import RoutingDiagram, { replayStepMs } from './RoutingDiagram'
 import './tracker.css'
 
 const tradeTasks = [
@@ -73,6 +71,8 @@ function eventName(action: string) {
     'run.superseded': 'Run superseded',
     'review.hold': 'Desk placed hold',
     'review.clear': 'Desk signed clear',
+    'approval.review_sent': 'Packet delivered to desk reviewers',
+    'approval.decision_sent': 'Request delivered to final approver',
     'evidence.attached': 'Invoice attached',
     'request.created': 'Desk request sent',
     'request.answered': 'Desk request answered',
@@ -111,7 +111,7 @@ function RouteMap({ file, audit }: { file: StaffFile; audit: AuditEvent[] }) {
   }, [run?.run_id, run?.status, run?.mode, reduced, preview])
   useEffect(() => {
     if (frame === null) return
-    const timeout = window.setTimeout(() => setFrame(frame + 1 < steps.length ? frame + 1 : null), 1600)
+    const timeout = window.setTimeout(() => setFrame(frame + 1 < steps.length ? frame + 1 : null), replayStepMs)
     return () => window.clearTimeout(timeout)
   }, [frame, steps.length])
   const states = tasks.map((task) => {
@@ -202,6 +202,7 @@ type Props = {
   open: () => void
   select: (id: string) => void
   submit: Submit
+  approval: ReactNode
 }
 
 function RequestResult({ file }: { file: StaffFile }) {
@@ -214,17 +215,18 @@ function RequestResult({ file }: { file: StaffFile }) {
   const Icon = pending ? ClockIcon : attention ? WarningCircleIcon : ArrowCircleUpRightIcon
   const amount = file.request_input?.amount_minor ?? file.amount_minor
   const currency = file.request_input?.currency || file.currency
+  const reviewing = file.human_approval?.stage === 'review' && result?.tone === 'review'
   return <section className={'request-result ' + (pending ? 'processing' : attention ? 'attention' : 'review')} role="status">
     <span className="result-symbol"><Icon size={32} weight="duotone" /></span>
     <div className="result-body"><span className="result-label">{result ? 'Organizer recommendation' : pending ? 'Request received' : 'Organizer update'}</span>
-      <h2>{result?.title || (pending ? 'Preparing your review packet' : runLabels[stage!] || 'Analysis stopped')}</h2>
+      <h2>{reviewing ? 'In human review' : result?.title || (pending ? 'Preparing your review packet' : runLabels[stage!] || 'Analysis stopped')}</h2>
       <p>{result?.guidance || (pending ? 'Follow the handoffs below while the agents check the file.' : 'This run produced no current recommendation. Open the case to review its status.')}</p>
       <div className="result-context"><span title={file.case_id}>{caseLabel(file.case_id)}</span><span>{file.request_input?.subject || file.workflow_title}</span>
         {currency && amount != null && <span>{money(amount, currency)}</span>}</div>
     </div></section>
 }
 
-export default function RequestDashboard({ file, staff, queue, audit, busy, open, select, submit }: Props) {
+export default function RequestDashboard({ file, staff, queue, audit, busy, open, select, submit, approval }: Props) {
   const stats = [
     { name: 'Assigned requests', value: queue.length, icon: StackIcon },
     {
@@ -242,6 +244,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
   const incoming = audit.find((e) => e.action === 'case.opened')
   const history = [...audit].reverse()
   const [allEvents, setAllEvents] = useState(false)
+  const route = <RouteMap key={file.case_id + file.revision} file={file} audit={audit} />
   return (
     <div className="tracker">
       <div className="tracker-title">
@@ -257,6 +260,8 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
         </button>
       </div>
       <RequestResult file={file} />
+      {approval}
+      {approval && route}
       <div className="tracker-summary">
         <div className="tracker-stats">
           {stats.map((s) => (
@@ -297,7 +302,7 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
           )}
         </div>
       </div>
-      <RouteMap key={file.case_id + file.revision} file={file} audit={audit} />
+      {!approval && route}
       <div className="tracker-lower">
         <div className="tracker-stack">
           <section className="track-panel">
@@ -335,42 +340,9 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
               </p>
             )}
           </section>
-          <section className="track-panel">
-            <div className="panel-title">
-              <div className="track-heading">
-                <ShieldCheckIcon size={18} />
-                <h2>Human review</h2>
-              </div>
-              <small>Revision {file.revision}</small>
-            </div>
-            {(file.department_case?.reviewers || desks).map((d) => {
-              const finding = file.reviews.find((r) => r.desk === d)
-              const disposition = file.holds.some((h) => h.desk === d)
-                ? 'hold'
-                : (finding?.disposition ?? 'pending')
-              return (
-                <div className="desk-disposition" key={d}>
-                  {deskName(file, d)}
-                  <span className={'pill ' + disposition}>
-                    {disposition === 'clear' && <CheckIcon size={12} />} {label(disposition)}
-                  </span>
-                </div>
-              )
-            })}
-            {file.requests.length > 0 && (
-              <div className="visible-requests">
-                <h3>Desk requests</h3>
-                {file.requests.map((r) => (
-                  <p key={r.request_id}>
-                    <span>
-                      {label(r.from_desk)} → {label(r.to_desk)}
-                    </span>
-                    <small>{label(r.status)}</small>
-                  </p>
-                ))}
-              </div>
-            )}
-          </section>
+          {file.requests.length > 0 && <section className="track-panel visible-requests"><h3>Desk requests</h3>
+            {file.requests.map(r => <p key={r.request_id}><span>{label(r.from_desk)} → {label(r.to_desk)}</span><small>{label(r.status)}</small></p>)}
+          </section>}
         </div>
         <section className="track-panel feed">
           <div className="panel-title">

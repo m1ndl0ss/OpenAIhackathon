@@ -1,4 +1,4 @@
-#launch-curtain { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; pointer-events: none; color: #263b2f; background: #f7f8f0; animation: launch-away 440ms 1650ms ease-in-out both; }
+#launch-curtain { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; pointer-events: none; color: #263b2f; background: #f7f8f0; animation: launch-away 440ms 2400ms ease-in-out both; }
 .launch-signature { display: grid; justify-items: center; gap: 15px; }
 .launch-world { position: relative; width: clamp(208px, 29vw, 300px); aspect-ratio: 286 / 206; }
 .launch-world > * { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }

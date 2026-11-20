@@ -11,7 +11,13 @@ make brane-check
 make run-live
 ```
 
-Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount. **Submit request** starts the organizer and opens its live routing diagram. The sealed packet produces a recommendation for the human reviewers. For the seeded letter-of-credit walkthrough, choose **Coverage → LC-001 → Run analysis**. **Open case** shows the file and **Switch desk** keeps that case selected. Each fresh rehearsal has its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
+Open the local rehearsal and click **New request**. Choose **Payment exception triage**, click **Fill demo example** and edit the payment amount.
+
+1. **Submit request** starts the organizer and opens the routing diagram. Its recommendation appears above the Human approval panel.
+2. **Send for desk review** delivers the packet to Sam Reed in Payments and Amir Cole in Operations. Use **Review request** for your own desk or **Open demo desk** for the other reviewer. Each person can find the request in **My approvals**, inspect the evidence and sign or place a hold.
+3. With both signatures and checks complete, the panel shows that the request has arrived in Ari Fox’s inbox. Open Ari’s desk and record the final decision. The case history identifies who signed and who approved.
+
+For the preloaded letter-of-credit walkthrough, choose **Coverage → LC-001 → Run analysis**. Sealing a preloaded case sends it to its reviewers automatically. Each fresh live rehearsal has its own temporary database. For an offline walkthrough use `make run` and port 8000. [Live rehearsal](http://127.0.0.1:8001) · [Offline console](http://127.0.0.1:8000) · [Full click-through guide](README.md#walk-the-case)
 
 ## What to show the jury
 

@@ -4,7 +4,7 @@ Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases
 
 **Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
 
-![A submitted Redwood payment request, its organizer recommendation and the three review agents](docs/evidence/request-result.jpg)
+![A submitted payment request with its recommendation, named desk reviewers and named final approver](docs/evidence/request-result.jpg)
 
 ## Run from a fresh clone
 
@@ -19,15 +19,17 @@ Open the console and click **New request**. Choose one of 27 workflows. **Fill d
 
 The routing diagram follows the request from the originating desk through the organizer to three agents. A sealed packet produces a recommendation. Green calls for human review and amber flags a next step such as collecting an invoice. **Replay run** follows the recorded handoffs. For an existing unrun case, use **Preview route** or **Run analysis**. [Recorded handoffs](docs/evidence/request-routing.gif)
 
-**Open case** takes you to the desk’s actions and evidence. Use **Switch desk** to continue as another employee. Both the offline console and the isolated live rehearsal support one-click desk entry. A persistent staff deployment uses individual tokens.
+Click **Send for desk review** under the recommendation. Each named reviewer receives the current revision in **My approvals**. For a payment exception, Sam Reed and Amir Cole each review and sign. Once both have signed and the evidence checks pass, Redwood sends the request to **Ari Fox** for a final decision. Ari can approve the request or refer it for further review. The case shows each signature and who still needs to act.
+
+In the local demo, **Open demo desk** next to a name takes you directly to that person’s action on the same case. **My approvals** shows their inbox, and **Open case** shows the evidence. A persistent staff deployment uses individual tokens. The preloaded walkthrough cases reach their reviewers automatically when you run analysis.
 
 Setup installs the dependencies, builds the React console, creates the six original demo identities and two identities per specialist desk, seeds SQLite and prepares evidence worksheets. An existing checkout can run `make seed` and `make build`, then restart its server to pick up the new directory. Setup keeps existing cases, logins and worksheet edits. The default mode runs entirely on local fixtures after installation. The console uses Neue Haas Grotesk Display when installed and bundles Inter, IBM Plex Mono and its icons for offline use. [Bundled font and icon licenses](console/public/design-licenses.txt)
 
 ## Try a specialist desk
 
 1. Choose **Corporate banking → Payments & Cash**. The analyst’s dashboard opens with two cases. Select **PAY-001** and click **Run analysis**. The routing map follows evidence review, policy review and the handover draft.
-2. Click **Open case**. Expand the evidence packet to inspect the return-match record. Enter a reason and click **Sign desk review**. Use **Switch desk → Operations** to sign the assigned Operations review on the same case. The picker suggests the next required reviewer.
-3. Click **Switch desk** again. The picker selects the Payments approver. Open that desk, enter a reason and click **Confirm the return match** or **Refer for further review**. The outcome and its reference appear in the file.
+2. Open the case as **Sam Reed**, inspect the return-match record, enter a reason and click **Sign desk review**. In the Human approval panel, open **Amir Cole**’s demo desk and sign the Operations review.
+3. The case now shows delivery to **Ari Fox** for final approval. Open Ari’s demo desk or select the case in Ari’s **My approvals**. Enter a reason and click **Approve request** to confirm the return match, or **Refer for further review**. The outcome and its reference appear in the file.
 4. Try **PAY-002** as the analyst for an incomplete record. **Verify supporting record** creates revision 2. Run the organizer again to prepare that revision for the human reviewers. To submit another payment, click **New request**, choose **Payment exception triage**, enter the payment details and click **Submit request**.
 
 Use the four department groups or search for a desk. Each specialist has its own examples, prompts, evidence and final action. M&A, AML & Financial Crime and Regulatory Surveillance keep all three drafting tasks inside the bank. The other 23 specialist desks use BRANE in live mode. All outcomes are simulated internal records. [Browse the 26 desks and their examples](docs/department-workflows.md) · [See the organizer running a payment case](docs/evidence/specialist-workflow.jpg)

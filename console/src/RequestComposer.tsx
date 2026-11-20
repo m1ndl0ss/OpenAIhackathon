@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeftIcon, ArrowRightIcon, ArrowsClockwiseIcon, FileTextIcon, HandTapIcon, ShuffleSimpleIcon, UsersThreeIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, ArrowRightIcon, ArrowsClockwiseIcon, FileTextIcon, HandTapIcon, ShuffleSimpleIcon, SignatureIcon, UsersThreeIcon } from '@phosphor-icons/react'
 import { bank, BankError, money, textError, type RequestType, type RequestValues, type StaffFile, type StaffSession } from './api'
 import { Brand, DeskIcon } from './Brand'
 import './request.css'
@@ -112,7 +112,8 @@ export default function RequestComposer({ session, preferred, cancel, created }:
         <h2>{type.desk}</h2><p>{type.title}</p><ol>
           <li><FileTextIcon /><div><small>Originating desk</small><strong>{type.desk}</strong></div></li>
           <li><ArrowsClockwiseIcon /><div><small>Organizer sends to</small><strong>{type.code === 'LC' ? 'Trade Finance, Credit Risk and Compliance' : 'Evidence, policy and handover agents'}</strong></div></li>
-          <li><UsersThreeIcon /><div><small>Final decision</small><strong>{type.decision_desk}</strong></div></li></ol>
+          <li><UsersThreeIcon /><div><small>Desk reviewers</small><strong>{type.reviewers?.map(person => person.name).join(' · ')}</strong></div></li>
+          <li><SignatureIcon /><div><small>Final human approval</small><strong>{type.final?.name} · {type.decision_desk}</strong></div></li></ol>
       </aside></div>}
     </div></main>
 }

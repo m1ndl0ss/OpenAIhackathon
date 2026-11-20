@@ -9,7 +9,7 @@ function DepartmentActions({ file, staff, busy, submit }: { file: DepartmentFile
   const meta = file.department_case
   const allowed = file.permitted_actions
   const signedActions = allowed.filter(k => ['sign', 'hold', 'complete', 'refer'].includes(k))
-  const names: Record<string, string> = { sign: 'Sign desk review', hold: 'Place on hold', complete: meta.outcome, refer: 'Refer for further review' }
+  const names: Record<string, string> = { sign: 'Sign desk review', hold: 'Place on hold', complete: 'Approve request', refer: 'Refer for further review' }
   async function act(action: string) {
     const body = { action, revision: file.revision, ...(action === 'verify' ? {} : {
       packet_hash: file.packet_hash, reason: reason.trim(), expected_event_id: file.reviews.find(r => r.desk === staff.role)?.event_id ?? null,
@@ -18,8 +18,10 @@ function DepartmentActions({ file, staff, busy, submit }: { file: DepartmentFile
       hold: 'Desk hold recorded.', complete: 'Department outcome recorded.', refer: 'Department referral recorded.' }[action]
     if (await submit('/workflow-action', body, message || 'Action recorded.')) setReason('')
   }
-  return <section className="card action-form">
-    <h2>Your desk action</h2><p className="muted">{deskName(file, staff.role)} · Revision {file.revision}</p>
+  return <section className="card action-form" id="approval-action" tabIndex={-1}>
+    <h2>{allowed.includes('complete') ? 'Your final decision' : signedActions.length ? 'Your desk review' : 'Your desk action'}</h2>
+    <p className="muted">{staff.name} · {deskName(file, staff.role)} · Revision {file.revision}</p>
+    {allowed.includes('complete') && <p>Approval records the following outcome. <strong>{meta.outcome}</strong>.</p>}
     {allowed.includes('verify') && <div className="action-form"><p>Verify the registered synthetic record, <strong>{meta.source}</strong>, to attach it to a new revision.</p>
       <button disabled={busy} onClick={() => act('verify')}><FilesIcon size={16} />Verify supporting record</button></div>}
     {allowed.includes('run') && <button className="primary" disabled={busy || file.last_run?.status === 'pending'} onClick={() => submit('/runs', {revision:file.revision, mode:file.configured_mode}, 'Analysis run submitted.')}>Run analysis</button>}

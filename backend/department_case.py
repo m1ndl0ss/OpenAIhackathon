@@ -116,6 +116,8 @@ def detail(db, row, s, actor, mode, p):
 
 
 def apply(db, row, s, actor, body, mode):
+    from .approvals import require_delivery
+
     p = dep.profile(s)
     role, cid, revision, action = actor["role"], s["case_id"], s["revision"], body.action
     require_open(db, s)
@@ -135,6 +137,7 @@ def apply(db, row, s, actor, body, mode):
         return 201, {"revision": revision + 1}
     if not row["packet_hash"] or body.packet_hash != row["packet_hash"]:
         conflict("stale_packet", "Review the current sealed packet.")
+    require_delivery(db, row, s, actor, "review" if action in ("sign", "hold") else "decision")
     if not body.reason or len(body.reason.strip()) < 10:
         raise Problem(422, "reason_required", "Enter a reason of at least ten characters.")
     if action in ("sign", "hold"):
