@@ -238,8 +238,8 @@ export default function RequestDashboard({ file, staff, queue, audit, busy, open
         </button>
       </div>
       <AgentReply file={file} />
-      {approval}
       {approval && route}
+      {approval}
       <div className="tracker-summary">
         <div className="tracker-stats">
           {stats.map((s) => (

@@ -4,7 +4,7 @@ Redwood is a corporate banking workspace with **27 workflows and 54 seeded cases
 
 **Judges and presenters** can open the [submission guide, live results and backup walkthrough](SUBMISSION.md).
 
-![A submitted payment request with its recommendation, named desk reviewers and named final approver](docs/evidence/request-result.jpg)
+![A payment recommendation followed by the request routing diagram and the named human reviewers](docs/evidence/request-result.jpg)
 
 ## Run from a fresh clone
 
@@ -19,7 +19,7 @@ Open the console and click **New request**. Choose one of 27 workflows. **Fill d
 
 After submission, **Agent reply** appears above **Human approval** on the dashboard and in the case workspace. Read the recommended next step and the agent’s returned wording. **Review findings and sources** opens the other drafts and the records your desk can inspect. The reply stays attached to its analyzed revision throughout sign-off and after the final decision. Green calls for human review and amber flags an issue such as a missing invoice.
 
-The routing diagram follows the request through the organizer to three agents. **Replay run** follows the recorded handoffs. For an existing unrun case, use **Preview route** or **Run analysis**. [Recorded handoffs](docs/evidence/request-routing.gif)
+On the dashboard, **Request routing** sits between **Agent reply** and **Human approval**. The diagram follows the request through the organizer to three agents. **Replay run** shows the recorded handoffs. For an existing unrun case, use **Preview route** or **Run analysis**. [Recorded handoffs](docs/evidence/request-routing.gif)
 
 Click **Send for desk review** under the recommendation. Each named reviewer receives the current revision in **My approvals**. For a payment exception, Sam Reed and Amir Cole each review and sign. Once both have signed and the evidence checks pass, Redwood sends the request to **Ari Fox** for a final decision. Ari can approve the request or refer it for further review. The case shows each signature and who still needs to act.
 
