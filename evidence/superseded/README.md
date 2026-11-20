@@ -15,6 +15,14 @@ The policy under test was `hardened-v1`
 | `…163159Z`, `…163221Z`, `…163241Z` | Identifier tokens renamed to `CASE_ACCOUNT_A` etc. Still FAILed at 2 of 3 — the person-like prefix was not the whole cause. |
 | `…163539Z`, `…163559Z`, `…163617Z` | Identifier tokens bracketed (`[[ACCT-A]]`, stable 3/3), but the word-like person token `SIGNATORY_1` was then re-detected as part of the span `"confirms SIGNATORY_1"`, which also deleted the verb from the outgoing payload. |
 
+Two A5 check-failure runs are also here:
+
+| Run | Why superseded |
+| --- | --- |
+| `redwood-A5-check-failure_…174648Z` | First version of the A5 test. Scenarios b-e used `http://` endpoints, which the client rejects before dialling, so they recorded **no network activity at all** and passed without exercising their failure modes. The test now fails any fault scenario that never reaches the network. |
+| `redwood-A5-check-failure_…174815Z` | Correct results (18/18), but produced before the static endpoint check was scoped to code and configuration. Re-run as `…175417Z` against the current repo state. |
+| `redwood-A5-check-failure_…174905Z` | First raw-client contrast run. Correct verdicts (0/18) but every scenario reported only "outcome=None", which buried the one finding that matters. Re-run as `…175012Z`, which names the missing classification and the 121 leaked characters. |
+
 The findings these runs produced are reported properly in `../REPORT.md` §4.5 (token
 shape determines whether BRANE re-detects an app-side token) and §5. The
 authoritative sets are:
@@ -23,3 +31,6 @@ authoritative sets are:
 - `../redwood-hardened-v1_20261120T1553*.csv` / `1557*.csv` — hardened, 12 checks, 3 runs
 - `../redwood-hardened-v1_20261120T161953Z.csv` — T1 control re-run
 - `../redwood-hardened-v1_20261120T1639*.csv` — hardened, the 4 added checks, 3 runs
+- `../redwood-hardened-v2_20261120T165*.csv` — hardened-v2, 20 checks, 3 runs
+- `../redwood-A5-check-failure_20261120T175417Z.csv` — A5, governed client, 18/18
+- `../redwood-A5-check-failure_20261120T175012Z.csv` — A5, raw transport, 0/18 (the contrast)

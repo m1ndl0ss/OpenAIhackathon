@@ -5,6 +5,7 @@
 | [Integrated live case](submission-live.json) | Two revisions, three departments, the real OpenAI model through BRANE, per-call route and digest, citation checks, three current signatures, the officer decision and one simulated receipt. Six distinct scripted staff identities used the API. |
 | [Specialist live rehearsal](department-rehearsal-live.json) | One case per specialist desk through approval. BRANE reported 57 cloud and 12 local-model calls. Three restricted desks recorded zero model calls. |
 | [Specialist routing dashboard](specialist-workflow.jpg) | Payments & Cash servicing a returned payment during an actual live run. |
+| [Merged BRANE client checks](brane-check-failure.csv) | Five faults repeated three times returned zero answer text. Three healthy controls returned a verified response. The observer checked each destination and port from the client process. |
 | [Network-denied outage](firewall-outage.json) | T5 in its official firewall-unavailable meaning. An independent Python audit hook denied DNS and IP socket operations. The bank attempted its policy lookup, submitted zero model requests and left the case unsealed. |
 | [Submission test worksheet](submission-tests.csv) | The five official scenarios and the team's five edge cases. Each row identifies the application, gateway or controlled-outage evidence. |
 | [Submission policy matrix](submission-policy-matrix.csv) | Eleven rules from Ilaria's legal worksheet with observed gateway behaviour and application controls. The legal-source column matches her source sheet. |

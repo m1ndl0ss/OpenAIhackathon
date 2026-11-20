@@ -141,6 +141,19 @@ Tests D and E together are the gate check **A5** (firewall unavailable). Both **
 show that a BRANE outage stops model work rather than degrading to a direct provider
 call.
 
+### 6.1 Run the outage checks
+
+The reference client and the staff API share the same verdict classifier. Five fault scenarios cover a DNS failure, a refused connection, a timeout, an HTTP 503 and an HTTP 200 with a completion but no routing verdict. A sixth, healthy control requires a usable response and an observed connection to the assigned BRANE endpoint.
+
+```sh
+.venv/bin/python scripts/check_failure_test.py --only a,b,c,d,e --runs 1 --output-dir .clearance/evidence/brane-outage
+.venv/bin/python scripts/check_failure_test.py --runs 3 --output-dir .clearance/evidence/brane-live
+```
+
+The first command uses dummy credentials. The runner scopes each fault to a reserved test hostname or an exact loopback address and port. The second command also reads the team credential for the healthy control and its policy readback. The observer records DNS and connection attempts from the client process. The merged harness passed all 18 runs. [Measured results](evidence/brane-check-failure.csv)
+
+The staff API checks the active policy before submitting a drafting turn. Run `make evidence` for the independently observed bank-level outage and `make live-evidence` for both case revisions through the assigned firewall. [Outage trace](evidence/firewall-outage.json) · [Signed case and receipt](evidence/submission-live.json)
+
 ## 7. What the adapter must never do
 
 1. Fabricate a successful packet to fill a gap. An infrastructure error cannot seal a

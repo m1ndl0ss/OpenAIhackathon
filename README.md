@@ -65,7 +65,7 @@ Choose the named role on the desk picker. The dashboard refreshes automatically 
 | Command | Result |
 | --- | --- |
 | `make test` | Run the backend and workspace checks against disposable data. |
-| `make evidence` | Exercise the hold, revision, receipt and firewall-outage controls, and run both fixture scenarios. Save results under `.clearance/evidence/`. |
+| `make evidence` | Exercise holds, revisions, receipt retries, the bank outage and five fault scenarios with dummy credentials, and run both fixture scenarios. Save results under `.clearance/evidence/`. |
 | `python -m tools.agent_utility` | Score both synthetic revisions against Ilaria's answer key and export `.clearance/evidence/agent-utility-fixture.json`. |
 | `make doctor` | Check local database, logins, console build and configured mode. |
 | `make brane-check` | Read the assigned department and verify its active policy against the committed hardened rules. |

@@ -152,7 +152,116 @@ def request(
 
 def brane_headers(headers: Dict[str, str]) -> Dict[str, str]:
     """Every X-Brane-* header, lowercased keys, in sorted order."""
-    return {k: v for k, v in sorted(headers.items()) if k.startswith("x-brane-")}
+    return {k.lower(): v for k, v in sorted(headers.items()) if k.lower().startswith("x-brane-")}
+
+
+# --------------------------------------------------------------------------------------
+# Reference implementation of docs/brane_adapter_contract.md §3.
+#
+# request() above is transport only: it hands back whatever came off the wire. That is
+# deliberate, because the evidence harness needs the raw observation. It is NOT safe to
+# hand to an agent, and check_failure_test.py proves why: a 200 carrying a completion but
+# no X-Brane-Routed-To is indistinguishable from a governed answer at the transport layer.
+# Classification has to happen above it, so here it is, once, for everyone to reuse.
+# --------------------------------------------------------------------------------------
+OUTCOMES = ("direct", "pseudonymized", "local", "blocked", "unavailable")
+
+
+def observed_outcome(status, observation) -> str:
+    """Classify the firewall verdict recorded by the staff API and the security runner."""
+    route = observation.get("routed_to"), observation.get("action")
+    if str(status) == "422" and route == ("refused", "refuse"):
+        return "blocked"
+    if str(status) != "200":
+        return "unavailable"
+    if route == ("cloud", "allow") and observation.get("redacted") == "false":
+        return "direct"
+    if route == ("cloud", "placeholder") and observation.get("redacted") == "true" and observation.get("redaction_classes"):
+        return "pseudonymized"
+    if route == ("local", "local") and (observation.get("model") or "").startswith("vllm:"):
+        return "local"
+    return "unavailable"
+
+
+def classify_outcome(status: str, headers: Dict[str, str]) -> str:
+    """
+    Map an observation onto exactly one of the five normalised outcomes.
+
+    An HTTP 200 with no X-Brane-Routed-To is `unavailable`, never `direct`: a response
+    we cannot attribute to a policy decision is not a permitted route.
+    """
+    h = brane_headers(headers)
+    return observed_outcome(status, {
+        "routed_to": h.get("x-brane-routed-to"), "action": h.get("x-brane-action"),
+        "redacted": h.get("x-brane-redacted"), "redaction_classes": h.get("x-brane-placeholder-types"),
+        "model": h.get("x-brane-model-resolved"),
+    })
+
+
+def call_governed(prompt: str, timeout: float = 60.0, system: Optional[str] = None) -> Dict[str, Any]:
+    """
+    One governed model turn. Returns:
+
+        {"outcome": one of OUTCOMES,
+         "answer":  the model text, or None whenever the outcome is not a usable answer,
+         "status":  HTTP status as a string, or "ERROR",
+         "headers": every X-Brane-* header observed,
+         "reason":  short safe reason for a non-answer outcome}
+
+    `answer` is None for `blocked` and `unavailable`. That is the whole point: an
+    unverified completion must not reach a caller who might reason over it.
+    """
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    status, headers, body, raw = request(
+        "POST", "/chat/completions", {"model": "auto", "messages": messages}, timeout=timeout
+    )
+    outcome = classify_outcome(status, headers)
+    choices = body.get("choices") if isinstance(body, dict) else None
+    choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
+    message = choice.get("message")
+    answer = message.get("content") if isinstance(message, dict) and not message.get("tool_calls") else None
+    if not isinstance(answer, str) or not answer.strip():
+        answer = None
+        if outcome != "blocked":
+            outcome = "unavailable"
+
+    if outcome in ("blocked", "unavailable"):
+        reason = {
+            "blocked": f"refused by policy ({brane_headers(headers).get('x-brane-refused-by', 'rule not reported')})",
+            "unavailable": f"no policy decision observed (status={status})",
+        }[outcome]
+        return {"outcome": outcome, "answer": None, "status": status,
+                "headers": brane_headers(headers), "reason": scrub(reason),
+                "discarded_answer_chars": len(answer or "")}
+    return {"outcome": outcome, "answer": answer, "status": status,
+            "headers": brane_headers(headers), "reason": ""}
+
+
+def call_raw(prompt: str, timeout: float = 60.0, system: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Transport-only call in the same shape as call_governed, with NO classification and
+    no answer suppression. Exists so check_failure_test.py can measure the difference
+    between a transport and an adapter rather than assert it.
+    """
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    status, headers, body, raw = request(
+        "POST", "/chat/completions", {"model": "auto", "messages": messages}, timeout=timeout
+    )
+    answer = None
+    if isinstance(body, dict) and body.get("choices"):
+        answer = (body["choices"][0].get("message") or {}).get("content")
+    elif status == "ERROR":
+        answer = None
+    return {"outcome": None, "answer": answer, "status": status,
+            "headers": brane_headers(headers), "reason": ""}
 
 
 def write_json(path: Path, payload: Any) -> None:

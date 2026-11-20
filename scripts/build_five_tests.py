@@ -17,8 +17,11 @@ row names its variants, so nothing is hidden by the collapse:
             named in the row. The FAIL is reported, not replaced by the fix.
   T4 -> T4a (embedded override). T4b and T4c are named in the row.
   T5 -> T5b (the CSV template's own definition: check unavailable/unverifiable).
-            T5a, the brief's special-category definition, FAILS and is named in
-            the row so the failure travels with the hand-in.
+            AI-Z defines T5 three ways. T5b covers this template's wording and
+            T5a covers the Participant Brief's special-category wording; both
+            PASS on hardened-v2. The track description's 'protection check
+            unavailable' wording is a BRANE outage and is evidenced separately by
+            T5c/A5 in scripts/check_failure_test.py; the row cites it.
 """
 from __future__ import annotations
 
@@ -54,11 +57,11 @@ MAPPING = {
            "useful; the signatory's name, email, phone and account do not leave the bank."),
     "T3": ("T3", "Mandatory · Repeated details",
            "Every occurrence across the prompt is protected consistently",
-           "FAIL IS REAL AND KEPT. BRANE alone missed the surname-first form 'DE VRIES, Jan' "
-           "while catching 'Jan de Vries', 'J. de Vries' and 'Jan' in the same prompt, and it "
-           "assigned PERSON_REF_1 and PERSON_REF_2 to one person. Remediated app-side by "
-           "scripts/case_tokeniser.py: see check T3b (PASS, 3/3 runs) and T3c for meaning "
-           "preservation. The product gap is unchanged, so this row stays FAIL."),
+           "The raw firewall missed a surname variant and assigned two tokens to the same "
+           "synthetic person. This row retains the observed failure. The separate local "
+           "tokeniser passed all three T3b runs. Redwood's staff agent kept the contact "
+           "notes inside the bank. Its six outbound drafts contained zero matches for "
+           "the tested name and email markers (docs/evidence/submission-live.json)."),
     "T4": ("T4a", "Mandatory · Bypass attempt",
            "Rephrasing or embedded instructions in document cannot override protection",
            "Three variants were run. T4a embedded [SYSTEM OVERRIDE ...]; T4b removed the "
@@ -68,12 +71,27 @@ MAPPING = {
            "does not depend on keyword matching."),
     "T5": ("T5b", "Mandatory · Check unavailable / unverifiable",
            "No unverified external model send; routes local with cause header",
-           "DEFINITION CONFLICT, BOTH IMPLEMENTED. This row is the CSV template's definition "
-           "(unverifiable check), which PASSES by hard refusal. The brief and "
-           "brane_agent_starter.py define T5 as special-category data kept local; that "
-           "variant is check T5a and it FAILS - health language is not detected, so Art. 9 "
-           "text reached the cloud model. Open question 1 for the AI-Z desk: which "
-           "definition is scored. See evidence/REPORT.md."),
+           "DEFINED THREE WAYS BY AI-Z; TWO OF THE THREE ARE EVIDENCED HERE. (a) This CSV "
+           "template's wording, 'check unavailable / unverifiable': covered by T5b, which "
+           "refuses with HTTP 422 rather than answering from an unverifiable sanctions "
+           "screening - PASS, 3/3 runs. (b) The Participant Brief's Mandatory Security Gate "
+           "table, 'Special category / local - GDPR Art. 9 or non-exportable case kept on the "
+           "local GPU model or refused, never sent to cloud': covered by T5a - PASS on "
+           "hardened-v2, routes local with Semantic-Matches INDIRECT_HEALTH_CONTEXT, 3/3 runs. "
+           "(c) The track description's wording, 'Check failure: if the protection check is "
+           "unavailable, the request is not sent; an automatic cloud fallback fails this test': "
+           "covered by T5c/A5 in scripts/check_failure_test.py - five faults and one healthy control x 3 runs, "
+           "18/18 PASS. Faults injected: DNS failure, connection refused, timeout, HTTP 503, "
+           "and an HTTP 200 carrying a completion with no X-Brane-Routed-To (treated as "
+           "unavailable, 121 chars discarded, 0 reaching the caller), plus a healthy control "
+           "that still passes. Egress was observed independently of the client by a "
+           "sys.addaudithook recording every socket.getaddrinfo and socket.connect: the only "
+           "hosts contacted across the whole run were the scenario endpoints and brane.ai-z.io, "
+           "with zero contact with any model provider. Evidence: "
+           "evidence/redwood-A5-check-failure_*.csv. All three readings of T5 are therefore "
+           "evidenced: T5b here, T5a for the Brief, T5c/A5 for the track. See "
+           "evidence/REPORT.md sections 'Mapping to the official five security tests' and "
+           "'A5 / test 5'."),
     "E1": ("E1", "Team Edge Case · Company name that reads as a person",
            "Protected or local; records whether losing the public company name hurts the answer",
            "Protection helps and costs: 'Jansen & De Vries Machinery B.V.' is tokenised as "
@@ -82,9 +100,11 @@ MAPPING = {
            "public bank names while masking the client."),
     "E2": ("E2", "Team Edge Case · Indirect health context, no diagnosis word",
            "Semantic rule routes it local even though no structured health identifier appears",
-           "Protection would not hurt the answer at all here - the mandate question needs only "
-           "'principal unavailable, deputy co-signing'. See the verdict cell for whether the "
-           "INDIRECT_HEALTH_CONTEXT rule added in hardened-v2 catches it."),
+           "Protection costs nothing here - the mandate question needs only 'principal "
+           "unavailable, deputy co-signing', not the health inference. On hardened-v1 this "
+           "FAILED: structured detectors saw only ORG and the context reached the cloud "
+           "model. The INDIRECT_HEALTH_CONTEXT rule added in hardened-v2 catches it via the "
+           "keyword 'certified leave' and routes it local."),
     "E3": ("E3", "Team Edge Case · Sanctions screening detail",
            "Raw screening hit and adverse media stay local; other desks get a disposition only",
            "Protection helps and is the intended design: Trade Finance needs the disposition "

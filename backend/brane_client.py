@@ -9,7 +9,7 @@ from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, build_opener
 
-from scripts.brane_client import ASSIGNED_BASE, USER_AGENT, NoRedirect, policy_hash
+from scripts.brane_client import ASSIGNED_BASE, USER_AGENT, NoRedirect, observed_outcome, policy_hash
 
 from .agent.runtime import ModelTurn, permitted_turn
 
@@ -94,15 +94,9 @@ def send_turn(*, case_ref, revision, run_id, task, policy_version, messages, too
             audit.update(observation_for(response.headers, response.status))
             if response.status != 200:
                 return ModelTurn("unavailable", observation=audit)
-            route = {
-                ("cloud", "allow", "false"): "direct",
-                ("cloud", "placeholder", "true"): "pseudonymized",
-            }.get((audit["routed_to"], audit["action"], audit["redacted"]))
-            if audit["routed_to"] == "local" and audit["action"] == "local" and (audit["model"] or "").startswith("vllm:"):
-                route = "local"
+            route = observed_outcome(response.status, audit)
             reported_version = audit["reported_policy_version"]
-            if (not route or route == "pseudonymized" and not audit["redaction_classes"]
-                    or reported_version and reported_version != configured_policy):
+            if route == "unavailable" or (reported_version and reported_version != configured_policy):
                 return ModelTurn("unavailable", observation=audit)
             content = read_json(response, 65_536)
             message = content["choices"][0]["message"]
@@ -119,7 +113,7 @@ def send_turn(*, case_ref, revision, run_id, task, policy_version, messages, too
     except HTTPError as error:
         with error:
             audit.update(observation_for(error.headers, error.code))
-            if error.code == 422 and audit["routed_to"] == "refused" and audit["action"] == "refuse":
+            if observed_outcome(error.code, audit) == "blocked":
                 return ModelTurn("blocked", observation=audit)
             return ModelTurn("unavailable", observation=audit, transient=error.code in (429, 502, 503, 504))
     except (URLError, TimeoutError, OSError):

@@ -53,6 +53,7 @@ evidence:
 	$(ENV_PY) -m tools.workflow_evidence --output .clearance/evidence/workflow-fixture.csv
 	$(ENV_PY) -m tools.agent_utility --mode fixture
 	$(ENV_PY) -m tools.firewall_outage
+	$(ENV_PY) scripts/check_failure_test.py --only a,b,c,d,e --runs 1 --output-dir .clearance/evidence/brane-outage
 	$(ENV_PY) -m tools.submission_rehearsal --mode fixture
 
 live-evidence:
