@@ -4,9 +4,9 @@
 
 **[Open the public demo][redwood-demo]** and choose **Coverage → LC-001 → Run analysis** to see the agent’s recommendation. Switch desks to review the evidence and sign. You can also choose **New request → Fill demo example** to try another workflow. Each visitor gets a synthetic workspace in their browser tab. No account or API key is required.
 
-This first Vercel deployment expires **21 November 2026 at 01:45 CET** unless the team claims it. You can also [run the same demo locally](#run-redwood). The team’s [live BRANE run and model-call evidence](docs/evidence/submission-live.json) are available separately.
+The public demo uses offline model responses. You can also [run Redwood locally with BRANE](#run-redwood) or [inspect the team’s recorded live model calls, signatures and receipt](docs/evidence/submission-live.json).
 
-[redwood-demo]: https://sonic-tungsten-2g30zww.tmp.now/
+[redwood-demo]: https://redwood-corporate-banking.vercel.app/
 
 Redwood helps corporate banking staff prepare a case for a human decision. In the example, a relationship manager requests a **USD 2 million letter of credit**. Trade Finance checks the documents, Credit Risk calculates the remaining capacity, and Compliance flags a missing supplier invoice. Once the invoice arrives, all three desks sign the revised file. A separate officer approves it, and Operations records a simulated issuance. All cases and staff identities are synthetic.
 
@@ -27,7 +27,9 @@ For a live demo, copy `.env.example` to `.env`, set `BRANE_API_KEY` to the assig
 
 ## Deploy the public demo on Vercel
 
-1. In [Vercel New Project](https://vercel.com/new), import the GitHub repository `nickdatak/OpenAIhackathon`. Give the Vercel GitHub app access to this repository if it is missing from the picker.
+The team’s `redwood-corporate-banking` project is connected to this repository. Push to `main` to update the [public demo][redwood-demo]. To deploy a separate copy, follow these steps.
+
+1. Import `nickdatak/OpenAIhackathon` or your fork. Give the Vercel GitHub app access to that repository if it is missing from the picker. [Vercel New Project](https://vercel.com/new)
 2. Use `main` as the production branch, leave the root directory at `.` and choose **Other** for the framework preset. The root [Vercel configuration](vercel.json) builds the console and deploys its Python API together. The public demo requires no environment variables.
 3. Select **Deploy**, then **Visit**. Open the production domain in a private browser window and choose **Coverage → LC-001 → Run analysis**. If Vercel asks visitors to sign in, check the project’s **Deployment Protection** setting for Production. When publishing a new project, set the `redwood-demo` link near the top of this README to that production domain. Connecting the repository enables automatic deployments from `main`.
 
