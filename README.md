@@ -58,4 +58,4 @@ The same review flow supports 26 additional desks. In a live run using scripted 
 | [Test protocol](submission/MAIN_Five_Tests_Template.csv) | Results for permitted requests, protected and repeated details, embedded instructions, and an unavailable firewall, plus five banking edge cases. |
 | [Security findings](evidence/REPORT.md) and [application evidence](docs/evidence/README.md) | The application excluded every planted private field across six observed requests. In separate raw-text tests the gateway missed a name variant and masked ordinary trade wording. |
 
-Use `make test` to run the automated suite and `make evidence` to reproduce the local fixture and outage checks. From a Git checkout, `make submission` packages the committed source and evidence into a ZIP.
+Use `make test` to run the automated suite and `make evidence` to reproduce the local fixture and outage checks. From a Git checkout, `make submission` packages the committed source and evidence into a single ZIP.
